@@ -9,7 +9,7 @@ Program    -> List*
 List       -> "(" (Atom | List) * ")"
 Atom       -> Number | String | Symbol | nil
 
-Number     -> {digit}+
+Number     -> {digit}+ (. {digit}+)?
 String     -> \" {character}* \"
 Symbol     -> {character}+
 ```

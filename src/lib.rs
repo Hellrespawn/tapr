@@ -1,12 +1,8 @@
+#![warn(clippy::pedantic)]
+#![allow(clippy::manual_assert)]
+#![allow(clippy::must_use_candidate)]
+#![allow(clippy::missing_panics_doc)]
+
+pub mod cli;
 pub mod lexer;
 pub mod token;
-
-pub fn main() {
-    let source = "(a 1.2 \"string\")";
-
-    let lexer = lexer::Lexer::new(source);
-
-    let tokens = lexer.collect::<Vec<_>>();
-
-    println!("{tokens:?}");
-}

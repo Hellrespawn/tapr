@@ -1,4 +1,5 @@
-#[derive(Copy, Clone, Debug)]
+#[allow(clippy::module_name_repetitions)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum TokenType {
     LeftParen,
     RightParen,
@@ -8,14 +9,20 @@ pub enum TokenType {
     Symbol,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Token {
     ttype: TokenType,
     lexeme: String,
+    line_no: usize,
 }
 
 impl Token {
-    pub fn new(ttype: TokenType, lexeme: String) -> Self {
-        Self { ttype, lexeme }
+    #[must_use]
+    pub fn new(ttype: TokenType, lexeme: String, line_no: usize) -> Self {
+        Self {
+            ttype,
+            lexeme,
+            line_no,
+        }
     }
 }
