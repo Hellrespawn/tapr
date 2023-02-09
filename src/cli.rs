@@ -1,6 +1,5 @@
 use rustyline::error::ReadlineError;
 
-use crate::interpreter::Interpreter;
 use crate::lexer::Lexer;
 use crate::parser::Parser;
 
@@ -61,17 +60,9 @@ fn run_file(filename: &str) {
 fn run_code(source: &str) {
     let lexer = Lexer::new(source);
 
-    // let tokens = lexer.collect::<Vec<_>>();
-
-    // println!("{tokens:#?}");
-
     let mut parser = Parser::new(lexer);
 
     let program = parser.parse();
 
-    let interpreter = Interpreter {};
-
-    let output = interpreter.interpret(&program);
-
-    println!("{output}");
+    println!("{program:#?}");
 }

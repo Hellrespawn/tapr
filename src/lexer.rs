@@ -77,7 +77,7 @@ impl<'l> Lexer<'l> {
     }
 
     fn at_end(&self) -> bool {
-        self.current_character() == Some("")
+        self.current_character().is_none()
     }
 
     fn is_whitespace(&self) -> bool {
