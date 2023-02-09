@@ -1,9 +1,13 @@
+use self::ast::{Atom, List, Node, Program};
+use crate::error::Error;
 use crate::lexer::Lexer;
 use crate::token::{Token, TokenType};
-
-use self::ast::{Atom, Expression, List, Node, Program};
+use crate::Result;
+use once_cell::sync::Lazy;
 
 pub mod ast;
+
+static DEBUG_AST: Lazy<bool> = Lazy::new(|| std::env::var("DEBUG_AST").is_ok());
 
 pub struct Parser<'p> {
     lexer: Lexer<'p>,
@@ -12,33 +16,45 @@ pub struct Parser<'p> {
 
 impl<'p> Parser<'p> {
     pub fn new(lexer: Lexer<'p>) -> Self {
-        let mut parser = Self {
+        Self {
             lexer,
             current_token: None,
-        };
-
-        parser.advance();
-
-        parser
+        }
     }
 
-    pub fn parse(&mut self) -> Program {
-        self.program()
+    pub fn parse(&mut self) -> Result<Program> {
+        self.advance()?;
+
+        let program = self.program()?;
+
+        if *DEBUG_AST {
+            println!("{program:#?}");
+        }
+
+        Ok(program)
     }
 
     fn error(message: &str) -> ! {
         panic!("{message}")
     }
 
-    fn advance(&mut self) {
-        self.current_token = self.lexer.scan_token();
+    fn advance(&mut self) -> Result<()> {
+        self.current_token = self.lexer.scan_token()?;
+
+        Ok(())
     }
 
-    fn consume(&mut self, expected_type: TokenType) {
+    fn consume(&mut self, expected_type: TokenType) -> Result<()> {
         if self.matches(expected_type) {
-            self.advance();
+            self.advance()
         } else {
-            Self::error("Expected type did not match actual type.")
+            Err(Error::ConsumeError {
+                expected: expected_type,
+                found: self
+                    .current_token
+                    .as_ref()
+                    .map_or(TokenType::EOF, |t| t.ttype),
+            })
         }
     }
 
@@ -52,69 +68,41 @@ impl<'p> Parser<'p> {
         false
     }
 
-    fn program(&mut self) -> Program {
-        let mut expressions = Vec::new();
+    fn program(&mut self) -> Result<Program> {
+        let mut lists = Vec::new();
 
         while self.matches(TokenType::LeftParen) {
-            expressions.push(self.expression());
+            lists.push(self.list()?);
         }
 
         if self.current_token.is_some() {
             Self::error("Program may only contain lists.");
         }
 
-        Program { expressions }
+        Ok(Program { lists })
     }
 
-    fn expression(&mut self) -> Expression {
-        self.consume(TokenType::LeftParen);
+    fn list(&mut self) -> Result<List> {
+        self.consume(TokenType::LeftParen)?;
 
-        if !self.matches(TokenType::Symbol) {
-            Self::error("Expression must start with symbol.")
-        }
-
-        let symbol = self.current_token.as_ref().unwrap().lexeme().to_owned();
-
-        self.advance();
-
-        let mut arguments: Vec<Box<dyn Node>> = Vec::new();
+        let mut elements: Vec<Node> = Vec::new();
 
         while self.current_token.is_some()
             && !self.matches(TokenType::RightParen)
         {
             if self.matches(TokenType::LeftParen) {
-                arguments.push(Box::new(self.list()));
+                elements.push(self.list()?.into());
             } else {
-                arguments.push(Box::new(self.atom()));
+                elements.push(self.atom()?.into());
             }
         }
 
-        self.consume(TokenType::RightParen);
+        self.consume(TokenType::RightParen)?;
 
-        Expression { symbol, arguments }
+        Ok(List { elements })
     }
 
-    fn list(&mut self) -> List {
-        self.consume(TokenType::LeftParen);
-
-        let mut elements: Vec<Box<dyn Node>> = Vec::new();
-
-        while self.current_token.is_some()
-            && !self.matches(TokenType::RightParen)
-        {
-            if self.matches(TokenType::LeftParen) {
-                elements.push(Box::new(self.list()));
-            } else {
-                elements.push(Box::new(self.atom()));
-            }
-        }
-
-        self.consume(TokenType::RightParen);
-
-        List { elements }
-    }
-
-    fn atom(&mut self) -> Atom {
+    fn atom(&mut self) -> Result<Atom> {
         let atom = match self.current_token.as_ref() {
             None => unreachable!(),
             Some(token) => match token.ttype {
@@ -128,8 +116,8 @@ impl<'p> Parser<'p> {
             },
         };
 
-        self.advance();
+        self.advance()?;
 
-        atom
+        Ok(atom)
     }
 }

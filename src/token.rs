@@ -6,6 +6,8 @@ pub enum TokenType {
     String,
     Number,
     Symbol,
+
+    EOF,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -16,7 +18,6 @@ pub struct Token {
 }
 
 impl Token {
-    #[must_use]
     pub fn new(ttype: TokenType, lexeme: String, line_no: usize) -> Self {
         Self {
             ttype,

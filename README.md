@@ -6,7 +6,6 @@ Dit is de code die hoort bij mijn project compilers/interpreters.
 
 ```bnf
 Program    -> Expression
-Expression -> "(" Symbol (Atom | List)* ")"
 List       -> "(" (Atom | List) * ")"
 Atom       -> Number | String | Symbol
 

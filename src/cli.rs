@@ -1,7 +1,6 @@
-use rustyline::error::ReadlineError;
-
 use crate::lexer::Lexer;
 use crate::parser::Parser;
+use rustyline::error::ReadlineError;
 
 pub fn main() {
     let mut args = std::env::args();
@@ -24,7 +23,6 @@ fn repl() {
         match readline {
             Ok(line) => {
                 if line.is_empty() {
-                    println!("Exiting REPL...");
                     break;
                 }
 
@@ -33,15 +31,16 @@ fn repl() {
                 run_code(&line);
             }
             Err(ReadlineError::Interrupted) => {
-                println!("Exiting REPL...");
                 break;
             }
             Err(err) => {
                 eprintln!("Error occured: {err}");
-                break;
+                return;
             }
         }
     }
+
+    println!("Exiting REPL...");
 }
 
 fn run_file(filename: &str) {

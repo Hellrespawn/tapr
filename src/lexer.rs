@@ -1,6 +1,7 @@
-use once_cell::sync::Lazy;
-
+use crate::error::Error;
 use crate::token::{Token, TokenType};
+use crate::Result;
+use once_cell::sync::Lazy;
 
 static DEBUG_TOKENS: Lazy<bool> =
     Lazy::new(|| std::env::var("DEBUG_TOKENS").is_ok());
@@ -20,18 +21,14 @@ impl<'l> Lexer<'l> {
         }
     }
 
-    pub fn scan_token(&mut self) -> Option<Token> {
-        if self.at_end() {
-            return None;
-        }
-
+    pub fn scan_token(&mut self) -> Result<Option<Token>> {
         self.skip_whitespace();
         self.skip_comments();
 
         let char = self.current_character();
 
         let token = match char {
-            None => return None,
+            None => return Ok(None),
             Some(char) => match char {
                 "(" => {
                     let token = Token::new(
@@ -55,8 +52,8 @@ impl<'l> Lexer<'l> {
 
                     token
                 }
-                "\"" => self.string(),
-                _ if self.is_number() => self.number(),
+                "\"" => self.string()?,
+                _ if self.is_number() => self.number()?,
                 _ => self.symbol(),
             },
         };
@@ -65,7 +62,7 @@ impl<'l> Lexer<'l> {
             println!("{token:#?}");
         }
 
-        Some(token)
+        Ok(Some(token))
     }
 
     fn current_character(&self) -> Option<&'l str> {
@@ -136,7 +133,7 @@ impl<'l> Lexer<'l> {
         }
     }
 
-    fn string(&mut self) -> Token {
+    fn string(&mut self) -> Result<Token> {
         // Advance past opening "
         self.advance();
 
@@ -144,19 +141,22 @@ impl<'l> Lexer<'l> {
 
         while self.current_character() != Some("\"") {
             if self.at_end() {
-                panic!("Unterminated string!");
+                return Err(Error::UnterminatedString);
             }
 
             string.push_str(self.current_character().unwrap());
             self.advance();
         }
 
+        // Advance past closing "
         self.advance();
 
-        Token::new(TokenType::String, string, self.line_no)
+        let token = Token::new(TokenType::String, string, self.line_no);
+
+        Ok(token)
     }
 
-    fn number(&mut self) -> Token {
+    fn number(&mut self) -> Result<Token> {
         let mut string = String::new();
 
         while self.is_number() {
@@ -166,7 +166,7 @@ impl<'l> Lexer<'l> {
 
         if self.current_character() == Some(".") {
             if !self.is_next_number() {
-                panic!("Found decimal point not followed by decimals.")
+                return Err(Error::DecimalPointNotFollowedByDigits);
             }
 
             string.push('.');
@@ -178,7 +178,9 @@ impl<'l> Lexer<'l> {
             }
         }
 
-        Token::new(TokenType::Number, string, self.line_no)
+        let token = Token::new(TokenType::Number, string, self.line_no);
+
+        Ok(token)
     }
 
     fn symbol(&mut self) -> Token {
@@ -193,25 +195,23 @@ impl<'l> Lexer<'l> {
     }
 }
 
-impl<'l> Iterator for Lexer<'l> {
-    type Item = Token;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.scan_token()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use TokenType::{LeftParen, Number, RightParen, String, Symbol};
 
-    fn lexer_test(source: &str, expected: &[Token]) {
-        let lexer = Lexer::new(source);
+    fn lexer_test(source: &str, expected: &[Token]) -> Result<()> {
+        let mut lexer = Lexer::new(source);
 
-        let output = lexer.collect::<Vec<_>>();
+        let mut output = Vec::new();
+
+        while let Some(token) = lexer.scan_token()? {
+            output.push(token);
+        }
 
         assert_eq!(output, expected,);
+
+        Ok(())
     }
 
     fn token(ttype: TokenType, lexeme: &str) -> Token {
@@ -231,13 +231,15 @@ mod tests {
     }
 
     #[test]
-    fn test_empty_string() {
-        lexer_test("", &[]);
+    fn test_empty_string() -> Result<()> {
+        lexer_test("", &[])?;
+
+        Ok(())
     }
 
     #[test]
-    fn test_parentheses() {
-        lexer_test("()", &[token(LeftParen, "("), token(RightParen, ")")]);
+    fn test_parentheses() -> Result<()> {
+        lexer_test("()", &[token(LeftParen, "("), token(RightParen, ")")])?;
 
         lexer_test(
             "())(",
@@ -247,38 +249,46 @@ mod tests {
                 token(RightParen, ")"),
                 token(LeftParen, "("),
             ],
-        );
+        )?;
+
+        Ok(())
     }
 
     #[test]
-    fn test_numbers() {
-        lexer_test("1", &[number(1.)]);
+    fn test_numbers() -> Result<()> {
+        lexer_test("1", &[number(1.)])?;
 
-        lexer_test("12.34", &[number(12.34)]);
+        lexer_test("12.34", &[number(12.34)])?;
+
+        Ok(())
     }
 
     #[test]
     #[should_panic]
     fn test_invalid_number() {
-        lexer_test("12.", &[number(0.)]);
+        let _ = lexer_test("12.", &[number(0.)]);
     }
 
     #[test]
-    fn test_string() {
-        lexer_test("\"\"", &[string("")]);
+    fn test_string() -> Result<()> {
+        lexer_test("\"\"", &[string("")])?;
 
-        lexer_test("\"This is a test.\"", &[string("This is a test.")]);
+        lexer_test("\"This is a test.\"", &[string("This is a test.")])?;
+
+        Ok(())
     }
 
     #[test]
     #[should_panic]
     fn test_unterminated_string() {
-        lexer_test("\"Unterminated string", &[string("")]);
+        let _ = lexer_test("\"Unterminated string", &[string("")]);
     }
 
     #[test]
-    fn test_symbol() {
-        lexer_test("symbol", &[symbol("symbol")]);
-        lexer_test("[];',.", &[symbol("[];',.")]);
+    fn test_symbol() -> Result<()> {
+        lexer_test("symbol", &[symbol("symbol")])?;
+        lexer_test("[];',.", &[symbol("[];',.")])?;
+
+        Ok(())
     }
 }
