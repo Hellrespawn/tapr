@@ -1,6 +1,8 @@
 use std::io::Write;
 
+use crate::interpreter::Interpreter;
 use crate::lexer::Lexer;
+use crate::parser::Parser;
 
 pub fn main() {
     let mut args = std::env::args();
@@ -55,7 +57,17 @@ fn run_file(filename: &str) {
 fn run_code(source: &str) {
     let lexer = Lexer::new(source);
 
-    let tokens = lexer.collect::<Vec<_>>();
+    // let tokens = lexer.collect::<Vec<_>>();
 
-    println!("{tokens:#?}");
+    // println!("{tokens:#?}");
+
+    let mut parser = Parser::new(lexer);
+
+    let program = parser.parse();
+
+    let interpreter = Interpreter {};
+
+    let output = interpreter.interpret(&program);
+
+    println!("{output}");
 }

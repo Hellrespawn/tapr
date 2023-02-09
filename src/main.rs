@@ -1,3 +1,3 @@
 fn main() {
-    project_compilers_interpreters::cli::main();
+    korisp::cli::main();
 }

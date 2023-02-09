@@ -1,4 +1,3 @@
-#[allow(clippy::module_name_repetitions)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum TokenType {
     LeftParen,
@@ -11,9 +10,9 @@ pub enum TokenType {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Token {
-    ttype: TokenType,
-    lexeme: String,
-    line_no: usize,
+    pub ttype: TokenType,
+    pub lexeme: String,
+    pub line_no: usize,
 }
 
 impl Token {
@@ -24,5 +23,9 @@ impl Token {
             lexeme,
             line_no,
         }
+    }
+
+    pub fn lexeme(&self) -> &str {
+        &self.lexeme
     }
 }

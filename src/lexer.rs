@@ -1,4 +1,9 @@
+use once_cell::sync::Lazy;
+
 use crate::token::{Token, TokenType};
+
+static DEBUG_TOKENS: Lazy<bool> =
+    Lazy::new(|| std::env::var("DEBUG_TOKENS").is_ok());
 
 pub struct Lexer<'l> {
     source: &'l str,
@@ -28,23 +33,37 @@ impl<'l> Lexer<'l> {
         let token = match char {
             None => return None,
             Some(char) => match char {
-                "(" => Token::new(
-                    TokenType::LeftParen,
-                    char.to_owned(),
-                    self.line_no,
-                ),
-                ")" => Token::new(
-                    TokenType::RightParen,
-                    char.to_owned(),
-                    self.line_no,
-                ),
+                "(" => {
+                    let token = Token::new(
+                        TokenType::LeftParen,
+                        char.to_owned(),
+                        self.line_no,
+                    );
+
+                    self.advance();
+
+                    token
+                }
+                ")" => {
+                    let token = Token::new(
+                        TokenType::RightParen,
+                        char.to_owned(),
+                        self.line_no,
+                    );
+
+                    self.advance();
+
+                    token
+                }
                 "\"" => self.string(),
                 _ if self.is_number() => self.number(),
                 _ => self.symbol(),
             },
         };
 
-        self.advance();
+        if *DEBUG_TOKENS {
+            println!("{token:#?}");
+        }
 
         Some(token)
     }
@@ -87,7 +106,7 @@ impl<'l> Lexer<'l> {
 
     fn is_character(&self) -> bool {
         if let Some(current) = self.current_character() {
-            current.chars().all(|c| !c.is_whitespace())
+            current.chars().all(|c| c.is_alphanumeric() || c == '_')
         } else {
             false
         }
@@ -131,6 +150,8 @@ impl<'l> Lexer<'l> {
             string.push_str(self.current_character().unwrap());
             self.advance();
         }
+
+        self.advance();
 
         Token::new(TokenType::String, string, self.line_no)
     }
