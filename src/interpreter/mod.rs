@@ -66,7 +66,7 @@ impl Visitor for Interpreter {
         match atom {
             Atom::Number(number) => number.to_string(),
             Atom::String(string) => string.clone(),
-            Atom::Symbol(string) => string.clone(),
+            Atom::Symbol(symbol) => symbol.clone(),
         }
     }
 }

@@ -1,4 +1,4 @@
-use std::io::Write;
+use rustyline::error::ReadlineError;
 
 use crate::interpreter::Interpreter;
 use crate::lexer::Lexer;
@@ -17,27 +17,31 @@ pub fn main() {
 fn repl() {
     println!("Welcome to Korisp.");
 
-    let mut buffer = String::new();
-
-    let stdin = std::io::stdin();
-    let mut stdout = std::io::stdout();
+    let mut rl = rustyline::Editor::<()>::new().unwrap();
 
     loop {
-        print!("> ");
-        stdout.flush().expect("Unable to flush stdout");
+        let readline = rl.readline("> ").map(|s| s.trim().to_owned());
 
-        stdin
-            .read_line(&mut buffer)
-            .expect("Unable to read from stdin");
+        match readline {
+            Ok(line) => {
+                if line.is_empty() {
+                    println!("Exiting REPL...");
+                    break;
+                }
 
-        if buffer.trim().is_empty() {
-            println!("Exiting REPL...");
-            break;
+                rl.add_history_entry(&line);
+
+                run_code(&line);
+            }
+            Err(ReadlineError::Interrupted) => {
+                println!("Exiting REPL...");
+                break;
+            }
+            Err(err) => {
+                eprintln!("Error occured: {err}");
+                break;
+            }
         }
-
-        run_code(&buffer);
-
-        buffer.clear();
     }
 }
 
