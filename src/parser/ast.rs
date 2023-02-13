@@ -1,41 +1,54 @@
-#[derive(Debug)]
+use crate::interpreter::Visitor;
+
+#[derive(Debug, Clone)]
 pub enum Node {
-    ProgramNode(Program),
-    ListNode(List),
-    AtomNode(Atom),
+    Program(Program),
+    List(List),
+    Atom(Atom),
+}
+
+impl Node {
+    pub fn accept<T: std::fmt::Debug>(&self, visitor: &dyn Visitor<T>) -> T {
+        match self {
+            Node::Program(program) => visitor.visit_program(program),
+            Node::List(list) => visitor.visit_list(list),
+            Node::Atom(atom) => visitor.visit_atom(atom),
+        }
+    }
 }
 
 impl From<Program> for Node {
     fn from(program: Program) -> Self {
-        Self::ProgramNode(program)
+        Self::Program(program)
     }
 }
 
 impl From<List> for Node {
     fn from(list: List) -> Self {
-        Self::ListNode(list)
+        Self::List(list)
     }
 }
 
 impl From<Atom> for Node {
     fn from(atom: Atom) -> Self {
-        Self::AtomNode(atom)
+        Self::Atom(atom)
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Program {
     pub lists: Vec<List>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct List {
     pub elements: Vec<Node>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Atom {
     Number(f64),
     String(String),
     Symbol(String),
+    Nil,
 }

@@ -1,7 +1,7 @@
-use crate::error::Error;
+use crate::interpreter::{Interpreter, Value};
 use crate::lexer::Lexer;
 use crate::parser::Parser;
-use crate::Result;
+use crate::{Error, Result};
 use rustyline::error::ReadlineError;
 
 pub fn main() {
@@ -19,7 +19,7 @@ pub fn main() {
 }
 
 fn repl() -> Result<()> {
-    println!("Welcome to Korisp.");
+    println!("Welcome to Korisp {}.", env!("CARGO_PKG_VERSION"));
 
     let mut rl = rustyline::Editor::<()>::new().unwrap();
 
@@ -36,8 +36,9 @@ fn repl() -> Result<()> {
 
                 let result = run_code(&line);
 
-                if let Err(error) = result {
-                    eprintln!("{error}");
+                match result {
+                    Ok(value) => println!("{value}"),
+                    Err(error) => eprintln!("{error}"),
                 }
             }
             Err(ReadlineError::Interrupted) => {
@@ -56,17 +57,18 @@ fn repl() -> Result<()> {
 
 fn run_file(filename: &str) -> Result<()> {
     let source = std::fs::read_to_string(filename)?;
-    run_code(&source)
+    run_code(&source)?;
+    Ok(())
 }
 
-fn run_code(source: &str) -> Result<()> {
+fn run_code(source: &str) -> Result<Value> {
     let lexer = Lexer::new(source);
 
     let mut parser = Parser::new(lexer);
 
     let program = parser.parse()?;
 
-    println!("{program:#?}");
+    let intp = Interpreter {};
 
-    Ok(())
+    intp.interpret(&program)
 }

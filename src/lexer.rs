@@ -1,6 +1,5 @@
-use crate::error::Error;
 use crate::token::{Token, TokenType};
-use crate::Result;
+use crate::{Error, Result};
 use once_cell::sync::Lazy;
 
 static DEBUG_TOKENS: Lazy<bool> =

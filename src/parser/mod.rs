@@ -1,8 +1,7 @@
 use self::ast::{Atom, List, Node, Program};
-use crate::error::Error;
 use crate::lexer::Lexer;
 use crate::token::{Token, TokenType};
-use crate::Result;
+use crate::{Error, Result};
 use once_cell::sync::Lazy;
 
 pub mod ast;
@@ -22,7 +21,7 @@ impl<'p> Parser<'p> {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Program> {
+    pub fn parse(&mut self) -> Result<Node> {
         self.advance()?;
 
         let program = self.program()?;
@@ -31,11 +30,7 @@ impl<'p> Parser<'p> {
             println!("{program:#?}");
         }
 
-        Ok(program)
-    }
-
-    fn error(message: &str) -> ! {
-        panic!("{message}")
+        Ok(program.into())
     }
 
     fn advance(&mut self) -> Result<()> {
@@ -76,10 +71,10 @@ impl<'p> Parser<'p> {
         }
 
         if self.current_token.is_some() {
-            Self::error("Program may only contain lists.");
+            Err(Error::ProgramMayOnlyContainLists)
+        } else {
+            Ok(Program { lists })
         }
-
-        Ok(Program { lists })
     }
 
     fn list(&mut self) -> Result<List> {
@@ -112,7 +107,8 @@ impl<'p> Parser<'p> {
                 }
                 TokenType::String => Atom::String(token.lexeme().to_owned()),
                 TokenType::Symbol => Atom::Symbol(token.lexeme().to_owned()),
-                _ => Self::error("Invalid TokenType for Atom."),
+                TokenType::Nil => Atom::Nil,
+                _ => unreachable!("Invalid TokenType for Atom."),
             },
         };
 
