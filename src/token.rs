@@ -6,6 +6,7 @@ pub enum TokenType {
     String,
     Number,
     Symbol,
+    Nil,
 
     EOF,
 }

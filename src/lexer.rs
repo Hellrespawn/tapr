@@ -6,6 +6,8 @@ use once_cell::sync::Lazy;
 static DEBUG_TOKENS: Lazy<bool> =
     Lazy::new(|| std::env::var("DEBUG_TOKENS").is_ok());
 
+static CHARACTERS: &str = "_-+*/!%^&'";
+
 pub struct Lexer<'l> {
     source: &'l str,
     offset: usize,
@@ -54,7 +56,8 @@ impl<'l> Lexer<'l> {
                 }
                 "\"" => self.string()?,
                 _ if self.is_number() => self.number()?,
-                _ => self.symbol(),
+                _ if self.is_character() => self.symbol_or_nil(),
+                _ => return Err(Error::UnknownCharacter(char.to_owned())),
             },
         };
 
@@ -103,7 +106,9 @@ impl<'l> Lexer<'l> {
 
     fn is_character(&self) -> bool {
         if let Some(current) = self.current_character() {
-            current.chars().all(|c| c.is_alphanumeric() || c == '_')
+            current
+                .chars()
+                .all(|c| c.is_alphanumeric() || CHARACTERS.contains(c))
         } else {
             false
         }
@@ -183,7 +188,7 @@ impl<'l> Lexer<'l> {
         Ok(token)
     }
 
-    fn symbol(&mut self) -> Token {
+    fn symbol_or_nil(&mut self) -> Token {
         let mut string = String::new();
 
         while self.is_character() {
@@ -191,7 +196,10 @@ impl<'l> Lexer<'l> {
             self.advance();
         }
 
-        Token::new(TokenType::Symbol, string, self.line_no)
+        let ttype =
+            if string == "nil" { TokenType::Nil } else { TokenType::Symbol };
+
+        Token::new(ttype, string, self.line_no)
     }
 }
 
@@ -264,9 +272,13 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn test_invalid_number() {
-        let _ = lexer_test("12.", &[number(0.)]);
+        let result = lexer_test("12.", &[number(0.)]);
+
+        assert!(matches!(
+            result,
+            Err(Error::DecimalPointNotFollowedByDigits)
+        ));
     }
 
     #[test]
@@ -279,16 +291,27 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn test_unterminated_string() {
-        let _ = lexer_test("\"Unterminated string", &[string("")]);
+        let result = lexer_test("\"Unterminated string", &[string("")]);
+
+        assert!(matches!(result, Err(Error::UnterminatedString)));
     }
 
     #[test]
     fn test_symbol() -> Result<()> {
         lexer_test("symbol", &[symbol("symbol")])?;
-        lexer_test("[];',.", &[symbol("[];',.")])?;
+        lexer_test("+-_", &[symbol("+-_")])?;
 
         Ok(())
+    }
+
+    #[test]
+    fn test_invalid_characters() {
+        let result = lexer_test("[]", &[]);
+
+        assert!(matches!(
+            result,
+            Err(Error::UnknownCharacter(string)) if string == "["
+        ));
     }
 }

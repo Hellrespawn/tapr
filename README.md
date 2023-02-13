@@ -5,9 +5,9 @@ Dit is de code die hoort bij mijn project compilers/interpreters.
 ## Korisp Grammar
 
 ```bnf
-Program    -> Expression
+Program    -> List*
 List       -> "(" (Atom | List) * ")"
-Atom       -> Number | String | Symbol
+Atom       -> Number | String | Symbol | "nil"
 
 Number     -> {digit}+ (. {digit}+)?
 String     -> \" {character}* \"
