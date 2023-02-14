@@ -121,9 +121,7 @@ impl<'p> Parser<'p> {
     fn set_expression(&mut self) -> Result<SetExpression> {
         self.consume(TokenType::Set)?;
 
-        let symbol = if let Atom::Symbol(string) = self.atom()? {
-            string
-        } else {
+        let Atom::Symbol(symbol) = self.atom()? else {
             return Err(Error::Parser(
                 "Set expression must be followed by a symbol.".to_owned(),
             ));

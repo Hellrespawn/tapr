@@ -63,13 +63,13 @@ impl Interpreter {
 
 impl Visitor<Result<Value>> for Interpreter {
     fn visit_program(&mut self, program: &Program) -> Result<Value> {
-        let values = program
+        let mut values = program
             .expressions
             .iter()
             .map(|node| node.accept(self))
             .collect::<Result<Vec<_>>>()?;
 
-        Ok(Value::List(values))
+        Ok(values.pop().unwrap_or(Value::Nil))
     }
 
     fn visit_if_expression(

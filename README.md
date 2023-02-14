@@ -10,10 +10,10 @@ Expression    -> SetExpression | IfExpression | List | Atom
 
 SetExpression -> "(" "set" Symbol Expression ")"
 
-                         condition  then       else
+                          condition  then       else
 IfExpression  -> "(" "if" Expression Expression Expression? ")"
 
-List          -> "(" (Expression) * ")"
+List          -> "(" Expression* ")"
 Atom          -> Boolean | Number | String | Symbol | "nil"
 
 Boolean       -> "true" | "false"

@@ -1,4 +1,4 @@
-(set a 1)
-(set b 2)
-(set c (+ a b))
-(print c)
+(set a 1)        # Set a to 1
+(set b 2)        # Set b to 2
+(set c (+ a b))  # Set c to a + b
+(print c)        # Print c
