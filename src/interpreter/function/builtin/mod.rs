@@ -20,11 +20,9 @@ impl Function for PrintFunction {
     fn call(&self, args: &[Value]) -> Result<Value> {
         PrintFunction::ARGUMENTS.check_amount(args.len())?;
 
-        let value = args[0].clone();
+        println!("{}", &args[0]);
 
-        println!("{value}");
-
-        Ok(value)
+        Ok(Value::Nil)
     }
 }
 

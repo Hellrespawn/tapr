@@ -164,6 +164,16 @@ impl Value {
             None
         }
     }
+
+    pub fn is_truthy(&self) -> bool {
+        match self {
+            Value::Nil => false,
+            Value::Boolean(boolean) => *boolean,
+            Value::Number(number) => *number != 0.,
+            Value::String(string) => !string.is_empty(),
+            _ => true,
+        }
+    }
 }
 
 impl std::fmt::Display for Value {

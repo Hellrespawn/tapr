@@ -31,8 +31,9 @@ pub enum Error {
         expected: TokenType,
         found: TokenType,
     },
-    #[error("Program may only contain lists.")]
-    ProgramMayOnlyContainLists,
+
+    #[error("{0}")]
+    Parser(String),
 
     // Interpreter
     #[error("Undefined symbol '{0}'")]

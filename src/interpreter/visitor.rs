@@ -1,7 +1,9 @@
-use crate::parser::ast::{Atom, List, Program};
+use crate::parser::ast::*;
 
 pub trait Visitor<T: std::fmt::Debug> {
-    fn visit_program(&self, program: &Program) -> T;
-    fn visit_list(&self, list: &List) -> T;
-    fn visit_atom(&self, atom: &Atom) -> T;
+    fn visit_program(&mut self, program: &Program) -> T;
+    fn visit_if_expression(&mut self, if_expression: &IfExpression) -> T;
+    fn visit_set_expression(&mut self, set_expression: &SetExpression) -> T;
+    fn visit_list(&mut self, list: &List) -> T;
+    fn visit_atom(&mut self, atom: &Atom) -> T;
 }

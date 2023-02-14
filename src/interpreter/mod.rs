@@ -2,17 +2,33 @@ mod function;
 mod value;
 mod visitor;
 
+use std::collections::HashMap;
+
 pub use value::Value;
 pub use visitor::Visitor;
 
-use crate::parser::ast::{Atom, List, Node, Program};
+use crate::parser::ast::*;
 use crate::{Error, Result};
 use function::{Function, BUILTIN_FUNCTIONS};
 
-pub struct Interpreter {}
+pub struct Interpreter {
+    environment: HashMap<String, Value>,
+}
+
+impl Default for Interpreter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl Interpreter {
-    pub fn interpret(&self, program: &Node) -> Result<Value> {
+    pub fn new() -> Self {
+        Self {
+            environment: HashMap::new(),
+        }
+    }
+
+    pub fn interpret(&mut self, program: &Node) -> Result<Value> {
         program.accept(self)
     }
 
@@ -22,8 +38,8 @@ impl Interpreter {
         function.map(|f| &**f)
     }
 
-    fn get_variable(&self, _name: &str) -> Option<Value> {
-        None
+    fn get_variable(&self, name: &str) -> Option<Value> {
+        self.environment.get(name).cloned()
     }
 
     fn evaluate_function(name: &str, arguments: &[Value]) -> Result<Value> {
@@ -36,7 +52,7 @@ impl Interpreter {
     fn evaluate_symbol(&self, name: &str) -> Result<Value> {
         if let Some(value) = self.get_variable(name) {
             Ok(value)
-        } else if let Some(_function) = Interpreter::get_function(name) {
+        } else if Interpreter::get_function(name).is_some() {
             // Evaluated afterward
             Ok(Value::Symbol(name.to_owned()))
         } else {
@@ -46,17 +62,45 @@ impl Interpreter {
 }
 
 impl Visitor<Result<Value>> for Interpreter {
-    fn visit_program(&self, program: &Program) -> Result<Value> {
+    fn visit_program(&mut self, program: &Program) -> Result<Value> {
         let values = program
-            .lists
+            .expressions
             .iter()
-            .map(|list| self.visit_list(list))
+            .map(|node| node.accept(self))
             .collect::<Result<Vec<_>>>()?;
 
         Ok(Value::List(values))
     }
 
-    fn visit_list(&self, list: &List) -> Result<Value> {
+    fn visit_if_expression(
+        &mut self,
+        if_expression: &IfExpression,
+    ) -> Result<Value> {
+        let condition = if_expression.condition.accept(self)?;
+
+        if condition.is_truthy() {
+            if_expression.then_branch.accept(self)
+        } else if let Some(else_branch) = &if_expression.else_branch {
+            else_branch.accept(self)
+        } else {
+            Ok(Value::Nil)
+        }
+    }
+
+    fn visit_set_expression(
+        &mut self,
+        set_expression: &SetExpression,
+    ) -> Result<Value> {
+        let SetExpression { symbol, expression } = set_expression;
+
+        let value = expression.accept(self)?;
+
+        self.environment.insert(symbol.clone(), value);
+
+        Ok(Value::Nil)
+    }
+
+    fn visit_list(&mut self, list: &List) -> Result<Value> {
         let elements = &list.elements;
 
         let value = if elements.is_empty() {
@@ -77,8 +121,9 @@ impl Visitor<Result<Value>> for Interpreter {
         Ok(value)
     }
 
-    fn visit_atom(&self, atom: &Atom) -> Result<Value> {
+    fn visit_atom(&mut self, atom: &Atom) -> Result<Value> {
         let value = match atom {
+            Atom::Boolean(bool) => Value::Boolean(*bool),
             Atom::Number(number) => Value::Number(*number),
             Atom::String(string) => Value::String(string.clone()),
             Atom::Symbol(symbol) => self.evaluate_symbol(symbol)?,

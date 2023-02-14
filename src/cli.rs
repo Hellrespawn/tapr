@@ -23,6 +23,8 @@ fn repl() -> Result<()> {
 
     let mut rl = rustyline::Editor::<()>::new().unwrap();
 
+    let mut intp = Interpreter::new();
+
     loop {
         let readline = rl.readline("> ").map(|s| s.trim().to_owned());
 
@@ -34,7 +36,7 @@ fn repl() -> Result<()> {
 
                 rl.add_history_entry(&line);
 
-                let result = run_code(&line);
+                let result = run_code(&line, &mut intp);
 
                 match result {
                     Ok(value) => println!("{value}"),
@@ -57,18 +59,17 @@ fn repl() -> Result<()> {
 
 fn run_file(filename: &str) -> Result<()> {
     let source = std::fs::read_to_string(filename)?;
-    run_code(&source)?;
+    let mut intp = Interpreter::new();
+    run_code(&source, &mut intp)?;
     Ok(())
 }
 
-fn run_code(source: &str) -> Result<Value> {
+fn run_code(source: &str, intp: &mut Interpreter) -> Result<Value> {
     let lexer = Lexer::new(source);
 
     let mut parser = Parser::new(lexer);
 
     let program = parser.parse()?;
-
-    let intp = Interpreter {};
 
     intp.interpret(&program)
 }

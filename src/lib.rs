@@ -5,6 +5,7 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::module_inception)]
+#![allow(clippy::wildcard_imports)]
 
 pub mod cli;
 mod error;

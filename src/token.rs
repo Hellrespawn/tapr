@@ -1,8 +1,14 @@
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum TokenType {
+    // Literals
     LeftParen,
     RightParen,
+    True,
+    False,
+    If,
+    Set,
 
+    // Terminal rules
     String,
     Number,
     Symbol,

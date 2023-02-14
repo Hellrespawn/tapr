@@ -5,11 +5,19 @@ Dit is de code die hoort bij mijn project compilers/interpreters.
 ## Korisp Grammar
 
 ```bnf
-Program    -> List*
-List       -> "(" (Atom | List) * ")"
-Atom       -> Number | String | Symbol | "nil"
+Program       -> Expression*
+Expression    -> SetExpression | IfExpression | List | Atom
 
-Number     -> {digit}+ (. {digit}+)?
-String     -> \" {character}* \"
-Symbol     -> {character}+
+SetExpression -> "(" "set" Symbol Expression ")"
+
+                         condition  then       else
+IfExpression  -> "(" "if" Expression Expression Expression? ")"
+
+List          -> "(" (Expression) * ")"
+Atom          -> Boolean | Number | String | Symbol | "nil"
+
+Boolean       -> "true" | "false"
+Number        -> {digit}+ (. {digit}+)?
+String        -> \" {character}* \"
+Symbol        -> {character}+
 ```

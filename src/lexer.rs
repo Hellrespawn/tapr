@@ -55,7 +55,7 @@ impl<'l> Lexer<'l> {
                 }
                 "\"" => self.string()?,
                 _ if self.is_number() => self.number()?,
-                _ if self.is_character() => self.symbol_or_nil(),
+                _ if self.is_character() => self.keyword_or_symbol(),
                 _ => return Err(Error::UnknownCharacter(char.to_owned())),
             },
         };
@@ -187,7 +187,7 @@ impl<'l> Lexer<'l> {
         Ok(token)
     }
 
-    fn symbol_or_nil(&mut self) -> Token {
+    fn keyword_or_symbol(&mut self) -> Token {
         let mut string = String::new();
 
         while self.is_character() {
@@ -195,8 +195,14 @@ impl<'l> Lexer<'l> {
             self.advance();
         }
 
-        let ttype =
-            if string == "nil" { TokenType::Nil } else { TokenType::Symbol };
+        let ttype = match string.as_str() {
+            "true" => TokenType::True,
+            "false" => TokenType::False,
+            "nil" => TokenType::Nil,
+            "if" => TokenType::If,
+            "set" => TokenType::Set,
+            _ => TokenType::Symbol,
+        };
 
         Token::new(ttype, string, self.line_no)
     }
