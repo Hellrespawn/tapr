@@ -5,7 +5,7 @@ use once_cell::sync::Lazy;
 static DEBUG_TOKENS: Lazy<bool> =
     Lazy::new(|| std::env::var("DEBUG_TOKENS").is_ok());
 
-static CHARACTERS: &str = "_-+*/!%^&'";
+static CHARACTERS: &str = "_-+*/!%^&'<>=";
 
 pub struct Lexer<'l> {
     source: &'l str,

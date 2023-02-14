@@ -37,14 +37,11 @@ pub enum Error {
     // Interpreter
     #[error("Undefined symbol '{0}'")]
     UndefinedSymbol(String),
-    #[error("Invalid operand '{value}', expected '{expected}'")]
-    InvalidArgument {
+    #[error("Invalid operands '{values:?}', expected '{expected}'")]
+    InvalidArguments {
         expected: &'static str,
-        value: Value,
+        values: Vec<Value>,
     },
     #[error("Expect {expected} args, got {actual}.")]
-    WrongAmountOfArgs {
-        expected: &'static str,
-        actual: usize,
-    },
+    WrongAmountOfArgs { expected: String, actual: usize },
 }
