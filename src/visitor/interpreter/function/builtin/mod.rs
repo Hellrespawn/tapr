@@ -5,7 +5,7 @@ pub use arithmetic::*;
 pub use boolean::*;
 
 use super::{Arguments, Function};
-use crate::interpreter::Value;
+use crate::visitor::interpreter::Value;
 use crate::Result;
 use once_cell::sync::Lazy;
 use std::collections::HashMap;

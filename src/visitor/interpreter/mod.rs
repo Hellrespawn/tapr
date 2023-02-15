@@ -1,13 +1,12 @@
 mod function;
 mod value;
-mod visitor;
 
 use std::collections::HashMap;
 
 pub use value::Value;
-pub use visitor::Visitor;
 
 use crate::parser::ast::*;
+use crate::visitor::Visitor;
 use crate::{Error, Result};
 use function::{Function, BUILTIN_FUNCTIONS};
 
@@ -32,29 +31,17 @@ impl Interpreter {
         program.accept(self)
     }
 
-    fn get_function(name: &str) -> Option<&dyn Function> {
+    fn get_function(name: &str) -> Result<&dyn Function> {
         let function = BUILTIN_FUNCTIONS.get(name);
 
-        function.map(|f| &**f)
-    }
-
-    fn get_variable(&self, name: &str) -> Option<Value> {
-        self.environment.get(name).cloned()
-    }
-
-    fn evaluate_function(name: &str, arguments: &[Value]) -> Result<Value> {
-        let function = Interpreter::get_function(name)
-            .expect("Existence of function is checked by `evaluate_symbol`");
-
-        function.call(arguments)
+        function
+            .map(|f| &**f)
+            .ok_or(Error::UndefinedSymbol(name.to_owned()))
     }
 
     fn evaluate_symbol(&self, name: &str) -> Result<Value> {
-        if let Some(value) = self.get_variable(name) {
-            Ok(value)
-        } else if Interpreter::get_function(name).is_some() {
-            // Evaluated afterward
-            Ok(Value::Symbol(name.to_owned()))
+        if let Some(value) = self.environment.get(name) {
+            Ok(value.clone())
         } else {
             Err(Error::UndefinedSymbol(name.to_owned()))
         }
@@ -87,17 +74,35 @@ impl Visitor<Result<Value>> for Interpreter {
         }
     }
 
-    fn visit_set_expression(
+    fn visit_var_expression(
         &mut self,
-        set_expression: &SetExpression,
+        set_expression: &VarExpression,
     ) -> Result<Value> {
-        let SetExpression { symbol, expression } = set_expression;
+        let VarExpression {
+            name: symbol,
+            expression,
+        } = set_expression;
 
         let value = expression.accept(self)?;
 
         self.environment.insert(symbol.clone(), value);
 
         Ok(Value::Nil)
+    }
+
+    fn visit_function_call(
+        &mut self,
+        function_call: &FunctionCall,
+    ) -> Result<Value> {
+        let function = Interpreter::get_function(&function_call.name)?;
+
+        let arguments = function_call
+            .arguments
+            .iter()
+            .map(|node| node.accept(self))
+            .collect::<Result<Vec<_>>>()?;
+
+        function.call(&arguments)
     }
 
     fn visit_list(&mut self, list: &List) -> Result<Value> {
@@ -111,11 +116,7 @@ impl Visitor<Result<Value>> for Interpreter {
                 .map(|node| node.accept(self))
                 .collect::<Result<Vec<_>>>()?;
 
-            if let Some(Some(symbol)) = values.first().map(Value::get_symbol) {
-                Interpreter::evaluate_function(&symbol, &values[1..])?
-            } else {
-                Value::List(values)
-            }
+            Value::List(values)
         };
 
         Ok(value)

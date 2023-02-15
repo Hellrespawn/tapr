@@ -6,7 +6,7 @@ pub enum TokenType {
     True,
     False,
     If,
-    Set,
+    Var,
 
     // Terminal rules
     String,

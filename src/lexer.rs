@@ -200,7 +200,7 @@ impl<'l> Lexer<'l> {
             "false" => TokenType::False,
             "nil" => TokenType::Nil,
             "if" => TokenType::If,
-            "set" => TokenType::Set,
+            "var" => TokenType::Var,
             _ => TokenType::Symbol,
         };
 

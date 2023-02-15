@@ -6,12 +6,15 @@ Dit is de code die hoort bij mijn project compilers/interpreters.
 
 ```bnf
 Program       -> Expression*
-Expression    -> SetExpression | IfExpression | List | Atom
+Expression    -> VarExpression | IfExpression | List | Atom
 
-SetExpression -> "(" "set" Symbol Expression ")"
+VarExpression -> "(" "set" Symbol Expression ")"
 
                           condition  then       else
 IfExpression  -> "(" "if" Expression Expression Expression? ")"
+
+                     name   arguments
+FunctionCall  -> "(" Symbol Expression* ")"
 
 List          -> "(" Expression* ")"
 Atom          -> Boolean | Number | String | Symbol | "nil"

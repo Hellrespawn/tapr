@@ -1,5 +1,5 @@
-use crate::interpreter::function::{Arguments, Function};
-use crate::interpreter::Value;
+use crate::visitor::interpreter::function::{Arguments, Function};
+use crate::visitor::interpreter::Value;
 use crate::Result;
 
 #[derive(Debug, Copy, Clone)]

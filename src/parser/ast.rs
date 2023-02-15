@@ -1,10 +1,11 @@
-use crate::interpreter::Visitor;
+use crate::visitor::Visitor;
 
 #[derive(Debug, Clone)]
 pub enum Node {
     Program(Program),
     IfExpression(IfExpression),
-    SetExpression(SetExpression),
+    VarExpression(VarExpression),
+    FunctionCall(FunctionCall),
     List(List),
     Atom(Atom),
 }
@@ -19,8 +20,11 @@ impl Node {
             Node::IfExpression(if_expression) => {
                 visitor.visit_if_expression(if_expression)
             }
-            Node::SetExpression(if_expression) => {
-                visitor.visit_set_expression(if_expression)
+            Node::VarExpression(if_expression) => {
+                visitor.visit_var_expression(if_expression)
+            }
+            Node::FunctionCall(function_call) => {
+                visitor.visit_function_call(function_call)
             }
             Node::List(list) => visitor.visit_list(list),
             Node::Atom(atom) => visitor.visit_atom(atom),
@@ -40,9 +44,15 @@ impl From<IfExpression> for Node {
     }
 }
 
-impl From<SetExpression> for Node {
-    fn from(set_expression: SetExpression) -> Self {
-        Self::SetExpression(set_expression)
+impl From<VarExpression> for Node {
+    fn from(var_expression: VarExpression) -> Self {
+        Self::VarExpression(var_expression)
+    }
+}
+
+impl From<FunctionCall> for Node {
+    fn from(function_call: FunctionCall) -> Self {
+        Self::FunctionCall(function_call)
     }
 }
 
@@ -64,11 +74,6 @@ pub struct Program {
 }
 
 #[derive(Debug, Clone)]
-pub struct List {
-    pub elements: Vec<Node>,
-}
-
-#[derive(Debug, Clone)]
 pub struct IfExpression {
     pub condition: Box<Node>,
     pub then_branch: Box<Node>,
@@ -76,9 +81,20 @@ pub struct IfExpression {
 }
 
 #[derive(Debug, Clone)]
-pub struct SetExpression {
-    pub symbol: String,
+pub struct VarExpression {
+    pub name: String,
     pub expression: Box<Node>,
+}
+
+#[derive(Debug, Clone)]
+pub struct FunctionCall {
+    pub name: String,
+    pub arguments: Vec<Node>,
+}
+
+#[derive(Debug, Clone)]
+pub struct List {
+    pub elements: Vec<Node>,
 }
 
 #[derive(Debug, Clone)]

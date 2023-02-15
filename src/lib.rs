@@ -9,10 +9,10 @@
 
 pub mod cli;
 mod error;
-pub mod interpreter;
 pub mod lexer;
 pub mod parser;
 pub mod token;
+pub mod visitor;
 
 pub type Result<T> = std::result::Result<T, error::Error>;
 pub use error::Error;

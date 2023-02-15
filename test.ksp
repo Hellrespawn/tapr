@@ -1,4 +1,4 @@
-(set a 1)        # Set a to 1
-(set b 2)        # Set b to 2
-(set c (+ a b))  # Set c to a + b
+(var a 1)        # Set a to 1
+(var b 2)        # Set b to 2
+(var c (+ a b))  # Set c to a + b
 (print c)        # Print c

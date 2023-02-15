@@ -1,5 +1,4 @@
-use crate::interpreter::Value;
-use crate::token::TokenType;
+use crate::visitor::interpreter::Value;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -26,11 +25,8 @@ pub enum Error {
     DecimalPointNotFollowedByDigits,
 
     // Parser
-    #[error("Expected {expected:?}, found {found:?}")]
-    ConsumeError {
-        expected: TokenType,
-        found: TokenType,
-    },
+    #[error("{0}")]
+    ConsumeError(String),
 
     #[error("{0}")]
     Parser(String),

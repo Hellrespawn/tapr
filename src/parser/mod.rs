@@ -1,6 +1,7 @@
 use self::ast::*;
 use crate::lexer::Lexer;
 use crate::token::{Token, TokenType};
+use crate::visitor::graph::DotVisitor;
 use crate::{Error, Result};
 use once_cell::sync::Lazy;
 
@@ -26,11 +27,16 @@ impl<'p> Parser<'p> {
 
         let program = self.program()?;
 
+        let node: Node = program.into();
+
         if *DEBUG_AST {
-            println!("{program:#?}");
+            let dot = DotVisitor::create_ast_dot(&node);
+
+            std::fs::write(format!("{}.ast.dot", env!("CARGO_PKG_NAME")), dot)
+                .expect("Unable to write dot.");
         }
 
-        Ok(program.into())
+        Ok(node)
     }
 
     fn advance(&mut self) -> Result<()> {
@@ -39,17 +45,15 @@ impl<'p> Parser<'p> {
         Ok(())
     }
 
-    fn consume(&mut self, expected_type: TokenType) -> Result<()> {
+    fn consume(
+        &mut self,
+        expected_type: TokenType,
+        message: &str,
+    ) -> Result<()> {
         if self.matches(expected_type) {
             self.advance()
         } else {
-            Err(Error::ConsumeError {
-                expected: expected_type,
-                found: self
-                    .current_token
-                    .as_ref()
-                    .map_or(TokenType::EOF, |t| t.ttype),
-            })
+            Err(Error::ConsumeError(message.to_owned()))
         }
     }
 
@@ -83,14 +87,21 @@ impl<'p> Parser<'p> {
                 self.advance()?;
 
                 let expression = if self.matches(TokenType::If) {
+                    self.advance()?;
                     self.if_expression()?.into()
-                } else if self.matches(TokenType::Set) {
-                    self.set_expression()?.into()
+                } else if self.matches(TokenType::Var) {
+                    self.advance()?;
+                    self.var_expression()?.into()
+                } else if self.matches(TokenType::Symbol) {
+                    self.function_call()?.into()
                 } else {
                     self.list()?.into()
                 };
 
-                self.consume(TokenType::RightParen)?;
+                self.consume(
+                    TokenType::RightParen,
+                    "Expected ')' after expression.",
+                )?;
 
                 Ok(expression)
             }
@@ -99,8 +110,6 @@ impl<'p> Parser<'p> {
     }
 
     fn if_expression(&mut self) -> Result<IfExpression> {
-        self.consume(TokenType::If)?;
-
         let condition = Box::new(self.expression()?);
 
         let then_branch = Box::new(self.expression()?);
@@ -118,10 +127,8 @@ impl<'p> Parser<'p> {
         })
     }
 
-    fn set_expression(&mut self) -> Result<SetExpression> {
-        self.consume(TokenType::Set)?;
-
-        let Atom::Symbol(symbol) = self.atom()? else {
+    fn var_expression(&mut self) -> Result<VarExpression> {
+        let Atom::Symbol(name) = self.atom()? else {
             return Err(Error::Parser(
                 "Set expression must be followed by a symbol.".to_owned(),
             ));
@@ -129,7 +136,28 @@ impl<'p> Parser<'p> {
 
         let expression = Box::new(self.expression()?);
 
-        Ok(SetExpression { symbol, expression })
+        Ok(VarExpression { name, expression })
+    }
+
+    fn function_call(&mut self) -> Result<FunctionCall> {
+        let Atom::Symbol(symbol) = self.atom()? else {
+            return Err(Error::Parser(
+                "Function call must be followed by a symbol.".to_owned(),
+            ));
+        };
+
+        let mut expressions: Vec<Node> = Vec::new();
+
+        while self.current_token.is_some()
+            && !self.matches(TokenType::RightParen)
+        {
+            expressions.push(self.expression()?);
+        }
+
+        Ok(FunctionCall {
+            name: symbol,
+            arguments: expressions,
+        })
     }
 
     fn list(&mut self) -> Result<List> {
