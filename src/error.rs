@@ -6,6 +6,7 @@ pub enum Error {
     // Cli
     #[error("Usage: {} [FILENAME]", env!("CARGO_PKG_NAME"))]
     UsageError,
+
     #[error(transparent)]
     IOError {
         #[from]

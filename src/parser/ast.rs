@@ -5,6 +5,7 @@ use crate::visitor::Visitor;
 pub enum Node {
     Program(Program),
     IfExpression(IfExpression),
+    WhileExpression(WhileExpression),
     VarExpression(VarExpression),
     FunctionCall(FunctionCall),
     List(List),
@@ -21,8 +22,11 @@ impl Node {
             Node::IfExpression(if_expression) => {
                 visitor.visit_if_expression(if_expression)
             }
-            Node::VarExpression(if_expression) => {
-                visitor.visit_var_expression(if_expression)
+            Node::WhileExpression(while_expression) => {
+                visitor.visit_while_expression(while_expression)
+            }
+            Node::VarExpression(var_expression) => {
+                visitor.visit_var_expression(var_expression)
             }
             Node::FunctionCall(function_call) => {
                 visitor.visit_function_call(function_call)
@@ -42,6 +46,12 @@ impl From<Program> for Node {
 impl From<IfExpression> for Node {
     fn from(if_expression: IfExpression) -> Self {
         Self::IfExpression(if_expression)
+    }
+}
+
+impl From<WhileExpression> for Node {
+    fn from(while_expression: WhileExpression) -> Self {
+        Self::WhileExpression(while_expression)
     }
 }
 
@@ -79,6 +89,12 @@ pub struct IfExpression {
     pub condition: Box<Node>,
     pub then_branch: Box<Node>,
     pub else_branch: Option<Box<Node>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct WhileExpression {
+    pub condition: Box<Node>,
+    pub then_branch: Box<Node>,
 }
 
 #[derive(Debug, Clone)]

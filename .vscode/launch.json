@@ -7,7 +7,7 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'korisp'",
+            "name": "Debug REPL",
             "cargo": {
                 "args": [
                     "build",
@@ -19,7 +19,29 @@
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": [
+                ""
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug 'test.ksp'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=korisp",
+                    "--package=korisp"
+                ],
+                "filter": {
+                    "name": "korisp",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "test.ksp"
+            ],
             "cwd": "${workspaceFolder}"
         },
         {

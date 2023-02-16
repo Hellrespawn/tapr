@@ -125,6 +125,20 @@ impl Visitor<()> for DotVisitor {
         }
     }
 
+    fn visit_while_expression(&mut self, while_expression: &WhileExpression) {
+        let if_node = self.new_node("While");
+
+        let condition_node = self.counter;
+        while_expression.condition.accept(self);
+
+        self.connect_nodes_with_label(if_node, condition_node, "condition");
+
+        let then_branch_node = self.counter;
+        while_expression.then_branch.accept(self);
+
+        self.connect_nodes_with_label(if_node, then_branch_node, "then");
+    }
+
     fn visit_var_expression(&mut self, set_expression: &VarExpression) {
         let set_node =
             self.new_node(&format!("Var '{}'", set_expression.name.lexeme()));

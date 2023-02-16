@@ -108,6 +108,9 @@ impl<'p> Parser<'p> {
                 let expression = if self.matches(TokenType::If) {
                     self.advance()?;
                     self.if_expression()?.into()
+                } else if self.matches(TokenType::While) {
+                    self.advance()?;
+                    self.while_expression()?.into()
                 } else if self.matches(TokenType::Var) {
                     self.advance()?;
                     self.var_expression()?.into()
@@ -143,6 +146,17 @@ impl<'p> Parser<'p> {
             condition,
             then_branch,
             else_branch,
+        })
+    }
+
+    fn while_expression(&mut self) -> Result<WhileExpression> {
+        let condition = Box::new(self.expression()?);
+
+        let then_branch = Box::new(self.expression()?);
+
+        Ok(WhileExpression {
+            condition,
+            then_branch,
         })
     }
 

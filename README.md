@@ -5,13 +5,16 @@ Dit is de code die hoort bij mijn project compilers/interpreters.
 ## Korisp Grammar
 
 ```bnf
-Program       -> Expression*
+Program       -> List
 Expression    -> VarExpression | IfExpression | List | Atom
 
 VarExpression -> "(" "var" Symbol Expression ")"
 
                           condition  then       else
 IfExpression  -> "(" "if" Expression Expression Expression? ")"
+
+                                condition  then
+WhileExpression  -> "(" "while" Expression Expression ")"
 
                      name   arguments
 FunctionCall  -> "(" Symbol Expression* ")"

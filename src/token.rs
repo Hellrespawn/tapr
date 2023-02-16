@@ -1,11 +1,13 @@
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum TokenType {
     // Literals
+    Quote, // TODO Add this to grammar and desugar into function call
     LeftParen,
     RightParen,
     True,
     False,
     If,
+    While,
     Var,
 
     // Terminal rules

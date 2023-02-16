@@ -1,8 +1,8 @@
-(var a 1)        # Set a to 1
-(var b 4)        # Set b to 2
-(var c (+ a b))  # Set c to a + b
-(if
-  (> c 3)                           # Condition
-  (print "Bigger than 3.")          # Then branch
-  (print "Smaller or equal to 3.")  # Else branch
+(var a 1)
+(while
+  (< a 10)
+  (
+    (print a)
+    (inc (quote a))
+  )
 )

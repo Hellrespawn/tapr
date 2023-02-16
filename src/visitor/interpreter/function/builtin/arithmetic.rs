@@ -1,6 +1,7 @@
+use crate::parser::ast::Node;
 use crate::visitor::interpreter::function::{Arguments, Function};
-use crate::visitor::interpreter::Value;
-use crate::Result;
+use crate::visitor::interpreter::{Interpreter, Value};
+use crate::{Error, Result};
 
 #[derive(Debug, Copy, Clone)]
 pub enum ArithmeticOp {
@@ -34,10 +35,14 @@ impl ArithmeticFunction {
 }
 
 impl Function for ArithmeticFunction {
-    fn call(&self, arguments: &[Value]) -> Result<Value> {
-        self.arguments.check_amount(arguments.len())?;
+    fn call(
+        &self,
+        intp: &mut Interpreter,
+        argument_nodes: &[Node],
+    ) -> Result<Value> {
+        let evaluated_args = self.arguments.evaluate(intp, argument_nodes)?;
 
-        let mut iter = arguments.iter();
+        let mut iter = evaluated_args.iter();
 
         let mut acc = iter.next().expect("More than two elements.").clone();
 
@@ -46,5 +51,41 @@ impl Function for ArithmeticFunction {
         }
 
         Ok(acc)
+    }
+}
+
+pub struct Increment;
+
+impl Increment {
+    const ARGUMENTS: Arguments = Arguments::Fixed(1);
+}
+
+impl Function for Increment {
+    fn call(
+        &self,
+        intp: &mut Interpreter,
+        argument_nodes: &[Node],
+    ) -> Result<Value> {
+        let evaluated_args =
+            Increment::ARGUMENTS.evaluate(intp, argument_nodes)?;
+
+        let key = &evaluated_args[0];
+
+        if let Value::Symbol(key) = key {
+            if let Some(Value::Number(value)) = intp.environment.get_mut(key) {
+                *value += 1.0;
+                Ok(Value::Nil)
+            } else {
+                Err(Error::InvalidArguments {
+                    expected: "Number",
+                    values: evaluated_args,
+                })
+            }
+        } else {
+            Err(Error::InvalidArguments {
+                expected: "String",
+                values: evaluated_args,
+            })
+        }
     }
 }

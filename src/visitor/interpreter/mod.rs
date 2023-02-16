@@ -12,7 +12,7 @@ use crate::{Error, Result};
 use function::{Function, BUILTIN_FUNCTIONS};
 
 pub struct Interpreter {
-    environment: HashMap<String, Value>,
+    pub environment: HashMap<String, Value>,
 }
 
 impl Default for Interpreter {
@@ -81,6 +81,25 @@ impl Visitor<Result<Value>> for Interpreter {
         }
     }
 
+    fn visit_while_expression(
+        &mut self,
+        while_expression: &WhileExpression,
+    ) -> Result<Value> {
+        let mut value = Value::Nil;
+
+        loop {
+            let condition = while_expression.condition.accept(self)?;
+
+            if condition.is_truthy() {
+                value = while_expression.then_branch.accept(self)?;
+            } else {
+                break;
+            }
+        }
+
+        Ok(value)
+    }
+
     fn visit_var_expression(
         &mut self,
         set_expression: &VarExpression,
@@ -103,13 +122,7 @@ impl Visitor<Result<Value>> for Interpreter {
     ) -> Result<Value> {
         let function = Interpreter::get_function(&function_call.name)?;
 
-        let arguments = function_call
-            .arguments
-            .iter()
-            .map(|node| node.accept(self))
-            .collect::<Result<Vec<_>>>()?;
-
-        function.call(&arguments)
+        function.call(self, &function_call.arguments)
     }
 
     fn visit_list(&mut self, list: &List) -> Result<Value> {

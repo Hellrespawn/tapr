@@ -1,5 +1,6 @@
+use crate::parser::ast::Node;
 use crate::visitor::interpreter::function::{Arguments, Function};
-use crate::visitor::interpreter::Value;
+use crate::visitor::interpreter::{Interpreter, Value};
 use crate::Result;
 
 #[derive(Debug, Copy, Clone)]
@@ -36,10 +37,14 @@ impl BooleanFunction {
 }
 
 impl Function for BooleanFunction {
-    fn call(&self, arguments: &[Value]) -> Result<Value> {
-        self.arguments.check_amount(arguments.len())?;
+    fn call(
+        &self,
+        intp: &mut Interpreter,
+        argument_nodes: &[Node],
+    ) -> Result<Value> {
+        let evaluated_args = self.arguments.evaluate(intp, argument_nodes)?;
 
-        let result = arguments.windows(2).all(|window| {
+        let result = evaluated_args.windows(2).all(|window| {
             let left = &window[0];
             let right = &window[1];
 

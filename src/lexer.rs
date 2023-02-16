@@ -225,6 +225,7 @@ impl<'l> Lexer<'l> {
             "false" => TokenType::False,
             "nil" => TokenType::Nil,
             "if" => TokenType::If,
+            "while" => TokenType::While,
             "var" => TokenType::Var,
             _ => TokenType::Symbol,
         };
