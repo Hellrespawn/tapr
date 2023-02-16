@@ -127,6 +127,7 @@ impl<'p> Parser<'p> {
 
                 Ok(expression)
             }
+            Some(TokenType::Quote) => Ok(self.quote()?.into()),
             _ => Ok(self.atom()?.into()),
         }
     }
@@ -219,6 +220,34 @@ impl<'p> Parser<'p> {
         // Trailing paren consumed by expression
 
         Ok(List { elements })
+    }
+
+    fn quote(&mut self) -> Result<FunctionCall> {
+        self.advance()?;
+
+        let (line_no, char_no) = self.previous_location();
+
+        let argument = self.atom()?;
+
+        if let Atom::Symbol(_) = &argument {
+            let name = Token::new(
+                TokenType::Symbol,
+                "quote".to_owned(),
+                line_no,
+                char_no,
+            );
+
+            Ok(FunctionCall {
+                name,
+                arguments: vec![argument.into()],
+            })
+        } else {
+            Err(Error::Parser {
+                message: "Quote must be followed by symbol.".to_owned(),
+                line_no,
+                char_no,
+            })
+        }
     }
 
     fn atom(&mut self) -> Result<Atom> {

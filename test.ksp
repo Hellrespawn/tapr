@@ -1,8 +1,16 @@
-(var a 1)
+(var                  # assign value to symbol
+  current             # symbol to assign to
+  (eval               # evaluate string as if it were a program
+    (read "start: ")  # read input from stdin, prompt 'start: '
+  )
+)
+
+(var end (eval (read "end: ")))
+
 (while
-  (< a 10)
+  (<= current end)
   (
-    (print a)
-    (inc (quote a))
+    (print current)
+    (inc 'current) # Increment current
   )
 )

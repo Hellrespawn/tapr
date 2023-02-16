@@ -20,7 +20,7 @@ WhileExpression  -> "(" "while" Expression Expression ")"
 FunctionCall  -> "(" Symbol Expression* ")"
 
 List          -> "(" Expression* ")"
-Atom          -> Boolean | Number | String | Symbol | "nil"
+Atom          -> Boolean | Number | String | "'"? Symbol | "nil"
 
 Boolean       -> "true" | "false"
 Number        -> {digit}+ (. {digit}+)?

@@ -57,6 +57,18 @@ impl<'l> Lexer<'l> {
 
                     token
                 }
+                "'" => {
+                    let token = Token::new(
+                        TokenType::Quote,
+                        char.to_owned(),
+                        self.line_no,
+                        self.char_no,
+                    );
+
+                    self.advance();
+
+                    token
+                }
                 "\"" => self.string()?,
                 _ if self.is_number() => self.number()?,
                 _ if self.is_character() => self.keyword_or_symbol(),

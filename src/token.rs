@@ -1,7 +1,7 @@
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum TokenType {
     // Literals
-    Quote, // TODO Add this to grammar and desugar into function call
+    Quote,
     LeftParen,
     RightParen,
     True,

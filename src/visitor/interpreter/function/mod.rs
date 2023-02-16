@@ -17,6 +17,9 @@ pub trait Function: Sync + Send {
 pub enum Arguments {
     Fixed(usize),
     Minimum(usize),
+    // Optional(usize),
+    // Composite(Vec<Arguments>)
+    // TODO handle optional arguments for functions.
 }
 
 impl Arguments {

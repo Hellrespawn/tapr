@@ -12,6 +12,7 @@ use crate::visitor::interpreter::{Interpreter, Value};
 use crate::{Error, Result};
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
+use std::io::Write;
 
 struct PrintFunction;
 
@@ -37,7 +38,7 @@ impl Function for PrintFunction {
 struct ReadFunction;
 
 impl ReadFunction {
-    const ARGUMENTS: Arguments = Arguments::Fixed(0);
+    const ARGUMENTS: Arguments = Arguments::Fixed(1);
 }
 
 impl Function for ReadFunction {
@@ -46,12 +47,25 @@ impl Function for ReadFunction {
         intp: &mut Interpreter,
         argument_nodes: &[Node],
     ) -> Result<Value> {
-        ReadFunction::ARGUMENTS.evaluate(intp, argument_nodes)?;
+        let evaluated_arg = ReadFunction::ARGUMENTS
+            .evaluate(intp, argument_nodes)?
+            .pop()
+            .unwrap();
 
-        let mut buffer = String::new();
-        std::io::stdin().read_line(&mut buffer)?;
+        if let Value::String(prompt) = evaluated_arg {
+            print!("{prompt}");
+            std::io::stdout().flush()?;
 
-        Ok(Value::String(buffer.trim_end().to_owned()))
+            let mut buffer = String::new();
+            std::io::stdin().read_line(&mut buffer)?;
+
+            Ok(Value::String(buffer.trim_end().to_owned()))
+        } else {
+            Err(Error::InvalidArguments {
+                expected: "String",
+                values: vec![evaluated_arg],
+            })
+        }
     }
 }
 
