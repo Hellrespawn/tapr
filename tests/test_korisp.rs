@@ -28,8 +28,8 @@ fn test_empty_input() -> TestResult {
 fn test_unmatched_parenthesis() -> TestResult {
     let error = run_test("(", Value::Nil).unwrap_err();
 
-    if let Error::ConsumeError(string) = error {
-        assert!(string.to_lowercase().contains("expected ')'"));
+    if let Error::ConsumeError { message, .. } = error {
+        assert!(message.to_lowercase().contains("expected ')'"));
     } else {
         panic!("Expected ConsumeError, got {}", error);
     }
@@ -68,7 +68,7 @@ fn test_global_variables() -> TestResult {
 
     let error = run_test("(== value 1)", Value::Boolean(true)).unwrap_err();
 
-    assert!(matches!(error, Error::UndefinedSymbol(_)));
+    assert!(matches!(error, Error::UndefinedSymbol { .. }));
 
     run_test("(var value 1)(== value 1)", Value::Boolean(true))?;
 

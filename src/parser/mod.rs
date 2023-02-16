@@ -11,6 +11,7 @@ static DEBUG_AST: Lazy<bool> = Lazy::new(|| std::env::var("DEBUG_AST").is_ok());
 
 pub struct Parser<'p> {
     lexer: Lexer<'p>,
+    previous_token: Option<Token>,
     current_token: Option<Token>,
 }
 
@@ -18,6 +19,7 @@ impl<'p> Parser<'p> {
     pub fn new(lexer: Lexer<'p>) -> Self {
         Self {
             lexer,
+            previous_token: None,
             current_token: None,
         }
     }
@@ -40,6 +42,8 @@ impl<'p> Parser<'p> {
     }
 
     fn advance(&mut self) -> Result<()> {
+        self.previous_token = self.current_token.take();
+
         self.current_token = self.lexer.scan_token()?;
 
         Ok(())
@@ -51,9 +55,16 @@ impl<'p> Parser<'p> {
         message: &str,
     ) -> Result<()> {
         if self.matches(expected_type) {
-            self.advance()
+            self.advance()?;
+            Ok(())
         } else {
-            Err(Error::ConsumeError(message.to_owned()))
+            let (line_no, char_no) = self.previous_location();
+
+            Err(Error::ConsumeError {
+                message: message.to_owned(),
+                line_no,
+                char_no,
+            })
         }
     }
 
@@ -69,6 +80,14 @@ impl<'p> Parser<'p> {
 
     fn current_type(&self) -> Option<TokenType> {
         self.current_token.as_ref().map(|token| token.ttype)
+    }
+
+    fn previous_location(&self) -> (usize, usize) {
+        if let Some(token) = self.previous_token.as_ref() {
+            (token.line_no, token.char_no)
+        } else {
+            (0, 0)
+        }
     }
 
     fn program(&mut self) -> Result<Program> {
@@ -129,9 +148,15 @@ impl<'p> Parser<'p> {
 
     fn var_expression(&mut self) -> Result<VarExpression> {
         let Atom::Symbol(name) = self.atom()? else {
-            return Err(Error::Parser(
-                "Set expression must be followed by a symbol.".to_owned(),
-            ));
+            let (line_no, char_no) = self.previous_location();
+
+            return Err(
+                Error::Parser{
+                    message: "Var expression must be followed by a symbol.".to_owned(),
+                    line_no,
+                    char_no
+                }
+            );
         };
 
         let expression = Box::new(self.expression()?);
@@ -141,9 +166,15 @@ impl<'p> Parser<'p> {
 
     fn function_call(&mut self) -> Result<FunctionCall> {
         let Atom::Symbol(symbol) = self.atom()? else {
-            return Err(Error::Parser(
-                "Function call must be followed by a symbol.".to_owned(),
-            ));
+            let (line_no, char_no) = self.previous_location();
+
+            return Err(
+                Error::Parser{
+                    message: "Function call must be followed by a symbol.".to_owned(),
+                    line_no,
+                    char_no
+                }
+            );
         };
 
         let mut expressions: Vec<Node> = Vec::new();
@@ -179,18 +210,28 @@ impl<'p> Parser<'p> {
     fn atom(&mut self) -> Result<Atom> {
         let atom = match self.current_token.as_ref() {
             None => unreachable!(),
-            Some(token) => match token.ttype {
-                TokenType::True => Atom::Boolean(true),
-                TokenType::False => Atom::Boolean(false),
-                TokenType::Number => {
-                    // Checked by lexer
-                    Atom::Number(token.lexeme().parse::<f64>().unwrap())
+            Some(token) => {
+                match token.ttype {
+                    TokenType::True | TokenType::False => {
+                        Atom::Boolean(token.clone())
+                    }
+                    TokenType::Number => {
+                        // Checked by lexer
+                        Atom::Number(token.clone())
+                    }
+                    TokenType::String => Atom::String(token.clone()),
+                    TokenType::Symbol => Atom::Symbol(token.clone()),
+                    TokenType::Nil => Atom::Nil(token.clone()),
+                    ttype => {
+                        let (line_no, char_no) = self.previous_location();
+                        return Err(Error::InvalidTypeForAtom {
+                            ttype,
+                            line_no,
+                            char_no,
+                        });
+                    }
                 }
-                TokenType::String => Atom::String(token.lexeme().to_owned()),
-                TokenType::Symbol => Atom::Symbol(token.lexeme().to_owned()),
-                TokenType::Nil => Atom::Nil,
-                ttype => unreachable!("Invalid TokenType for Atom '{ttype:?}'"),
-            },
+            }
         };
 
         self.advance()?;

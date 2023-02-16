@@ -8,7 +8,7 @@ Dit is de code die hoort bij mijn project compilers/interpreters.
 Program       -> Expression*
 Expression    -> VarExpression | IfExpression | List | Atom
 
-VarExpression -> "(" "set" Symbol Expression ")"
+VarExpression -> "(" "var" Symbol Expression ")"
 
                           condition  then       else
 IfExpression  -> "(" "if" Expression Expression Expression? ")"

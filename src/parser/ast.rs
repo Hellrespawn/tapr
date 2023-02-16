@@ -1,3 +1,4 @@
+use crate::token::Token;
 use crate::visitor::Visitor;
 
 #[derive(Debug, Clone)]
@@ -82,13 +83,13 @@ pub struct IfExpression {
 
 #[derive(Debug, Clone)]
 pub struct VarExpression {
-    pub name: String,
+    pub name: Token,
     pub expression: Box<Node>,
 }
 
 #[derive(Debug, Clone)]
 pub struct FunctionCall {
-    pub name: String,
+    pub name: Token,
     pub arguments: Vec<Node>,
 }
 
@@ -99,9 +100,9 @@ pub struct List {
 
 #[derive(Debug, Clone)]
 pub enum Atom {
-    Boolean(bool),
-    Number(f64),
-    String(String),
-    Symbol(String),
-    Nil,
+    Boolean(Token),
+    Number(Token),
+    String(Token),
+    Symbol(Token),
+    Nil(Token),
 }

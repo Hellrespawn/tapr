@@ -1,3 +1,4 @@
+use crate::token::TokenType;
 use crate::visitor::interpreter::Value;
 
 #[derive(Debug, thiserror::Error)]
@@ -17,27 +18,48 @@ pub enum Error {
     },
 
     // Lexer
-    #[error("Unknown character '{character}' at {line_no}:{char_no}.")]
+    #[error("{line_no}:{char_no}: Unknown character '{character}'")]
     UnknownCharacter {
         character: String,
         line_no: usize,
         char_no: usize,
     },
-    #[error("Unterminated string.")]
-    UnterminatedString,
-    #[error("Found decimal point not followed by decimals.")]
-    DecimalPointNotFollowedByDigits,
+    #[error("{line_no}:{char_no}: Unterminated string.")]
+    UnterminatedString { line_no: usize, char_no: usize },
+    #[error(
+        "{line_no}:{char_no}: Found decimal point not followed by decimals."
+    )]
+    DecimalPointNotFollowedByDigits { line_no: usize, char_no: usize },
 
     // Parser
-    #[error("{0}")]
-    ConsumeError(String),
+    #[error("{line_no}:{char_no}: {message}")]
+    ConsumeError {
+        message: String,
+        line_no: usize,
+        char_no: usize,
+    },
 
-    #[error("{0}")]
-    Parser(String),
+    #[error("{line_no}:{char_no}: {message}")]
+    Parser {
+        message: String,
+        line_no: usize,
+        char_no: usize,
+    },
+
+    #[error("{line_no}:{char_no}: Unable to parse as atom: '{ttype:?}'")]
+    InvalidTypeForAtom {
+        ttype: TokenType,
+        line_no: usize,
+        char_no: usize,
+    },
 
     // Interpreter
-    #[error("Undefined symbol '{0}'")]
-    UndefinedSymbol(String),
+    #[error("{line_no}:{char_no}: Undefined symbol '{symbol}'")]
+    UndefinedSymbol {
+        symbol: String,
+        line_no: usize,
+        char_no: usize,
+    },
     #[error("Invalid operands '{values:?}', expected '{expected}'")]
     InvalidArguments {
         expected: &'static str,

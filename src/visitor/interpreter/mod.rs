@@ -6,6 +6,7 @@ use std::collections::HashMap;
 pub use value::Value;
 
 use crate::parser::ast::*;
+use crate::token::Token;
 use crate::visitor::Visitor;
 use crate::{Error, Result};
 use function::{Function, BUILTIN_FUNCTIONS};
@@ -31,19 +32,25 @@ impl Interpreter {
         program.accept(self)
     }
 
-    fn get_function(name: &str) -> Result<&dyn Function> {
-        let function = BUILTIN_FUNCTIONS.get(name);
+    fn get_function(name: &Token) -> Result<&dyn Function> {
+        let function = BUILTIN_FUNCTIONS.get(name.lexeme());
 
-        function
-            .map(|f| &**f)
-            .ok_or(Error::UndefinedSymbol(name.to_owned()))
+        function.map(|f| &**f).ok_or(Error::UndefinedSymbol {
+            symbol: name.lexeme().to_owned(),
+            line_no: name.line_no,
+            char_no: name.char_no,
+        })
     }
 
-    fn evaluate_symbol(&self, name: &str) -> Result<Value> {
-        if let Some(value) = self.environment.get(name) {
+    fn evaluate_symbol(&self, name: &Token) -> Result<Value> {
+        if let Some(value) = self.environment.get(name.lexeme()) {
             Ok(value.clone())
         } else {
-            Err(Error::UndefinedSymbol(name.to_owned()))
+            Err(Error::UndefinedSymbol {
+                symbol: name.lexeme().to_owned(),
+                line_no: name.line_no,
+                char_no: name.char_no,
+            })
         }
     }
 }
@@ -85,7 +92,7 @@ impl Visitor<Result<Value>> for Interpreter {
 
         let value = expression.accept(self)?;
 
-        self.environment.insert(symbol.clone(), value);
+        self.environment.insert(symbol.lexeme().to_owned(), value);
 
         Ok(Value::Nil)
     }
@@ -124,11 +131,11 @@ impl Visitor<Result<Value>> for Interpreter {
 
     fn visit_atom(&mut self, atom: &Atom) -> Result<Value> {
         let value = match atom {
-            Atom::Boolean(bool) => Value::Boolean(*bool),
-            Atom::Number(number) => Value::Number(*number),
-            Atom::String(string) => Value::String(string.clone()),
-            Atom::Symbol(symbol) => self.evaluate_symbol(symbol)?,
-            Atom::Nil => Value::Nil,
+            Atom::Boolean(token) => Value::Boolean(token.as_bool().unwrap()),
+            Atom::Number(token) => Value::Number(token.as_number().unwrap()),
+            Atom::String(token) => Value::String(token.lexeme().to_owned()),
+            Atom::Symbol(token) => self.evaluate_symbol(token)?,
+            Atom::Nil(_) => Value::Nil,
         };
 
         Ok(value)

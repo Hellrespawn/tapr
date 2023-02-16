@@ -126,7 +126,8 @@ impl Visitor<()> for DotVisitor {
     }
 
     fn visit_var_expression(&mut self, set_expression: &VarExpression) {
-        let set_node = self.new_node(&format!("Var '{}'", set_expression.name));
+        let set_node =
+            self.new_node(&format!("Var '{}'", set_expression.name.lexeme()));
 
         let expr_node = self.counter;
         set_expression.expression.accept(self);
@@ -134,8 +135,10 @@ impl Visitor<()> for DotVisitor {
     }
 
     fn visit_function_call(&mut self, function_call: &FunctionCall) {
-        let function_node =
-            self.new_node(&format!("Function Call\n'{}'", function_call.name));
+        let function_node = self.new_node(&format!(
+            "Function Call\n'{}'",
+            function_call.name.lexeme()
+        ));
 
         for node in &function_call.arguments {
             let new_node = self.counter;
@@ -156,17 +159,19 @@ impl Visitor<()> for DotVisitor {
 
     fn visit_atom(&mut self, atom: &Atom) {
         match atom {
-            Atom::Boolean(bool) => self.new_node(&format!("Boolean\n'{bool}'")),
+            Atom::Boolean(bool) => {
+                self.new_node(&format!("Boolean\n'{}'", bool.lexeme()))
+            }
             Atom::Number(number) => {
-                self.new_node(&format!("Number\n'{number}'"))
+                self.new_node(&format!("Number\n'{}'", number.lexeme()))
             }
             Atom::String(string) => {
-                self.new_node(&format!("String\n'{string}'"))
+                self.new_node(&format!("String\n'{}'", string.lexeme()))
             }
             Atom::Symbol(symbol) => {
-                self.new_node(&format!("Symbol\n'{symbol}'"))
+                self.new_node(&format!("Symbol\n'{}'", symbol.lexeme()))
             }
-            Atom::Nil => self.new_node("Nil"),
+            Atom::Nil(_) => self.new_node("Nil"),
         };
     }
 }
