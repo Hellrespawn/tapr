@@ -17,8 +17,12 @@ pub enum Error {
     },
 
     // Lexer
-    #[error("Unknown character '{0}'.")]
-    UnknownCharacter(String),
+    #[error("Unknown character '{character}' at {line_no}:{char_no}.")]
+    UnknownCharacter {
+        character: String,
+        line_no: usize,
+        char_no: usize,
+    },
     #[error("Unterminated string.")]
     UnterminatedString,
     #[error("Found decimal point not followed by decimals.")]

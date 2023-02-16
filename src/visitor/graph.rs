@@ -83,14 +83,14 @@ impl DotVisitor {
         self.node_connector(node1, node2, None, true);
     }
 
-    // fn connect_nodes_with_label(
-    //     &mut self,
-    //     node1: usize,
-    //     node2: usize,
-    //     label: &str,
-    // ) {
-    //     self.node_connector(node1, node2, Some(label), true);
-    // }
+    fn connect_nodes_with_label(
+        &mut self,
+        node1: usize,
+        node2: usize,
+        label: &str,
+    ) {
+        self.node_connector(node1, node2, Some(label), true);
+    }
 }
 
 impl Visitor<()> for DotVisitor {
@@ -110,18 +110,18 @@ impl Visitor<()> for DotVisitor {
         let condition_node = self.counter;
         if_expression.condition.accept(self);
 
-        self.connect_nodes(if_node, condition_node);
+        self.connect_nodes_with_label(if_node, condition_node, "condition");
 
         let then_branch_node = self.counter;
         if_expression.then_branch.accept(self);
 
-        self.connect_nodes(if_node, then_branch_node);
+        self.connect_nodes_with_label(if_node, then_branch_node, "then");
 
         if let Some(else_branch) = &if_expression.else_branch {
             let else_branch_node = self.counter;
             else_branch.accept(self);
 
-            self.connect_nodes(if_node, else_branch_node);
+            self.connect_nodes_with_label(if_node, else_branch_node, "else");
         }
     }
 

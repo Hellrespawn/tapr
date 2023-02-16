@@ -10,6 +10,7 @@ static CHARACTERS: &str = "_-+*/!%^&'<>=";
 pub struct Lexer<'l> {
     source: &'l str,
     offset: usize,
+    char_no: usize,
     line_no: usize,
 }
 
@@ -18,6 +19,7 @@ impl<'l> Lexer<'l> {
         Self {
             source,
             offset: 0,
+            char_no: 1,
             line_no: 1,
         }
     }
@@ -56,7 +58,13 @@ impl<'l> Lexer<'l> {
                 "\"" => self.string()?,
                 _ if self.is_number() => self.number()?,
                 _ if self.is_character() => self.keyword_or_symbol(),
-                _ => return Err(Error::UnknownCharacter(char.to_owned())),
+                _ => {
+                    return Err(Error::UnknownCharacter {
+                        character: char.to_owned(),
+                        line_no: self.line_no,
+                        char_no: self.char_no,
+                    })
+                }
             },
         };
 
@@ -125,7 +133,7 @@ impl<'l> Lexer<'l> {
                 self.advance();
             }
 
-            self.advance();
+            self.skip_whitespace();
         }
     }
 
@@ -134,6 +142,9 @@ impl<'l> Lexer<'l> {
 
         if self.current_character() == Some("\n") {
             self.line_no += 1;
+            self.char_no = 1;
+        } else {
+            self.char_no += 1;
         }
     }
 
@@ -316,7 +327,12 @@ mod tests {
 
         assert!(matches!(
             result,
-            Err(Error::UnknownCharacter(string)) if string == "["
+            Err(Error::UnknownCharacter{ character: string, ..}) if string == "["
         ));
+    }
+
+    #[test]
+    fn test_whitespace_before_left_paren() -> Result<()> {
+        lexer_test("  ()", &[token(LeftParen, "("), token(RightParen, ")")])
     }
 }
