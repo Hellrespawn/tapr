@@ -86,9 +86,11 @@ impl Function for EvalFunction {
 
         let value = &evaluated_args[0];
 
-        if let Value::String(string) = value {
-            let lexer = Lexer::new(string);
-            let mut parser = Parser::new(lexer);
+        if let Value::String(source) = value {
+            let lexer = Lexer::new(source);
+            let mut parser = Parser::with_number(lexer, intp.parser_no);
+
+            intp.parser_no += 1;
 
             let program = parser.parse()?;
 
@@ -116,14 +118,30 @@ impl Function for QuoteFunction {
         intp: &mut Interpreter,
         argument_nodes: &[Node],
     ) -> Result<Value> {
-        if let Some(Node::Atom(Atom::Symbol(symbol))) = argument_nodes.first() {
-            return Ok(Value::Symbol(symbol.lexeme().to_owned()));
+        QuoteFunction::ARGUMENTS.check_amount(argument_nodes.len())?;
+
+        let argument = &argument_nodes[0];
+
+        match argument {
+            Node::Atom(Atom::Symbol(symbol)) => {
+                Ok(Value::Symbol(symbol.lexeme().to_owned()))
+            }
+            Node::List(list) => {
+                let values = list
+                    .expressions
+                    .iter()
+                    .map(|node| node.accept(intp))
+                    .collect::<Result<Vec<_>>>()?;
+
+                Ok(Value::List(values))
+            }
+            _ => {
+                let mut values =
+                    QuoteFunction::ARGUMENTS.evaluate(intp, argument_nodes)?;
+
+                Ok(values.pop().unwrap())
+            }
         }
-
-        let mut values =
-            QuoteFunction::ARGUMENTS.evaluate(intp, argument_nodes)?;
-
-        Ok(values.pop().unwrap())
     }
 }
 

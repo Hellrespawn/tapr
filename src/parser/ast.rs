@@ -81,7 +81,7 @@ impl From<Atom> for Node {
 
 #[derive(Debug, Clone)]
 pub struct Program {
-    pub expressions: Vec<Node>,
+    pub expression: Box<Node>,
 }
 
 #[derive(Debug, Clone)]
@@ -100,7 +100,8 @@ pub struct WhileExpression {
 #[derive(Debug, Clone)]
 pub struct VarExpression {
     pub name: Token,
-    pub expression: Box<Node>,
+    pub value: Box<Node>,
+    pub scope: Box<Node>,
 }
 
 #[derive(Debug, Clone)]
@@ -111,7 +112,7 @@ pub struct FunctionCall {
 
 #[derive(Debug, Clone)]
 pub struct List {
-    pub elements: Vec<Node>,
+    pub expressions: Vec<Node>,
 }
 
 #[derive(Debug, Clone)]

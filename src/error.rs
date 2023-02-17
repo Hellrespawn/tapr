@@ -19,47 +19,53 @@ pub enum Error {
     },
 
     // Lexer
-    #[error("{line_no}:{char_no}: Unknown character '{character}'")]
+    #[error("{line_no}:{col_no}: Unknown character '{character}'")]
     UnknownCharacter {
-        character: String,
+        character: char,
         line_no: usize,
-        char_no: usize,
+        col_no: usize,
     },
-    #[error("{line_no}:{char_no}: Unterminated string.")]
-    UnterminatedString { line_no: usize, char_no: usize },
+    #[error("{line_no}:{col_no}: Unterminated string.")]
+    UnterminatedString { line_no: usize, col_no: usize },
     #[error(
-        "{line_no}:{char_no}: Found decimal point not followed by decimals."
+        "{line_no}:{col_no}: Found decimal point not followed by decimals."
     )]
-    DecimalPointNotFollowedByDigits { line_no: usize, char_no: usize },
+    DecimalPointNotFollowedByDigits { line_no: usize, col_no: usize },
 
     // Parser
-    #[error("{line_no}:{char_no}: {message}")]
+    #[error("{line_no}:{col_no}: {message}")]
     ConsumeError {
         message: String,
         line_no: usize,
-        char_no: usize,
+        col_no: usize,
     },
 
-    #[error("{line_no}:{char_no}: {message}")]
+    #[error("{line_no}:{col_no}: {message}")]
     Parser {
         message: String,
         line_no: usize,
-        char_no: usize,
+        col_no: usize,
     },
 
-    #[error("{line_no}:{char_no}: Unable to parse as atom: '{ttype:?}'")]
+    #[error("There was no input.")]
+    EmptyInput,
+
+    #[error("{line_no}:{col_no}: Unmatched parenthesis.")]
+    UnmatchedParenthesis { line_no: usize, col_no: usize },
+
+    #[error("{line_no}:{col_no}: Unable to parse Token as atom: '{ttype:?}'")]
     InvalidTypeForAtom {
         ttype: TokenType,
         line_no: usize,
-        char_no: usize,
+        col_no: usize,
     },
 
     // Interpreter
-    #[error("{line_no}:{char_no}: Undefined symbol '{symbol}'")]
+    #[error("{line_no}:{col_no}: Undefined symbol '{symbol}'")]
     UndefinedSymbol {
         symbol: String,
         line_no: usize,
-        char_no: usize,
+        col_no: usize,
     },
     #[error("Invalid operands '{values:?}', expected '{expected}'")]
     InvalidArguments {

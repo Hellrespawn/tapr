@@ -13,6 +13,7 @@ use function::{Function, BUILTIN_FUNCTIONS};
 
 pub struct Interpreter {
     pub environment: HashMap<String, Value>,
+    pub parser_no: usize,
 }
 
 impl Default for Interpreter {
@@ -25,6 +26,7 @@ impl Interpreter {
     pub fn new() -> Self {
         Self {
             environment: HashMap::new(),
+            parser_no: 1,
         }
     }
 
@@ -38,7 +40,7 @@ impl Interpreter {
         function.map(|f| &**f).ok_or(Error::UndefinedSymbol {
             symbol: name.lexeme().to_owned(),
             line_no: name.line_no,
-            char_no: name.char_no,
+            col_no: name.col_no,
         })
     }
 
@@ -49,7 +51,7 @@ impl Interpreter {
             Err(Error::UndefinedSymbol {
                 symbol: name.lexeme().to_owned(),
                 line_no: name.line_no,
-                char_no: name.char_no,
+                col_no: name.col_no,
             })
         }
     }
@@ -57,13 +59,24 @@ impl Interpreter {
 
 impl Visitor<Result<Value>> for Interpreter {
     fn visit_program(&mut self, program: &Program) -> Result<Value> {
-        let mut values = program
-            .expressions
-            .iter()
-            .map(|node| node.accept(self))
-            .collect::<Result<Vec<_>>>()?;
+        program.expression.accept(self)
+    }
 
-        Ok(values.pop().unwrap_or(Value::Nil))
+    fn visit_list(&mut self, list: &List) -> Result<Value> {
+        let elements = &list.expressions;
+
+        let value = if elements.is_empty() {
+            Value::Nil
+        } else {
+            let values = elements
+                .iter()
+                .map(|node| node.accept(self))
+                .collect::<Result<Vec<_>>>()?;
+
+            Value::List(values)
+        };
+
+        Ok(value)
     }
 
     fn visit_if_expression(
@@ -102,18 +115,15 @@ impl Visitor<Result<Value>> for Interpreter {
 
     fn visit_var_expression(
         &mut self,
-        set_expression: &VarExpression,
+        var_expression: &VarExpression,
     ) -> Result<Value> {
-        let VarExpression {
-            name: symbol,
-            expression,
-        } = set_expression;
+        let VarExpression { name, value, scope } = var_expression;
 
-        let value = expression.accept(self)?;
+        let value = value.accept(self)?;
 
-        self.environment.insert(symbol.lexeme().to_owned(), value);
+        self.environment.insert(name.lexeme().to_owned(), value);
 
-        Ok(Value::Nil)
+        scope.accept(self)
     }
 
     fn visit_function_call(
@@ -123,23 +133,6 @@ impl Visitor<Result<Value>> for Interpreter {
         let function = Interpreter::get_function(&function_call.name)?;
 
         function.call(self, &function_call.arguments)
-    }
-
-    fn visit_list(&mut self, list: &List) -> Result<Value> {
-        let elements = &list.elements;
-
-        let value = if elements.is_empty() {
-            Value::Nil
-        } else {
-            let values = elements
-                .iter()
-                .map(|node| node.accept(self))
-                .collect::<Result<Vec<_>>>()?;
-
-            Value::List(values)
-        };
-
-        Ok(value)
     }
 
     fn visit_atom(&mut self, atom: &Atom) -> Result<Value> {

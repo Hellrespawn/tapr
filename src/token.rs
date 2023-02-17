@@ -24,7 +24,7 @@ pub struct Token {
     pub ttype: TokenType,
     pub lexeme: String,
     pub line_no: usize,
-    pub char_no: usize,
+    pub col_no: usize,
 }
 
 impl Token {
@@ -32,13 +32,13 @@ impl Token {
         ttype: TokenType,
         lexeme: String,
         line_no: usize,
-        char_no: usize,
+        col_no: usize,
     ) -> Self {
         Self {
             ttype,
             lexeme,
             line_no,
-            char_no,
+            col_no,
         }
     }
 

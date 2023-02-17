@@ -21,20 +21,22 @@ fn run_test(source: &str, expectation: Value) -> TestResult {
 
 #[test]
 fn test_empty_input() -> TestResult {
-    run_test("", Value::Nil)
+    let result = run_test("", Value::Nil).unwrap_err();
+
+    assert!(matches!(result, Error::EmptyInput));
+
+    Ok(())
 }
 
 #[test]
 fn test_unmatched_parenthesis() -> TestResult {
     let error = run_test("(", Value::Nil).unwrap_err();
 
-    if let Error::ConsumeError { message, .. } = error {
-        assert!(message.to_lowercase().contains("expected ')'"));
+    if let Error::UnmatchedParenthesis { .. } = error {
+        Ok(())
     } else {
-        panic!("Expected ConsumeError, got {}", error);
+        panic!("Expected Error::UnmatchedParenthesis, got {}", error);
     }
-
-    Ok(())
 }
 
 #[test]
@@ -64,13 +66,11 @@ fn test_truthiness() -> TestResult {
 
 #[test]
 fn test_global_variables() -> TestResult {
-    run_test("(var value 1)", Value::Nil)?;
-
     let error = run_test("(== value 1)", Value::Boolean(true)).unwrap_err();
 
     assert!(matches!(error, Error::UndefinedSymbol { .. }));
 
-    run_test("(var value 1)(== value 1)", Value::Boolean(true))?;
+    run_test("(var value 1 (== value 1))", Value::Boolean(true))?;
 
     Ok(())
 }

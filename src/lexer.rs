@@ -7,11 +7,13 @@ static DEBUG_TOKENS: Lazy<bool> =
 
 static CHARACTERS: &str = "_-+*/!%^&'<>=";
 
+/// `_Lex_ical analyz_er_` takes an input string and converts it to tokens
+/// based on the terminal rules and constant characters of the grammar.
 pub struct Lexer<'l> {
     source: &'l str,
     offset: usize,
-    char_no: usize,
     line_no: usize,
+    col_no: usize,
 }
 
 impl<'l> Lexer<'l> {
@@ -19,82 +21,51 @@ impl<'l> Lexer<'l> {
         Self {
             source,
             offset: 0,
-            char_no: 1,
+            col_no: 1,
             line_no: 1,
         }
     }
 
     pub fn scan_token(&mut self) -> Result<Option<Token>> {
-        self.skip_whitespace();
-        self.skip_comments();
+        self.skip_ignored_characters();
 
-        let char = self.current_character();
-
-        let token = match char {
-            None => return Ok(None),
-            Some(char) => match char {
-                "(" => {
-                    let token = Token::new(
-                        TokenType::LeftParen,
-                        char.to_owned(),
-                        self.line_no,
-                        self.char_no,
-                    );
-
-                    self.advance();
-
-                    token
-                }
-                ")" => {
-                    let token = Token::new(
-                        TokenType::RightParen,
-                        char.to_owned(),
-                        self.line_no,
-                        self.char_no,
-                    );
-
-                    self.advance();
-
-                    token
-                }
-                "'" => {
-                    let token = Token::new(
-                        TokenType::Quote,
-                        char.to_owned(),
-                        self.line_no,
-                        self.char_no,
-                    );
-
-                    self.advance();
-
-                    token
-                }
-                "\"" => self.string()?,
+        if let Some(character) = self.current_character() {
+            let token = match character {
+                '(' => self.single_character(TokenType::LeftParen),
+                ')' => self.single_character(TokenType::RightParen),
+                '\'' => self.single_character(TokenType::Quote),
+                '\"' => self.string()?,
                 _ if self.is_number() => self.number()?,
                 _ if self.is_character() => self.keyword_or_symbol(),
                 _ => {
                     return Err(Error::UnknownCharacter {
-                        character: char.to_owned(),
+                        character,
                         line_no: self.line_no,
-                        char_no: self.char_no,
+                        col_no: self.col_no,
                     })
                 }
-            },
-        };
+            };
 
-        if *DEBUG_TOKENS {
-            println!("{token:#?}");
+            if *DEBUG_TOKENS {
+                println!("{token:#?}");
+            }
+
+            Ok(Some(token))
+        } else {
+            Ok(None)
         }
-
-        Ok(Some(token))
     }
 
-    fn current_character(&self) -> Option<&'l str> {
-        self.source.get(self.offset..=self.offset)
+    fn get_character(&self, offset: usize) -> Option<char> {
+        self.source.as_bytes().get(offset).map(|b| *b as char)
     }
 
-    fn next_character(&self) -> Option<&'l str> {
-        self.source.get(self.offset + 1..=self.offset + 1)
+    fn current_character(&self) -> Option<char> {
+        self.get_character(self.offset)
+    }
+
+    fn next_character(&self) -> Option<char> {
+        self.get_character(self.offset + 1)
     }
 
     fn at_end(&self) -> bool {
@@ -103,7 +74,7 @@ impl<'l> Lexer<'l> {
 
     fn is_whitespace(&self) -> bool {
         if let Some(current) = self.current_character() {
-            current.chars().all(char::is_whitespace)
+            current.is_whitespace()
         } else {
             false
         }
@@ -111,7 +82,7 @@ impl<'l> Lexer<'l> {
 
     fn is_number(&self) -> bool {
         if let Some(current) = self.current_character() {
-            current.chars().all(char::is_numeric)
+            current.is_numeric()
         } else {
             false
         }
@@ -119,7 +90,7 @@ impl<'l> Lexer<'l> {
 
     fn is_next_number(&self) -> bool {
         if let Some(next) = self.next_character() {
-            next.chars().all(char::is_numeric)
+            next.is_numeric()
         } else {
             false
         }
@@ -127,12 +98,15 @@ impl<'l> Lexer<'l> {
 
     fn is_character(&self) -> bool {
         if let Some(current) = self.current_character() {
-            current
-                .chars()
-                .all(|c| c.is_alphanumeric() || CHARACTERS.contains(c))
+            current.is_alphanumeric() || CHARACTERS.contains(current)
         } else {
             false
         }
+    }
+
+    fn skip_ignored_characters(&mut self) {
+        self.skip_whitespace();
+        self.skip_comments();
     }
 
     fn skip_whitespace(&mut self) {
@@ -142,8 +116,8 @@ impl<'l> Lexer<'l> {
     }
 
     fn skip_comments(&mut self) {
-        if self.current_character() == Some("#") {
-            while self.current_character() != Some("\n") {
+        if self.current_character() == Some('#') {
+            while self.current_character() != Some('\n') {
                 self.advance();
             }
 
@@ -154,36 +128,49 @@ impl<'l> Lexer<'l> {
     fn advance(&mut self) {
         self.offset += 1;
 
-        if self.current_character() == Some("\n") {
+        if self.current_character() == Some('\n') {
             self.line_no += 1;
-            self.char_no = 1;
+            self.col_no = 1;
         } else {
-            self.char_no += 1;
+            self.col_no += 1;
         }
+    }
+
+    fn single_character(&mut self, ttype: TokenType) -> Token {
+        let token = Token::new(
+            ttype,
+            self.current_character().unwrap().to_string(),
+            self.line_no,
+            self.col_no,
+        );
+
+        self.advance();
+
+        token
     }
 
     fn string(&mut self) -> Result<Token> {
         let mut string = String::new();
 
         // Preserve location at start of string.
-        let (line_no, char_no) = (self.line_no, self.char_no);
+        let (line_no, col_no) = (self.line_no, self.col_no);
 
         // Advance past opening "
         self.advance();
 
-        while self.current_character() != Some("\"") {
+        while self.current_character() != Some('"') {
             if self.at_end() {
-                return Err(Error::UnterminatedString { line_no, char_no });
+                return Err(Error::UnterminatedString { line_no, col_no });
             }
 
-            string.push_str(self.current_character().unwrap());
+            string.push(self.current_character().unwrap());
             self.advance();
         }
 
         // Advance past closing "
         self.advance();
 
-        let token = Token::new(TokenType::String, string, line_no, char_no);
+        let token = Token::new(TokenType::String, string, line_no, col_no);
 
         Ok(token)
     }
@@ -192,18 +179,18 @@ impl<'l> Lexer<'l> {
         let mut string = String::new();
 
         // Preserve location at start of number.
-        let (line_no, char_no) = (self.line_no, self.char_no);
+        let (line_no, col_no) = (self.line_no, self.col_no);
 
         while self.is_number() {
-            string.push_str(self.current_character().unwrap());
+            string.push(self.current_character().unwrap());
             self.advance();
         }
 
-        if self.current_character() == Some(".") {
+        if self.current_character() == Some('.') {
             if !self.is_next_number() {
                 return Err(Error::DecimalPointNotFollowedByDigits {
                     line_no,
-                    char_no,
+                    col_no,
                 });
             }
 
@@ -211,12 +198,12 @@ impl<'l> Lexer<'l> {
             self.advance();
 
             while self.is_number() {
-                string.push_str(self.current_character().unwrap());
+                string.push(self.current_character().unwrap());
                 self.advance();
             }
         }
 
-        let token = Token::new(TokenType::Number, string, line_no, char_no);
+        let token = Token::new(TokenType::Number, string, line_no, col_no);
 
         Ok(token)
     }
@@ -224,11 +211,11 @@ impl<'l> Lexer<'l> {
     fn keyword_or_symbol(&mut self) -> Token {
         let mut string = String::new();
 
-        // Preserve location at start of string.
-        let (line_no, char_no) = (self.line_no, self.char_no);
+        // Preserve location at start of string
+        let (line_no, col_no) = (self.line_no, self.col_no);
 
         while self.is_character() {
-            string.push_str(self.current_character().unwrap());
+            string.push(self.current_character().unwrap());
             self.advance();
         }
 
@@ -242,7 +229,7 @@ impl<'l> Lexer<'l> {
             _ => TokenType::Symbol,
         };
 
-        Token::new(ttype, string, line_no, char_no)
+        Token::new(ttype, string, line_no, col_no)
     }
 }
 
@@ -269,21 +256,21 @@ mod tests {
         ttype: TokenType,
         lexeme: &str,
         line_no: usize,
-        char_no: usize,
+        col_no: usize,
     ) -> Token {
-        Token::new(ttype, lexeme.to_owned(), line_no, char_no)
+        Token::new(ttype, lexeme.to_owned(), line_no, col_no)
     }
 
-    fn number(number: f64, line_no: usize, char_no: usize) -> Token {
-        token(Number, &number.to_string(), line_no, char_no)
+    fn number(number: f64, line_no: usize, col_no: usize) -> Token {
+        token(Number, &number.to_string(), line_no, col_no)
     }
 
-    fn string(string: &str, line_no: usize, char_no: usize) -> Token {
-        token(String, string, line_no, char_no)
+    fn string(string: &str, line_no: usize, col_no: usize) -> Token {
+        token(String, string, line_no, col_no)
     }
 
-    fn symbol(string: &str, line_no: usize, char_no: usize) -> Token {
-        token(Symbol, string, line_no, char_no)
+    fn symbol(string: &str, line_no: usize, col_no: usize) -> Token {
+        token(Symbol, string, line_no, col_no)
     }
 
     #[test]
@@ -362,7 +349,7 @@ mod tests {
 
         assert!(matches!(
             result,
-            Err(Error::UnknownCharacter{ character: string, ..}) if string == "["
+            Err(Error::UnknownCharacter{ character: string, ..}) if string == '['
         ));
     }
 

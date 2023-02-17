@@ -1,3 +1,5 @@
+use std::process::Command;
+
 use crate::parser::ast::*;
 use crate::visitor::Visitor;
 
@@ -7,7 +9,7 @@ pub(crate) struct DotVisitor {
 }
 
 impl DotVisitor {
-    pub(crate) fn create_ast_dot(program: &Node) -> String {
+    pub(crate) fn create_ast_dot(program: &Node, filename: &str) {
         let body = "digraph astgraph {\n  \
             edge [arrowsize=.5];\n  \
             rankdir=\"TB\";\n  \
@@ -22,7 +24,41 @@ impl DotVisitor {
 
         dot_visitor.body.push('}');
 
-        dot_visitor.body
+        DotVisitor::write_graph_to_file(dot_visitor.body, filename);
+    }
+
+    fn write_graph_to_file(dot: String, filename: &str) {
+        let result = std::fs::write(filename, dot);
+
+        if result.is_err() {
+            eprintln!("Unable to write to dot-file to {filename}.");
+        }
+
+        if which::which("dot").is_ok() {
+            DotVisitor::render_graph(filename);
+            if std::fs::remove_file(filename).is_err() {
+                eprintln!("Unable to remove dot-file after rendering.");
+            }
+        }
+    }
+
+    fn render_graph(filename_in: &str) {
+        let filename_out = filename_in.replace(".dot", ".png");
+
+        let mut command = Command::new("dot");
+
+        command.arg("-Tpng");
+        command.arg(filename_in);
+        command.arg("-o");
+        command.arg(filename_out);
+
+        if let Ok(status) = command.status() {
+            if !status.success() {
+                eprintln!("Something went wrong with GraphViz dot.");
+            }
+        } else {
+            eprintln!("Unable to run GraphViz dot.");
+        }
     }
 
     fn increment(&mut self) -> usize {
@@ -97,11 +133,11 @@ impl Visitor<()> for DotVisitor {
     fn visit_program(&mut self, program: &Program) {
         let program_node = self.new_node("Program");
 
-        for node in &program.expressions {
-            let new_node = self.counter;
-            node.accept(self);
-            self.connect_nodes(program_node, new_node);
-        }
+        let new_node = self.counter;
+
+        program.expression.accept(self);
+
+        self.connect_nodes(program_node, new_node);
     }
 
     fn visit_if_expression(&mut self, if_expression: &IfExpression) {
@@ -139,13 +175,19 @@ impl Visitor<()> for DotVisitor {
         self.connect_nodes_with_label(if_node, then_branch_node, "then");
     }
 
-    fn visit_var_expression(&mut self, set_expression: &VarExpression) {
-        let set_node =
-            self.new_node(&format!("Var '{}'", set_expression.name.lexeme()));
+    fn visit_var_expression(&mut self, var_expression: &VarExpression) {
+        let var_node =
+            self.new_node(&format!("Var '{}'", var_expression.name.lexeme()));
 
-        let expr_node = self.counter;
-        set_expression.expression.accept(self);
-        self.connect_nodes(set_node, expr_node);
+        let value_node = self.counter;
+        var_expression.value.accept(self);
+
+        self.connect_nodes_with_label(var_node, value_node, "value");
+
+        let scope_node = self.counter;
+        var_expression.scope.accept(self);
+
+        self.connect_nodes_with_label(var_node, scope_node, "scope");
     }
 
     fn visit_function_call(&mut self, function_call: &FunctionCall) {
@@ -164,7 +206,7 @@ impl Visitor<()> for DotVisitor {
     fn visit_list(&mut self, list: &List) {
         let list_node = self.new_node("List");
 
-        for node in &list.elements {
+        for node in &list.expressions {
             let new_node = self.counter;
             node.accept(self);
             self.connect_nodes(list_node, new_node);

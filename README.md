@@ -5,25 +5,34 @@ Dit is de code die hoort bij mijn project compilers/interpreters.
 ## Korisp Grammar
 
 ```bnf
-Program       -> List
-Expression    -> VarExpression | IfExpression | List | Atom
+Program             -> Expression
 
-VarExpression -> "(" "var" Symbol Expression ")"
+Expression          -> VarExpression
+                     | IfExpression
+                     | WhileExpression
+                     | FunctionCall
+                     | DataType
 
-                          condition  then       else
-IfExpression  -> "(" "if" Expression Expression Expression? ")"
+                                 name   value      scope
+VarExpression       -> "(" "var" Symbol Expression Expression ")"
 
-                                condition  then
-WhileExpression  -> "(" "while" Expression Expression ")"
+                                condition  then       else
+IfExpression        -> "(" "if" Expression Expression Expression? ")"
 
-                     name   arguments
-FunctionCall  -> "(" Symbol Expression* ")"
+                                   condition  then
+WhileExpression     -> "(" "while" Expression Expression ")"
 
-List          -> "(" Expression* ")"
-Atom          -> Boolean | Number | String | "'"? Symbol | "nil"
+                           name   arguments
+FunctionCall        -> "(" Symbol Expression* ")"
 
-Boolean       -> "true" | "false"
-Number        -> {digit}+ (. {digit}+)?
-String        -> \" {character}* \"
-Symbol        -> {character}+
+DataType            -> "'"? (List | Atom)
+
+List                -> "(" Expression* ")"
+
+Atom                -> "nil" | Boolean | Number | String | Symbol
+
+Boolean             -> "true" | "false"
+Number              -> {digit}+ (. {digit}+)?
+String              -> \" {character}* \"
+Symbol              -> {character}+
 ```
