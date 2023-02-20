@@ -175,19 +175,19 @@ impl Visitor<()> for DotVisitor {
         self.connect_nodes_with_label(if_node, then_branch_node, "then");
     }
 
-    fn visit_var_expression(&mut self, var_expression: &VarExpression) {
-        let var_node =
-            self.new_node(&format!("Var '{}'", var_expression.name.lexeme()));
+    fn visit_set_expression(&mut self, set_expression: &SetExpression) {
+        let set_node =
+            self.new_node(&format!("Set '{}'", set_expression.name.lexeme()));
 
         let value_node = self.counter;
-        var_expression.value.accept(self);
+        set_expression.value.accept(self);
 
-        self.connect_nodes_with_label(var_node, value_node, "value");
+        self.connect_nodes_with_label(set_node, value_node, "value");
 
         let scope_node = self.counter;
-        var_expression.scope.accept(self);
+        set_expression.scope.accept(self);
 
-        self.connect_nodes_with_label(var_node, scope_node, "scope");
+        self.connect_nodes_with_label(set_node, scope_node, "scope");
     }
 
     fn visit_function_call(&mut self, function_call: &FunctionCall) {

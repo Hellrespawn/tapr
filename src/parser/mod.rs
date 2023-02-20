@@ -152,7 +152,7 @@ impl<'p> Parser<'p> {
             {
                 TokenType::If => self.if_expression()?.into(),
                 TokenType::While => self.while_expression()?.into(),
-                TokenType::Var => self.var_expression()?.into(),
+                TokenType::Set => self.set_expression()?.into(),
                 TokenType::Symbol => self.function_call()?.into(),
                 _ => self.list()?.into(),
             };
@@ -206,8 +206,8 @@ impl<'p> Parser<'p> {
         })
     }
 
-    fn var_expression(&mut self) -> Result<VarExpression> {
-        self.consume(TokenType::Var, "Var Expression must start with 'var'")?;
+    fn set_expression(&mut self) -> Result<SetExpression> {
+        self.consume(TokenType::Set, "Var Expression must start with 'set'")?;
 
         let Atom::Symbol(name) = self.atom()? else {
             let (line_no, col_no) = self.previous_location();
@@ -230,7 +230,7 @@ impl<'p> Parser<'p> {
             "Var Expression must end with ')'",
         )?;
 
-        Ok(VarExpression { name, value, scope })
+        Ok(SetExpression { name, value, scope })
     }
 
     fn function_call(&mut self) -> Result<FunctionCall> {

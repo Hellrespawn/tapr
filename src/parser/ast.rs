@@ -6,7 +6,7 @@ pub enum Node {
     Program(Program),
     IfExpression(IfExpression),
     WhileExpression(WhileExpression),
-    VarExpression(VarExpression),
+    SetExpression(SetExpression),
     FunctionCall(FunctionCall),
     List(List),
     Atom(Atom),
@@ -25,8 +25,8 @@ impl Node {
             Node::WhileExpression(while_expression) => {
                 visitor.visit_while_expression(while_expression)
             }
-            Node::VarExpression(var_expression) => {
-                visitor.visit_var_expression(var_expression)
+            Node::SetExpression(set_expression) => {
+                visitor.visit_set_expression(set_expression)
             }
             Node::FunctionCall(function_call) => {
                 visitor.visit_function_call(function_call)
@@ -55,9 +55,9 @@ impl From<WhileExpression> for Node {
     }
 }
 
-impl From<VarExpression> for Node {
-    fn from(var_expression: VarExpression) -> Self {
-        Self::VarExpression(var_expression)
+impl From<SetExpression> for Node {
+    fn from(set_expression: SetExpression) -> Self {
+        Self::SetExpression(set_expression)
     }
 }
 
@@ -98,7 +98,7 @@ pub struct WhileExpression {
 }
 
 #[derive(Debug, Clone)]
-pub struct VarExpression {
+pub struct SetExpression {
     pub name: Token,
     pub value: Box<Node>,
     pub scope: Box<Node>,

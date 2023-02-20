@@ -1,23 +1,8 @@
-use korisp::lexer::Lexer;
-use korisp::parser::Parser;
-use korisp::visitor::interpreter::{Interpreter, Value};
-use korisp::{Error, Result};
+mod common;
 
-type TestResult = Result<()>;
-
-fn run_test(source: &str, expectation: Value) -> TestResult {
-    let lexer = Lexer::new(source);
-    let mut parser = Parser::new(lexer);
-
-    let program = parser.parse()?;
-    let mut intp = Interpreter::new();
-
-    let value = intp.interpret(&program)?;
-
-    assert_eq!(value, expectation);
-
-    Ok(())
-}
+use common::{run_test, TestResult};
+use korisp::visitor::interpreter::Value;
+use korisp::Error;
 
 #[test]
 fn test_empty_input() -> TestResult {
@@ -60,17 +45,6 @@ fn test_truthiness() -> TestResult {
             Value::Boolean(expectation),
         )?;
     }
-
-    Ok(())
-}
-
-#[test]
-fn test_global_variables() -> TestResult {
-    let error = run_test("(== value 1)", Value::Boolean(true)).unwrap_err();
-
-    assert!(matches!(error, Error::UndefinedSymbol { .. }));
-
-    run_test("(var value 1 (== value 1))", Value::Boolean(true))?;
 
     Ok(())
 }

@@ -7,14 +7,14 @@ Dit is de code die hoort bij mijn project compilers/interpreters.
 ```bnf
 Program             -> Expression
 
-Expression          -> VarExpression
+Expression          -> SetExpression
                      | IfExpression
                      | WhileExpression
                      | FunctionCall
                      | DataType
 
                                  name   value      scope
-VarExpression       -> "(" "var" Symbol Expression Expression ")"
+SetExpression       -> "(" "set" Symbol Expression Expression ")"
 
                                 condition  then       else
 IfExpression        -> "(" "if" Expression Expression Expression? ")"

@@ -1,10 +1,10 @@
+mod environment;
 mod function;
 mod value;
 
-use std::collections::HashMap;
-
 pub use value::Value;
 
+use self::environment::Environment;
 use crate::parser::ast::*;
 use crate::token::Token;
 use crate::visitor::Visitor;
@@ -12,7 +12,7 @@ use crate::{Error, Result};
 use function::{Function, BUILTIN_FUNCTIONS};
 
 pub struct Interpreter {
-    pub environment: HashMap<String, Value>,
+    pub environment: Environment,
     pub parser_no: usize,
 }
 
@@ -25,7 +25,7 @@ impl Default for Interpreter {
 impl Interpreter {
     pub fn new() -> Self {
         Self {
-            environment: HashMap::new(),
+            environment: Environment::new(),
             parser_no: 1,
         }
     }
@@ -54,6 +54,24 @@ impl Interpreter {
                 col_no: name.col_no,
             })
         }
+    }
+
+    fn enter_scope(&mut self) {
+        let new_environment = Environment::new();
+
+        let old_environment =
+            std::mem::replace(&mut self.environment, new_environment);
+
+        self.environment.set_parent(old_environment);
+    }
+
+    fn exit_scope(&mut self) {
+        let parent_environment = self
+            .environment
+            .take_parent()
+            .expect("Scope to have parent.");
+
+        self.environment = parent_environment;
     }
 }
 
@@ -113,17 +131,23 @@ impl Visitor<Result<Value>> for Interpreter {
         Ok(value)
     }
 
-    fn visit_var_expression(
+    fn visit_set_expression(
         &mut self,
-        var_expression: &VarExpression,
+        set_expression: &SetExpression,
     ) -> Result<Value> {
-        let VarExpression { name, value, scope } = var_expression;
+        let SetExpression { name, value, scope } = set_expression;
 
         let value = value.accept(self)?;
 
+        self.enter_scope();
+
         self.environment.insert(name.lexeme().to_owned(), value);
 
-        scope.accept(self)
+        let value = scope.accept(self)?;
+
+        self.exit_scope();
+
+        Ok(value)
     }
 
     fn visit_function_call(
