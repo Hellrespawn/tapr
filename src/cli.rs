@@ -1,7 +1,8 @@
+use crate::error::{Error, ErrorKind};
 use crate::lexer::Lexer;
 use crate::parser::Parser;
 use crate::visitor::interpreter::{Interpreter, Value};
-use crate::{Error, Result};
+use crate::Result;
 use rustyline::error::ReadlineError;
 
 pub fn main() {
@@ -10,7 +11,7 @@ pub fn main() {
     let result = match args.len() {
         1 => repl(),
         2 => run_file(&args.nth(1).expect("Args should be manually checked.")),
-        _ => Err(Error::UsageError),
+        _ => Err(Error::without_location(ErrorKind::UsageError)),
     };
 
     if let Err(error) = result {
@@ -38,8 +39,9 @@ fn repl() -> Result<()> {
 
                 let result = run_code(&line, &mut intp);
 
-                if let Ok(value) = result {
-                    writeln!(intp.stdout, "{value}")?;
+                match result {
+                    Ok(value) => println!("{value}"),
+                    Err(error) => println!("{error}"),
                 }
             }
             Err(ReadlineError::Interrupted) => {

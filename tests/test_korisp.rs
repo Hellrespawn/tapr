@@ -1,14 +1,14 @@
 mod common;
 
 use common::{run_test, TestResult};
+use korisp::error::ErrorKind;
 use korisp::visitor::interpreter::Value;
-use korisp::Error;
 
 #[test]
 fn test_empty_input() -> TestResult {
-    let result = run_test("", Value::Nil).unwrap_err();
+    let error = run_test("", Value::Nil).unwrap_err();
 
-    assert!(matches!(result, Error::EmptyInput));
+    assert!(matches!(error.kind, ErrorKind::EmptyInput));
 
     Ok(())
 }
@@ -17,7 +17,7 @@ fn test_empty_input() -> TestResult {
 fn test_unmatched_parenthesis() -> TestResult {
     let error = run_test("(", Value::Nil).unwrap_err();
 
-    if let Error::UnmatchedParenthesis { .. } = error {
+    if let ErrorKind::UnmatchedParenthesis { .. } = error.kind {
         Ok(())
     } else {
         panic!("Expected Error::UnmatchedParenthesis, got {}", error);

@@ -3,8 +3,9 @@ mod builtin;
 pub use builtin::BUILTIN_FUNCTIONS;
 
 use super::{Interpreter, Value};
+use crate::error::{Error, ErrorKind};
 use crate::parser::ast::Node;
-use crate::{Error, Result};
+use crate::Result;
 pub trait Function: Sync + Send {
     fn call(
         &self,
@@ -32,13 +33,13 @@ impl Arguments {
         if condition {
             Ok(())
         } else {
-            Err(Error::WrongAmountOfArgs {
+            Err(Error::without_location(ErrorKind::WrongAmountOfArgs {
                 expected: match self {
                     Arguments::Fixed(args) => format!(">= {args}"),
                     Arguments::Minimum(args) => format!("{args}"),
                 },
                 actual: number_of_arguments,
-            })
+            }))
         }
     }
 

@@ -5,18 +5,16 @@ mod value;
 pub use value::Value;
 
 use self::environment::Environment;
+use crate::error::{Error, ErrorKind};
 use crate::parser::ast::*;
 use crate::token::Token;
 use crate::visitor::Visitor;
-use crate::{Error, Result};
+use crate::Result;
 use function::{Function, BUILTIN_FUNCTIONS};
-use std::io::Write;
 
 pub struct Interpreter {
     environment: Environment,
     parser_no: usize,
-    pub stdout: Box<dyn Write>,
-    stderr: Box<dyn Write>,
 }
 
 impl Default for Interpreter {
@@ -27,53 +25,35 @@ impl Default for Interpreter {
 
 impl Interpreter {
     pub fn new() -> Self {
-        Interpreter::custom_sinks(
-            Box::new(std::io::stdout()),
-            Box::new(std::io::stderr()),
-        )
-    }
-
-    pub fn custom_sinks(
-        stdout: Box<dyn Write>,
-        stderr: Box<dyn Write>,
-    ) -> Self {
         Self {
             environment: Environment::new(),
             parser_no: 1,
-            stdout,
-            stderr,
         }
     }
 
     pub fn interpret(&mut self, program: &Node) -> Result<Value> {
-        let result = program.accept(self);
-
-        if let Err(error) = &result {
-            writeln!(self.stderr, "{error}")?;
-        }
-
-        result
+        program.accept(self)
     }
 
     fn get_function(name: &Token) -> Result<&dyn Function> {
         let function = BUILTIN_FUNCTIONS.get(name.lexeme());
 
-        function.map(|f| &**f).ok_or(Error::UndefinedSymbol {
-            symbol: name.lexeme().to_owned(),
-            line_no: name.line_no,
-            col_no: name.col_no,
-        })
+        function.map(|f| &**f).ok_or(Error::new(
+            name.line_no,
+            name.col_no,
+            ErrorKind::UndefinedSymbol(name.lexeme().to_owned()),
+        ))
     }
 
     fn evaluate_symbol(&self, name: &Token) -> Result<Value> {
         if let Some(value) = self.environment.get(name.lexeme()) {
             Ok(value.clone())
         } else {
-            Err(Error::UndefinedSymbol {
-                symbol: name.lexeme().to_owned(),
-                line_no: name.line_no,
-                col_no: name.col_no,
-            })
+            Err(Error::new(
+                name.line_no,
+                name.col_no,
+                ErrorKind::UndefinedSymbol(name.lexeme().to_owned()),
+            ))
         }
     }
 

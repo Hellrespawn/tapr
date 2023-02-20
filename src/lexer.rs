@@ -1,5 +1,6 @@
+use crate::error::{Error, ErrorKind};
 use crate::token::{Token, TokenType};
-use crate::{Error, Result};
+use crate::Result;
 use once_cell::sync::Lazy;
 
 static DEBUG_TOKENS: Lazy<bool> =
@@ -38,11 +39,9 @@ impl<'l> Lexer<'l> {
                 _ if self.is_number() => self.number()?,
                 _ if self.is_character() => self.keyword_or_symbol(),
                 _ => {
-                    return Err(Error::UnknownCharacter {
-                        character,
-                        line_no: self.line_no,
-                        col_no: self.col_no,
-                    })
+                    return Err(self.error_at_current(
+                        ErrorKind::UnknownCharacter(character),
+                    ))
                 }
             };
 
@@ -54,6 +53,14 @@ impl<'l> Lexer<'l> {
         } else {
             Ok(None)
         }
+    }
+
+    fn error(line_no: usize, col_no: usize, kind: ErrorKind) -> Error {
+        Error::new(line_no, col_no, kind)
+    }
+
+    fn error_at_current(&self, kind: ErrorKind) -> Error {
+        Self::error(self.line_no, self.col_no, kind)
     }
 
     fn get_character(&self, offset: usize) -> Option<char> {
@@ -160,7 +167,11 @@ impl<'l> Lexer<'l> {
 
         while self.current_character() != Some('"') {
             if self.at_end() {
-                return Err(Error::UnterminatedString { line_no, col_no });
+                return Err(Self::error(
+                    line_no,
+                    col_no,
+                    ErrorKind::UnterminatedString,
+                ));
             }
 
             string.push(self.current_character().unwrap());
@@ -188,10 +199,11 @@ impl<'l> Lexer<'l> {
 
         if self.current_character() == Some('.') {
             if !self.is_next_number() {
-                return Err(Error::DecimalPointNotFollowedByDigits {
+                return Err(Self::error(
                     line_no,
                     col_no,
-                });
+                    ErrorKind::DecimalPointNotFollowedByDigits,
+                ));
             }
 
             string.push('.');
@@ -311,11 +323,11 @@ mod tests {
 
     #[test]
     fn test_invalid_number() {
-        let result = lexer_test("12.", &[number(0., 0, 0)]);
+        let error = lexer_test("12.", &[number(0., 0, 0)]).unwrap_err();
 
         assert!(matches!(
-            result,
-            Err(Error::DecimalPointNotFollowedByDigits { .. })
+            error.kind,
+            ErrorKind::DecimalPointNotFollowedByDigits { .. }
         ));
     }
 
@@ -330,9 +342,10 @@ mod tests {
 
     #[test]
     fn test_unterminated_string() {
-        let result = lexer_test("\"Unterminated string", &[string("", 0, 0)]);
+        let error = lexer_test("\"Unterminated string", &[string("", 0, 0)])
+            .unwrap_err();
 
-        assert!(matches!(result, Err(Error::UnterminatedString { .. })));
+        assert!(matches!(error.kind, ErrorKind::UnterminatedString { .. }));
     }
 
     #[test]
@@ -345,11 +358,11 @@ mod tests {
 
     #[test]
     fn test_invalid_characters() {
-        let result = lexer_test("[]", &[]);
+        let error = lexer_test("[]", &[]).unwrap_err();
 
         assert!(matches!(
-            result,
-            Err(Error::UnknownCharacter{ character: string, ..}) if string == '['
+            error.kind,
+            ErrorKind::UnknownCharacter(character) if character == '['
         ));
     }
 

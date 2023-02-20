@@ -1,7 +1,8 @@
+use crate::error::{Error, ErrorKind};
 use crate::parser::ast::Node;
 use crate::visitor::interpreter::function::{Arguments, Function};
 use crate::visitor::interpreter::{Interpreter, Value};
-use crate::{Error, Result};
+use crate::Result;
 
 #[derive(Debug, Copy, Clone)]
 pub enum ArithmeticOp {
@@ -76,16 +77,16 @@ impl Function for Increment {
                 *value += 1.0;
                 Ok(Value::Nil)
             } else {
-                Err(Error::InvalidArguments {
+                Err(Error::without_location(ErrorKind::InvalidArguments {
                     expected: "Number",
                     values: evaluated_args,
-                })
+                }))
             }
         } else {
-            Err(Error::InvalidArguments {
+            Err(Error::without_location(ErrorKind::InvalidArguments {
                 expected: "String",
                 values: evaluated_args,
-            })
+            }))
         }
     }
 }

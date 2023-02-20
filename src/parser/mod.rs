@@ -1,8 +1,9 @@
 use self::ast::*;
+use crate::error::{Error, ErrorKind};
 use crate::lexer::Lexer;
 use crate::token::{Token, TokenType};
 use crate::visitor::graph::DotVisitor;
-use crate::{Error, Result};
+use crate::Result;
 use once_cell::sync::Lazy;
 
 pub mod ast;
@@ -63,22 +64,32 @@ impl<'p> Parser<'p> {
         Ok(())
     }
 
+    fn error(line_no: usize, col_no: usize, kind: ErrorKind) -> Error {
+        Error::new(line_no, col_no, kind)
+    }
+
+    fn error_at_current(&self, kind: ErrorKind) -> Error {
+        let (line_no, col_no) = self.current_location();
+
+        Self::error(line_no, col_no, kind)
+    }
+
+    fn error_at_previous(&self, kind: ErrorKind) -> Error {
+        let (line_no, col_no) = self.previous_location();
+
+        Self::error(line_no, col_no, kind)
+    }
+
     fn consume(
         &mut self,
         expected_type: TokenType,
         message: &str,
     ) -> Result<()> {
         if self.matches(expected_type) {
-            self.advance()?;
-            Ok(())
+            self.advance()
         } else {
-            let (line_no, col_no) = self.previous_location();
-
-            Err(Error::ConsumeError {
-                message: message.to_owned(),
-                line_no,
-                col_no,
-            })
+            Err(self
+                .error_at_previous(ErrorKind::ConsumeError(message.to_owned())))
         }
     }
 
@@ -116,13 +127,9 @@ impl<'p> Parser<'p> {
         let expression = Box::new(self.expression()?);
 
         if self.current_token.is_some() {
-            let (line_no, col_no) = self.current_location();
-
-            Err(Error::Parser {
-                message: "Program must contain a single expression.".to_owned(),
-                line_no,
-                col_no,
-            })
+            Err(self.error_at_current(ErrorKind::ParserError(
+                "Program must contain a single expression.".to_owned(),
+            )))
         } else {
             Ok(Program { expression })
         }
@@ -135,7 +142,11 @@ impl<'p> Parser<'p> {
 
         while !self.matches(TokenType::RightParen) {
             if self.current_token.is_none() {
-                return Err(Error::UnmatchedParenthesis { line_no, col_no });
+                return Err(Self::error(
+                    line_no,
+                    col_no,
+                    ErrorKind::UnmatchedParenthesis,
+                ));
             }
 
             expressions.push(self.expression()?);
@@ -208,15 +219,13 @@ impl<'p> Parser<'p> {
 
     fn single_variable(&mut self) -> Result<Variable> {
         let Atom::Symbol(name) = self.atom()? else {
-            let (line_no, col_no) = self.previous_location();
-
             return Err(
-                Error::Parser{
-                    message: "Set expression must be followed by a symbol.".to_owned(),
-                    line_no,
-                    col_no
-                }
-            );
+                self.error_at_previous(
+                    ErrorKind::ParserError(
+                        "Set expression must be followed by a symbol.".to_owned()
+                    )
+                )
+            )
         };
 
         let node = Box::new(self.expression()?);
@@ -283,15 +292,14 @@ impl<'p> Parser<'p> {
 
     fn function_call(&mut self) -> Result<FunctionCall> {
         let Atom::Symbol(symbol) = self.atom()? else {
-            let (line_no, col_no) = self.previous_location();
 
             return Err(
-                Error::Parser{
-                    message: "Function call must be followed by a symbol.".to_owned(),
-                    line_no,
-                    col_no
-                }
-            );
+                self.error_at_previous(
+                    ErrorKind::ParserError(
+                        "Function call must be followed by a symbol.".to_owned()
+                    )
+                )
+            )
         };
 
         let arguments = self.gather_expressions_until_paren()?;
@@ -311,7 +319,11 @@ impl<'p> Parser<'p> {
 
         while !self.matches(TokenType::RightParen) {
             if self.current_token.is_none() {
-                return Err(Error::UnmatchedParenthesis { line_no, col_no });
+                return Err(Self::error(
+                    line_no,
+                    col_no,
+                    ErrorKind::UnmatchedParenthesis,
+                ));
             }
 
             expressions.push(self.expression()?);
@@ -352,17 +364,19 @@ impl<'p> Parser<'p> {
                 arguments: vec![argument.into()],
             })
         } else {
-            Err(Error::Parser {
-                message: "Quote must be followed by symbol.".to_owned(),
+            Err(Self::error(
                 line_no,
                 col_no,
-            })
+                ErrorKind::ParserError(
+                    "Quote must be followed by symbol.".to_owned(),
+                ),
+            ))
         }
     }
 
     fn atom(&mut self) -> Result<Atom> {
         let atom = match self.current_token.as_ref() {
-            None => return Err(Error::EmptyInput),
+            None => return Err(Error::without_location(ErrorKind::EmptyInput)),
             Some(token) => {
                 match token.ttype {
                     TokenType::True | TokenType::False => {
@@ -376,12 +390,9 @@ impl<'p> Parser<'p> {
                     TokenType::Symbol => Atom::Symbol(token.clone()),
                     TokenType::Nil => Atom::Nil(token.clone()),
                     ttype => {
-                        let (line_no, col_no) = self.previous_location();
-                        return Err(Error::InvalidTypeForAtom {
-                            ttype,
-                            line_no,
-                            col_no,
-                        });
+                        return Err(self.error_at_previous(
+                            ErrorKind::InvalidTypeForAtom(ttype),
+                        ));
                     }
                 }
             }

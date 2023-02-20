@@ -1,4 +1,5 @@
-use crate::{Error, Result};
+use crate::error::{Error, ErrorKind};
+use crate::Result;
 use std::cmp::Ordering;
 
 #[derive(Debug, Clone)]
@@ -59,10 +60,10 @@ impl std::ops::Add for Value {
             (Value::String(left), Value::String(right)) => {
                 Ok(Value::String(format!("{left}{right}")))
             }
-            _ => Err(Error::InvalidArguments {
+            _ => Err(Error::without_location(ErrorKind::InvalidArguments {
                 expected: "Numbers or Strings",
                 values: vec![self, rhs],
-            }),
+            })),
         }
     }
 }
@@ -74,10 +75,10 @@ impl std::ops::Sub for Value {
         if let (Value::Number(left), Value::Number(right)) = (&self, &rhs) {
             Ok(Value::Number(left - right))
         } else {
-            Err(Error::InvalidArguments {
+            Err(Error::without_location(ErrorKind::InvalidArguments {
                 expected: "Numbers",
                 values: vec![self, rhs],
-            })
+            }))
         }
     }
 }
@@ -89,10 +90,10 @@ impl std::ops::Mul for Value {
         if let (Value::Number(left), Value::Number(right)) = (&self, &rhs) {
             Ok(Value::Number(left * right))
         } else {
-            Err(Error::InvalidArguments {
+            Err(Error::without_location(ErrorKind::InvalidArguments {
                 expected: "Numbers",
                 values: vec![self, rhs],
-            })
+            }))
         }
     }
 }
@@ -104,10 +105,10 @@ impl std::ops::Div for Value {
         if let (Value::Number(left), Value::Number(right)) = (&self, &rhs) {
             Ok(Value::Number(left / right))
         } else {
-            Err(Error::InvalidArguments {
+            Err(Error::without_location(ErrorKind::InvalidArguments {
                 expected: "Numbers",
                 values: vec![self, rhs],
-            })
+            }))
         }
     }
 }

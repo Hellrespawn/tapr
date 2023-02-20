@@ -5,11 +5,12 @@ pub use arithmetic::*;
 pub use boolean::*;
 
 use super::{Arguments, Function};
+use crate::error::{Error, ErrorKind};
 use crate::lexer::Lexer;
 use crate::parser::ast::{Atom, Node};
 use crate::parser::Parser;
 use crate::visitor::interpreter::{Interpreter, Value};
-use crate::{Error, Result};
+use crate::Result;
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::io::Write;
@@ -29,7 +30,7 @@ impl Function for PrintFunction {
         let evaluated_args =
             PrintFunction::ARGUMENTS.evaluate(intp, arguments_nodes)?;
 
-        writeln!(intp.stdout, "{}", &evaluated_args[0])?;
+        println!("{}", &evaluated_args[0]);
 
         Ok(Value::Nil)
     }
@@ -61,10 +62,10 @@ impl Function for ReadFunction {
 
             Ok(Value::String(buffer.trim_end().to_owned()))
         } else {
-            Err(Error::InvalidArguments {
+            Err(Error::without_location(ErrorKind::InvalidArguments {
                 expected: "String",
                 values: vec![evaluated_arg],
-            })
+            }))
         }
     }
 }
@@ -99,10 +100,10 @@ impl Function for EvalFunction {
 
             Ok(value)
         } else {
-            Err(Error::InvalidArguments {
+            Err(Error::without_location(ErrorKind::InvalidArguments {
                 expected: "String",
                 values: evaluated_args,
-            })
+            }))
         }
     }
 }
