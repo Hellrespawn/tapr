@@ -38,9 +38,8 @@ fn repl() -> Result<()> {
 
                 let result = run_code(&line, &mut intp);
 
-                match result {
-                    Ok(value) => println!("{value}"),
-                    Err(error) => eprintln!("{error}"),
+                if let Ok(value) = result {
+                    writeln!(intp.stdout, "{value}")?;
                 }
             }
             Err(ReadlineError::Interrupted) => {
@@ -60,7 +59,7 @@ fn repl() -> Result<()> {
 fn run_file(filename: &str) -> Result<()> {
     let source = std::fs::read_to_string(filename)?;
     let mut intp = Interpreter::new();
-    run_code(&source, &mut intp)?;
+    let _result = run_code(&source, &mut intp);
     Ok(())
 }
 

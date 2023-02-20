@@ -99,8 +99,7 @@ pub struct WhileExpression {
 
 #[derive(Debug, Clone)]
 pub struct SetExpression {
-    pub name: Token,
-    pub value: Box<Node>,
+    pub variables: Vec<Variable>,
     pub scope: Box<Node>,
 }
 
@@ -122,4 +121,10 @@ pub enum Atom {
     String(Token),
     Symbol(Token),
     Nil(Token),
+}
+
+#[derive(Debug, Clone)]
+pub struct Variable {
+    pub name: Token,
+    pub node: Box<Node>,
 }

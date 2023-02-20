@@ -10,10 +10,13 @@ use crate::token::Token;
 use crate::visitor::Visitor;
 use crate::{Error, Result};
 use function::{Function, BUILTIN_FUNCTIONS};
+use std::io::Write;
 
 pub struct Interpreter {
-    pub environment: Environment,
-    pub parser_no: usize,
+    environment: Environment,
+    parser_no: usize,
+    pub stdout: Box<dyn Write>,
+    stderr: Box<dyn Write>,
 }
 
 impl Default for Interpreter {
@@ -24,14 +27,32 @@ impl Default for Interpreter {
 
 impl Interpreter {
     pub fn new() -> Self {
+        Interpreter::custom_sinks(
+            Box::new(std::io::stdout()),
+            Box::new(std::io::stderr()),
+        )
+    }
+
+    pub fn custom_sinks(
+        stdout: Box<dyn Write>,
+        stderr: Box<dyn Write>,
+    ) -> Self {
         Self {
             environment: Environment::new(),
             parser_no: 1,
+            stdout,
+            stderr,
         }
     }
 
     pub fn interpret(&mut self, program: &Node) -> Result<Value> {
-        program.accept(self)
+        let result = program.accept(self);
+
+        if let Err(error) = &result {
+            writeln!(self.stderr, "{error}")?;
+        }
+
+        result
     }
 
     fn get_function(name: &Token) -> Result<&dyn Function> {
@@ -135,19 +156,21 @@ impl Visitor<Result<Value>> for Interpreter {
         &mut self,
         set_expression: &SetExpression,
     ) -> Result<Value> {
-        let SetExpression { name, value, scope } = set_expression;
-
-        let value = value.accept(self)?;
+        let SetExpression { variables, scope } = set_expression;
 
         self.enter_scope();
 
-        self.environment.insert(name.lexeme().to_owned(), value);
+        for Variable { name, node } in variables {
+            let value = node.accept(self)?;
 
-        let value = scope.accept(self)?;
+            self.environment.insert(name.lexeme().to_owned(), value);
+        }
+
+        let return_value = scope.accept(self)?;
 
         self.exit_scope();
 
-        Ok(value)
+        Ok(return_value)
     }
 
     fn visit_function_call(

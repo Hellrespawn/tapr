@@ -1,7 +1,6 @@
-use std::process::Command;
-
 use crate::parser::ast::*;
 use crate::visitor::Visitor;
+use std::process::Command;
 
 pub(crate) struct DotVisitor {
     counter: usize,
@@ -176,13 +175,17 @@ impl Visitor<()> for DotVisitor {
     }
 
     fn visit_set_expression(&mut self, set_expression: &SetExpression) {
-        let set_node =
-            self.new_node(&format!("Set '{}'", set_expression.name.lexeme()));
+        let set_node = self.new_node("Set");
 
-        let value_node = self.counter;
-        set_expression.value.accept(self);
+        for Variable { name, node } in &set_expression.variables {
+            let var_node = self.new_node(name.lexeme());
 
-        self.connect_nodes_with_label(set_node, value_node, "value");
+            self.connect_nodes_with_label(set_node, var_node, "variable");
+
+            let value_node = self.counter;
+            node.accept(self);
+            self.connect_nodes(var_node, value_node);
+        }
 
         let scope_node = self.counter;
         set_expression.scope.accept(self);

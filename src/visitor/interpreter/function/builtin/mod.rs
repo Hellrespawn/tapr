@@ -29,7 +29,7 @@ impl Function for PrintFunction {
         let evaluated_args =
             PrintFunction::ARGUMENTS.evaluate(intp, arguments_nodes)?;
 
-        println!("{}", &evaluated_args[0]);
+        writeln!(intp.stdout, "{}", &evaluated_args[0])?;
 
         Ok(Value::Nil)
     }

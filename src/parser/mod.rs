@@ -206,31 +206,79 @@ impl<'p> Parser<'p> {
         })
     }
 
-    fn set_expression(&mut self) -> Result<SetExpression> {
-        self.consume(TokenType::Set, "Var Expression must start with 'set'")?;
-
+    fn single_variable(&mut self) -> Result<Variable> {
         let Atom::Symbol(name) = self.atom()? else {
             let (line_no, col_no) = self.previous_location();
 
             return Err(
                 Error::Parser{
-                    message: "Var expression must be followed by a symbol.".to_owned(),
+                    message: "Set expression must be followed by a symbol.".to_owned(),
                     line_no,
                     col_no
                 }
             );
         };
 
-        let value = Box::new(self.expression()?);
+        let node = Box::new(self.expression()?);
+
+        Ok(Variable { name, node })
+    }
+
+    fn multiple_variables(&mut self) -> Result<Vec<Variable>> {
+        let mut variables = Vec::new();
+
+        loop {
+            self.consume(
+                TokenType::LeftParen,
+                "Variable declaration must start with '('",
+            )?;
+
+            variables.push(self.single_variable()?);
+
+            self.consume(
+                TokenType::RightParen,
+                "Variable declaration must end with ')'",
+            )?;
+
+            if self.matches(TokenType::RightParen) {
+                break;
+            }
+        }
+
+        Ok(variables)
+    }
+
+    fn gather_variables(&mut self) -> Result<Vec<Variable>> {
+        if self.matches(TokenType::LeftParen) {
+            self.multiple_variables()
+        } else {
+            Ok(vec![self.single_variable()?])
+        }
+    }
+
+    fn set_expression(&mut self) -> Result<SetExpression> {
+        self.consume(TokenType::Set, "Set Expression must start with 'set'")?;
+
+        self.consume(
+            TokenType::LeftParen,
+            "Set Expression variables must start with '('",
+        )?;
+
+        let variables = self.gather_variables()?;
+
+        self.consume(
+            TokenType::RightParen,
+            "Set Expression variables must end with ')'",
+        )?;
 
         let scope = Box::new(self.expression()?);
 
         self.consume(
             TokenType::RightParen,
-            "Var Expression must end with ')'",
+            "Set Expression must end with ')'",
         )?;
 
-        Ok(SetExpression { name, value, scope })
+        Ok(SetExpression { variables, scope })
     }
 
     fn function_call(&mut self) -> Result<FunctionCall> {

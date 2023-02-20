@@ -116,7 +116,7 @@ impl<'l> Lexer<'l> {
     }
 
     fn skip_comments(&mut self) {
-        if self.current_character() == Some('#') {
+        while self.current_character() == Some('#') {
             while self.current_character() != Some('\n') {
                 self.advance();
             }

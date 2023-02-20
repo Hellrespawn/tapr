@@ -1,0 +1,13 @@
+(
+    set (a 1) (
+        (print a)
+
+        (set ((b 2) (c 3)) (
+            (print b)
+            (print c)
+        ))
+
+        (print b)
+
+    )
+)
