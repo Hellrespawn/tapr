@@ -9,6 +9,7 @@ pub enum TokenType {
     If,
     While,
     Set,
+    Def,
 
     // Terminal rules
     String,

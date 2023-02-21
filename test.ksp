@@ -1,5 +1,9 @@
-(set ((a 1) (b 2)) (
-    print (
-        + a b
+(
+    (
+        def mathThree           # define function mathThree
+        (a b c)                 # declare parameters `a`, `b` and `c`
+        (+ a (* b c))           # function body
     )
-))
+    (print (mathThree 2 3 4))
+    (print (mathThree 4 5 6))
+)

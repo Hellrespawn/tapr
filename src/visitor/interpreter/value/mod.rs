@@ -1,6 +1,11 @@
+mod function;
+
+pub use function::FunctionValue;
+
 use crate::error::{Error, ErrorKind};
 use crate::Result;
 use std::cmp::Ordering;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -10,6 +15,13 @@ pub enum Value {
     String(String),
     Symbol(String),
     List(Vec<Self>),
+    Function(Arc<FunctionValue>),
+}
+
+impl From<FunctionValue> for Value {
+    fn from(value: FunctionValue) -> Self {
+        Value::Function(Arc::new(value))
+    }
 }
 
 impl PartialEq for Value {
@@ -166,6 +178,14 @@ impl Value {
         }
     }
 
+    pub fn as_function(&self) -> Option<&FunctionValue> {
+        if let Self::Function(value) = self {
+            Some(value)
+        } else {
+            None
+        }
+    }
+
     pub fn is_truthy(&self) -> bool {
         match self {
             Value::Nil => false,
@@ -193,6 +213,9 @@ impl std::fmt::Display for Value {
                 }
 
                 write!(f, "\x08)")
+            }
+            Value::Function(function_value) => {
+                write!(f, "<fn {}>", function_value.name)
             }
         }
     }

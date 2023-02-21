@@ -8,6 +8,7 @@ pub enum Node {
     WhileExpression(WhileExpression),
     SetExpression(SetExpression),
     FunctionCall(FunctionCall),
+    FunctionDefinition(FunctionDefinition),
     List(List),
     Atom(Atom),
 }
@@ -30,6 +31,9 @@ impl Node {
             }
             Node::FunctionCall(function_call) => {
                 visitor.visit_function_call(function_call)
+            }
+            Node::FunctionDefinition(function_definition) => {
+                visitor.visit_function_definition(function_definition)
             }
             Node::List(list) => visitor.visit_list(list),
             Node::Atom(atom) => visitor.visit_atom(atom),
@@ -64,6 +68,12 @@ impl From<SetExpression> for Node {
 impl From<FunctionCall> for Node {
     fn from(function_call: FunctionCall) -> Self {
         Self::FunctionCall(function_call)
+    }
+}
+
+impl From<FunctionDefinition> for Node {
+    fn from(function_definition: FunctionDefinition) -> Self {
+        Self::FunctionDefinition(function_definition)
     }
 }
 
@@ -107,6 +117,13 @@ pub struct SetExpression {
 pub struct FunctionCall {
     pub name: Token,
     pub arguments: Vec<Node>,
+}
+
+#[derive(Debug, Clone)]
+pub struct FunctionDefinition {
+    pub name: Token,
+    pub parameters: Vec<Token>,
+    pub expression: Box<Node>,
 }
 
 #[derive(Debug, Clone)]

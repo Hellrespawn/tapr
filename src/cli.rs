@@ -61,7 +61,11 @@ fn repl() -> Result<()> {
 fn run_file(filename: &str) -> Result<()> {
     let source = std::fs::read_to_string(filename)?;
     let mut intp = Interpreter::new();
-    let _result = run_code(&source, &mut intp);
+
+    if let Err(error) = run_code(&source, &mut intp) {
+        eprintln!("{error}");
+    }
+
     Ok(())
 }
 

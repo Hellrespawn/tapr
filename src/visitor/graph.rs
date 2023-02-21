@@ -206,6 +206,35 @@ impl Visitor<()> for DotVisitor {
         }
     }
 
+    fn visit_function_definition(
+        &mut self,
+        function_definition: &FunctionDefinition,
+    ) {
+        let function_node = self.new_node(&format!(
+            "Function Def\n'{}'",
+            function_definition.name.lexeme()
+        ));
+
+        for param in &function_definition.parameters {
+            let param_node = self.new_node(param.lexeme());
+            self.connect_nodes_with_label(
+                function_node,
+                param_node,
+                "Parameter",
+            );
+        }
+
+        let expression_node = self.counter;
+
+        function_definition.expression.accept(self);
+
+        self.connect_nodes_with_label(
+            function_node,
+            expression_node,
+            "Expression",
+        );
+    }
+
     fn visit_list(&mut self, list: &List) {
         let list_node = self.new_node("List");
 

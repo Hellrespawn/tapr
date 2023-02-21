@@ -6,7 +6,7 @@ use korisp::visitor::interpreter::Value;
 
 #[test]
 fn test_scope() -> TestResult {
-    let source = include_str!("scope_test.ksp");
+    let source = include_str!("variable_scope_test.ksp");
 
     let error = run_test(source, Value::Number(10.0)).unwrap_err();
 

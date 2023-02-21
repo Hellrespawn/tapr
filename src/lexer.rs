@@ -238,6 +238,7 @@ impl<'l> Lexer<'l> {
             "if" => TokenType::If,
             "while" => TokenType::While,
             "set" => TokenType::Set,
+            "def" => TokenType::Def,
             _ => TokenType::Symbol,
         };
 

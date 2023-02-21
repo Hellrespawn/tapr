@@ -5,12 +5,14 @@ mod value;
 pub use value::Value;
 
 use self::environment::Environment;
+use self::value::FunctionValue;
 use crate::error::{Error, ErrorKind};
 use crate::parser::ast::*;
 use crate::token::Token;
 use crate::visitor::Visitor;
 use crate::Result;
 use function::{Function, BUILTIN_FUNCTIONS};
+use std::sync::Arc;
 
 pub struct Interpreter {
     environment: Environment,
@@ -35,10 +37,29 @@ impl Interpreter {
         program.accept(self)
     }
 
-    fn get_function(name: &Token) -> Result<&dyn Function> {
-        let function = BUILTIN_FUNCTIONS.get(name.lexeme());
+    fn get_builtin_function(name: &str) -> Option<Arc<dyn Function>> {
+        BUILTIN_FUNCTIONS.get(name).cloned()
+    }
 
-        function.map(|f| &**f).ok_or(Error::new(
+    fn get_function_from_environment(
+        &self,
+        name: &str,
+    ) -> Option<Arc<dyn Function>> {
+        let value = self.environment.get(name);
+
+        if let Some(Value::Function(function_value)) = value {
+            Some(function_value.clone())
+        } else {
+            None
+        }
+    }
+
+    fn get_function(&self, name: &Token) -> Result<Arc<dyn Function>> {
+        let function = self
+            .get_function_from_environment(name.lexeme())
+            .or_else(|| Self::get_builtin_function(name.lexeme()));
+
+        function.ok_or(Error::new(
             name.line_no,
             name.col_no,
             ErrorKind::UndefinedSymbol(name.lexeme().to_owned()),
@@ -157,9 +178,31 @@ impl Visitor<Result<Value>> for Interpreter {
         &mut self,
         function_call: &FunctionCall,
     ) -> Result<Value> {
-        let function = Interpreter::get_function(&function_call.name)?;
+        let function = self.get_function(&function_call.name)?;
 
         function.call(self, &function_call.arguments)
+    }
+
+    fn visit_function_definition(
+        &mut self,
+        function_definition: &FunctionDefinition,
+    ) -> Result<Value> {
+        let function_value = FunctionValue::new(
+            function_definition.name.lexeme().to_owned(),
+            function_definition
+                .parameters
+                .iter()
+                .map(|param| param.lexeme().to_owned())
+                .collect(),
+            function_definition.expression.clone(),
+        );
+
+        self.environment.insert(
+            function_definition.name.lexeme().to_owned(),
+            function_value.into(),
+        );
+
+        Ok(Value::Nil)
     }
 
     fn visit_atom(&mut self, atom: &Atom) -> Result<Value> {

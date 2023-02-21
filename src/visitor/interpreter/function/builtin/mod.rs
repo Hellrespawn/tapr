@@ -14,6 +14,7 @@ use crate::Result;
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::io::Write;
+use std::sync::Arc;
 
 struct PrintFunction;
 
@@ -146,47 +147,47 @@ impl Function for QuoteFunction {
     }
 }
 
-pub static BUILTIN_FUNCTIONS: Lazy<HashMap<&str, Box<dyn Function>>> =
+pub static BUILTIN_FUNCTIONS: Lazy<HashMap<&str, Arc<dyn Function>>> =
     Lazy::new(|| {
-        let mut map: HashMap<&str, Box<dyn Function>> = HashMap::new();
+        let mut map: HashMap<&str, Arc<dyn Function>> = HashMap::new();
 
         map.insert(
             "+",
-            Box::new(ArithmeticFunction::new(ArithmeticOp::Add, 2)),
+            Arc::new(ArithmeticFunction::new(ArithmeticOp::Add, 2)),
         );
 
         map.insert(
             "-",
-            Box::new(ArithmeticFunction::new(ArithmeticOp::Subtract, 2)),
+            Arc::new(ArithmeticFunction::new(ArithmeticOp::Subtract, 2)),
         );
 
         map.insert(
             "*",
-            Box::new(ArithmeticFunction::new(ArithmeticOp::Multiply, 2)),
+            Arc::new(ArithmeticFunction::new(ArithmeticOp::Multiply, 2)),
         );
 
         map.insert(
             "/",
-            Box::new(ArithmeticFunction::new(ArithmeticOp::Divide, 2)),
+            Arc::new(ArithmeticFunction::new(ArithmeticOp::Divide, 2)),
         );
 
-        map.insert(">", Box::new(BooleanFunction::new(BooleanOp::Greater, 2)));
+        map.insert(">", Arc::new(BooleanFunction::new(BooleanOp::Greater, 2)));
         map.insert(
             ">=",
-            Box::new(BooleanFunction::new(BooleanOp::GreaterOrEqual, 2)),
+            Arc::new(BooleanFunction::new(BooleanOp::GreaterOrEqual, 2)),
         );
-        map.insert("==", Box::new(BooleanFunction::new(BooleanOp::Equal, 2)));
+        map.insert("==", Arc::new(BooleanFunction::new(BooleanOp::Equal, 2)));
         map.insert(
             "<=",
-            Box::new(BooleanFunction::new(BooleanOp::LessOrEqual, 2)),
+            Arc::new(BooleanFunction::new(BooleanOp::LessOrEqual, 2)),
         );
-        map.insert("<", Box::new(BooleanFunction::new(BooleanOp::Less, 2)));
+        map.insert("<", Arc::new(BooleanFunction::new(BooleanOp::Less, 2)));
 
-        map.insert("quote", Box::new(QuoteFunction));
-        map.insert("print", Box::new(PrintFunction));
-        map.insert("read", Box::new(ReadFunction));
-        map.insert("eval", Box::new(EvalFunction));
-        map.insert("inc", Box::new(Increment));
+        map.insert("quote", Arc::new(QuoteFunction));
+        map.insert("print", Arc::new(PrintFunction));
+        map.insert("read", Arc::new(ReadFunction));
+        map.insert("eval", Arc::new(EvalFunction));
+        map.insert("inc", Arc::new(Increment));
 
         map
     });

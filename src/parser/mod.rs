@@ -164,6 +164,7 @@ impl<'p> Parser<'p> {
                 TokenType::If => self.if_expression()?.into(),
                 TokenType::While => self.while_expression()?.into(),
                 TokenType::Set => self.set_expression()?.into(),
+                TokenType::Def => self.function_definition()?.into(),
                 TokenType::Symbol => self.function_call()?.into(),
                 _ => self.list()?.into(),
             };
@@ -218,15 +219,9 @@ impl<'p> Parser<'p> {
     }
 
     fn single_variable(&mut self) -> Result<Variable> {
-        let Atom::Symbol(name) = self.atom()? else {
-            return Err(
-                self.error_at_previous(
-                    ErrorKind::ParserError(
-                        "Set expression must be followed by a symbol.".to_owned()
-                    )
-                )
-            )
-        };
+        let name = self.consume_symbol_token(
+            "Set expression must be followed by a symbol.",
+        )?;
 
         let node = Box::new(self.expression()?);
 
@@ -290,26 +285,85 @@ impl<'p> Parser<'p> {
         Ok(SetExpression { variables, scope })
     }
 
-    fn function_call(&mut self) -> Result<FunctionCall> {
-        let Atom::Symbol(symbol) = self.atom()? else {
+    fn consume_symbol_token(&mut self, error_message: &str) -> Result<Token> {
+        let Ok(Atom::Symbol(symbol)) = self.atom() else {
 
             return Err(
                 self.error_at_previous(
                     ErrorKind::ParserError(
-                        "Function call must be followed by a symbol.".to_owned()
+                        error_message.to_owned()
                     )
                 )
             )
         };
 
+        Ok(symbol)
+    }
+
+    fn parameter(&mut self) -> Result<Token> {
+        self.consume_symbol_token("Function parameter must be a symbol.")
+    }
+
+    fn parameters(&mut self) -> Result<Vec<Token>> {
+        if self.matches(TokenType::LeftParen) {
+            self.advance()?;
+
+            let mut parameters = Vec::new();
+
+            while self.current_token.is_some()
+                && !self.matches(TokenType::RightParen)
+            {
+                parameters.push(self.parameter()?);
+            }
+
+            self.consume(
+                TokenType::RightParen,
+                "Multiple function parameters must end with ')'",
+            )?;
+
+            Ok(parameters)
+        } else {
+            Ok(vec![self.parameter()?])
+        }
+    }
+
+    fn function_definition(&mut self) -> Result<FunctionDefinition> {
+        self.consume(
+            TokenType::Def,
+            "Function definition must start with 'def'",
+        )?;
+
+        let name = self.consume_symbol_token(
+            "Function definition must have symbol for name.",
+        )?;
+
+        let parameters = self.parameters()?;
+
+        let expression = Box::new(self.expression()?);
+
+        self.consume(
+            TokenType::RightParen,
+            "Function definition must end with ')'",
+        )?;
+
+        let function_definition = FunctionDefinition {
+            name,
+            parameters,
+            expression,
+        };
+
+        Ok(function_definition)
+    }
+
+    fn function_call(&mut self) -> Result<FunctionCall> {
+        let name = self
+            .consume_symbol_token("Function call must have symbol for name.")?;
+
         let arguments = self.gather_expressions_until_paren()?;
 
         self.advance()?;
 
-        Ok(FunctionCall {
-            name: symbol,
-            arguments,
-        })
+        Ok(FunctionCall { name, arguments })
     }
 
     fn list(&mut self) -> Result<List> {

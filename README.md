@@ -10,6 +10,7 @@ Program             -> Expression
 Expression          -> SetExpression
                      | IfExpression
                      | WhileExpression
+                     | FunctionDefinition
                      | FunctionCall
                      | DataType
 
@@ -30,6 +31,11 @@ WhileExpression     -> "(" "while" Expression Expression ")"
 
                            name   arguments
 FunctionCall        -> "(" Symbol Expression* ")"
+
+                                 name
+FunctionDefinition  -> "(" "def" Symbol "(" Parameters ")" Expression ")"
+
+Parameters          -> Symbol | "(" Symbol+ ")"
 
 DataType            -> "'"? (List | Atom)
 

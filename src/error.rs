@@ -31,7 +31,7 @@ impl Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let (Some(line_no), Some(char_no)) = (self.line_no, self.col_no) {
-            write!(f, "[{}:{}] {}", line_no, char_no, self.kind)
+            write!(f, "[{line_no}:{char_no}] {}", self.kind)
         } else {
             write!(f, "{}", self.kind)
         }
@@ -54,7 +54,7 @@ impl From<rustyline::error::ReadlineError> for Error {
 
 #[derive(Debug, Error)]
 pub enum ErrorKind {
-    // Cli
+    // CLI
     #[error("Usage: {} [FILENAME]", env!("CARGO_PKG_NAME"))]
     UsageError,
 
