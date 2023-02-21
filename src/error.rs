@@ -97,7 +97,15 @@ pub enum ErrorKind {
     #[error("Undefined symbol '{0}'")]
     UndefinedSymbol(String),
 
-    #[error("Invalid operands '{values:?}', expected '{expected}'")]
+    #[error(
+        "Invalid operands '{}', expected '{expected}'",
+        values
+            .iter()
+            .map(std::string::ToString::to_string)
+            .collect::<Vec<_>>()
+            .join(", ")
+        )
+    ]
     InvalidArguments {
         expected: &'static str,
         values: Vec<Value>,

@@ -29,11 +29,12 @@ IfExpression        -> "(" "if" Expression Expression Expression? ")"
                                    condition  then
 WhileExpression     -> "(" "while" Expression Expression ")"
 
+                                 name
+FunctionDefinition  -> "(" "def" Symbol "(" Parameters ")" Expression ")"
+
                            name   arguments
 FunctionCall        -> "(" Symbol Expression* ")"
 
-                                 name
-FunctionDefinition  -> "(" "def" Symbol "(" Parameters ")" Expression ")"
 
 Parameters          -> Symbol | "(" Symbol+ ")"
 
