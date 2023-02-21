@@ -6,8 +6,8 @@ pub use arithmetic::*;
 pub use boolean::*;
 pub use list::*;
 
-use super::function::Arguments;
-use super::Function;
+use super::callable::Arguments;
+use super::Callable;
 use crate::error::{Error, ErrorKind};
 use crate::interpreter::{Interpreter, Value};
 use crate::parser::ast::{Atom, Node};
@@ -22,7 +22,7 @@ impl PrintFunction {
     const ARGUMENTS: Arguments = Arguments::Fixed(1);
 }
 
-impl Function for PrintFunction {
+impl Callable for PrintFunction {
     fn call(
         &self,
         intp: &mut Interpreter,
@@ -48,7 +48,7 @@ impl ReadFunction {
     const ARGUMENTS: Arguments = Arguments::Fixed(1);
 }
 
-impl Function for ReadFunction {
+impl Callable for ReadFunction {
     fn call(
         &self,
         intp: &mut Interpreter,
@@ -87,7 +87,7 @@ impl EvalFunction {
     const ARGUMENTS: Arguments = Arguments::Fixed(1);
 }
 
-impl Function for EvalFunction {
+impl Callable for EvalFunction {
     fn call(
         &self,
         intp: &mut Interpreter,
@@ -124,7 +124,7 @@ impl QuoteFunction {
     const ARGUMENTS: Arguments = Arguments::Fixed(1);
 }
 
-impl Function for QuoteFunction {
+impl Callable for QuoteFunction {
     fn call(
         &self,
         intp: &mut Interpreter,
@@ -161,12 +161,12 @@ impl Function for QuoteFunction {
     }
 }
 
-pub fn get_builtin_functions() -> Vec<Rc<dyn Function>> {
+pub fn get_builtin_functions() -> Vec<Rc<dyn Callable>> {
     vec![
-        Rc::new(ArithmeticFunction::new(ArithmeticOp::Add, 2)),
-        Rc::new(ArithmeticFunction::new(ArithmeticOp::Subtract, 2)),
-        Rc::new(ArithmeticFunction::new(ArithmeticOp::Multiply, 2)),
-        Rc::new(ArithmeticFunction::new(ArithmeticOp::Divide, 2)),
+        Rc::new(ArithmeticFunction::new(ArithmeticType::Add, 2)),
+        Rc::new(ArithmeticFunction::new(ArithmeticType::Subtract, 2)),
+        Rc::new(ArithmeticFunction::new(ArithmeticType::Multiply, 2)),
+        Rc::new(ArithmeticFunction::new(ArithmeticType::Divide, 2)),
         Rc::new(BooleanFunction::new(BooleanOp::Greater, 2)),
         Rc::new(BooleanFunction::new(BooleanOp::GreaterOrEqual, 2)),
         Rc::new(BooleanFunction::new(BooleanOp::Equal, 2)),

@@ -3,7 +3,7 @@ use crate::error::{Error, ErrorKind};
 use crate::parser::ast::Node;
 use crate::Result;
 
-pub trait Function: std::fmt::Debug {
+pub trait Callable: std::fmt::Debug {
     fn call(
         &self,
         intp: &mut Interpreter,

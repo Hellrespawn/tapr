@@ -1,18 +1,18 @@
 use super::Value;
 use crate::error::{Error, ErrorKind};
-use crate::interpreter::function::Function;
+use crate::interpreter::callable::Callable;
 use crate::interpreter::Interpreter;
 use crate::parser::ast::Node;
 use crate::Result;
 
 #[derive(Debug, Clone)]
-pub struct FunctionValue {
+pub struct Function {
     pub name: String,
     pub parameters: Vec<String>,
     pub node: Box<Node>,
 }
 
-impl FunctionValue {
+impl Function {
     pub fn new(name: String, parameters: Vec<String>, node: Box<Node>) -> Self {
         Self {
             name,
@@ -33,7 +33,7 @@ impl FunctionValue {
     }
 }
 
-impl Function for FunctionValue {
+impl Callable for Function {
     fn call(
         &self,
         intp: &mut Interpreter,

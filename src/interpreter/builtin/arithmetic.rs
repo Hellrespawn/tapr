@@ -1,11 +1,11 @@
 use crate::error::{Error, ErrorKind};
-use crate::interpreter::function::{Arguments, Function};
+use crate::interpreter::callable::{Arguments, Callable};
 use crate::interpreter::{Interpreter, Value};
 use crate::parser::ast::Node;
 use crate::Result;
 
 #[derive(Debug, Copy, Clone)]
-pub enum ArithmeticOp {
+pub enum ArithmeticType {
     Add,
     Subtract,
     Multiply,
@@ -14,29 +14,29 @@ pub enum ArithmeticOp {
 
 #[derive(Debug)]
 pub struct ArithmeticFunction {
-    operator: ArithmeticOp,
+    atype: ArithmeticType,
     arguments: Arguments,
 }
 
 impl ArithmeticFunction {
-    pub fn new(operator: ArithmeticOp, arguments: usize) -> Self {
+    pub fn new(atype: ArithmeticType, arguments: usize) -> Self {
         Self {
-            operator,
+            atype,
             arguments: Arguments::Minimum(arguments),
         }
     }
 
     pub fn op(&self, left: &Value, right: &Value) -> Result<Value> {
-        match self.operator {
-            ArithmeticOp::Add => left.clone() + right.clone(),
-            ArithmeticOp::Subtract => left.clone() - right.clone(),
-            ArithmeticOp::Multiply => left.clone() * right.clone(),
-            ArithmeticOp::Divide => left.clone() / right.clone(),
+        match self.atype {
+            ArithmeticType::Add => left.clone() + right.clone(),
+            ArithmeticType::Subtract => left.clone() - right.clone(),
+            ArithmeticType::Multiply => left.clone() * right.clone(),
+            ArithmeticType::Divide => left.clone() / right.clone(),
         }
     }
 }
 
-impl Function for ArithmeticFunction {
+impl Callable for ArithmeticFunction {
     fn call(
         &self,
         intp: &mut Interpreter,
@@ -56,11 +56,11 @@ impl Function for ArithmeticFunction {
     }
 
     fn name(&self) -> &str {
-        match self.operator {
-            ArithmeticOp::Add => "+",
-            ArithmeticOp::Subtract => "-",
-            ArithmeticOp::Multiply => "*",
-            ArithmeticOp::Divide => "/",
+        match self.atype {
+            ArithmeticType::Add => "+",
+            ArithmeticType::Subtract => "-",
+            ArithmeticType::Multiply => "*",
+            ArithmeticType::Divide => "/",
         }
     }
 }
@@ -72,7 +72,7 @@ impl Increment {
     const ARGUMENTS: Arguments = Arguments::Fixed(1);
 }
 
-impl Function for Increment {
+impl Callable for Increment {
     fn call(
         &self,
         intp: &mut Interpreter,

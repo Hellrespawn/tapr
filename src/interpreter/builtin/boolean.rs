@@ -1,4 +1,4 @@
-use crate::interpreter::function::{Arguments, Function};
+use crate::interpreter::callable::{Arguments, Callable};
 use crate::interpreter::{Interpreter, Value};
 use crate::parser::ast::Node;
 use crate::Result;
@@ -37,7 +37,7 @@ impl BooleanFunction {
     }
 }
 
-impl Function for BooleanFunction {
+impl Callable for BooleanFunction {
     fn call(
         &self,
         intp: &mut Interpreter,

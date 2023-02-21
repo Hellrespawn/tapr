@@ -1,12 +1,12 @@
 mod builtin;
+mod callable;
 mod environment;
-mod function;
 mod value;
 
 pub use value::Value;
 
 use self::environment::Environment;
-use self::value::FunctionValue;
+use self::value::Function;
 use crate::error::{Error, ErrorKind};
 use crate::lexer::Lexer;
 use crate::parser::ast::*;
@@ -14,7 +14,7 @@ use crate::parser::Parser;
 use crate::token::Token;
 use crate::visitor::Visitor;
 use crate::Result;
-use function::Function;
+use callable::Callable;
 use std::io::Write;
 use std::rc::Rc;
 
@@ -83,21 +83,8 @@ impl<'i> Interpreter<'i> {
         result
     }
 
-    fn get_function_from_environment(
-        &self,
-        name: &str,
-    ) -> Option<Rc<dyn Function>> {
-        let value = self.environment.get(name);
-
-        if let Some(Value::Function(function_value)) = value {
-            Some(function_value.clone())
-        } else {
-            None
-        }
-    }
-
-    fn get_function(&self, name: &Token) -> Result<Rc<dyn Function>> {
-        let function = self.get_function_from_environment(name.lexeme());
+    fn get_function(&self, name: &Token) -> Result<Rc<dyn Callable>> {
+        let function = self.environment.get_function(name.lexeme());
         function.ok_or(Error::new(
             name.line_no,
             name.col_no,
@@ -226,7 +213,7 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
         &mut self,
         function_definition: &FunctionDefinition,
     ) -> Result<Value> {
-        let function_value = FunctionValue::new(
+        let function_value = Function::new(
             function_definition.name.lexeme().to_owned(),
             function_definition
                 .parameters

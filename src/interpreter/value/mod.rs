@@ -1,13 +1,13 @@
 mod function;
 
-pub use function::FunctionValue;
+pub use function::Function;
 
 use crate::error::{Error, ErrorKind};
 use crate::Result;
 use std::cmp::Ordering;
 use std::rc::Rc;
 
-use super::function::Function;
+use super::callable::Callable;
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -17,11 +17,11 @@ pub enum Value {
     String(String),
     Symbol(String),
     List(Vec<Self>),
-    Function(Rc<dyn Function>),
+    Function(Rc<dyn Callable>),
 }
 
-impl From<FunctionValue> for Value {
-    fn from(value: FunctionValue) -> Self {
+impl From<Function> for Value {
+    fn from(value: Function) -> Self {
         Value::Function(Rc::new(value))
     }
 }
@@ -180,7 +180,7 @@ impl Value {
         }
     }
 
-    pub fn as_function(&self) -> Option<Rc<dyn Function>> {
+    pub fn as_function(&self) -> Option<Rc<dyn Callable>> {
         if let Self::Function(value) = self {
             Some(value.clone())
         } else {

@@ -1,6 +1,8 @@
 use super::builtin::get_builtin_functions;
+use super::callable::Callable;
 use super::Value;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 pub struct Environment {
     map: HashMap<String, Value>,
@@ -49,6 +51,16 @@ impl Environment {
                 None
             }
         })
+    }
+
+    pub fn get_function(&self, name: &str) -> Option<Rc<dyn Callable>> {
+        let value = self.get(name);
+
+        if let Some(Value::Function(function_value)) = value {
+            Some(function_value.clone())
+        } else {
+            None
+        }
     }
 
     pub fn get_mut(&mut self, key: &str) -> Option<&mut Value> {

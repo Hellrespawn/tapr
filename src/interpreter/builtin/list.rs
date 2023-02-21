@@ -1,5 +1,5 @@
 use crate::error::{Error, ErrorKind};
-use crate::interpreter::function::{Arguments, Function};
+use crate::interpreter::callable::{Arguments, Callable};
 use crate::interpreter::{Interpreter, Value};
 use crate::parser::ast::Node;
 use crate::Result;
@@ -11,7 +11,7 @@ impl TailFunction {
     const ARGUMENTS: Arguments = Arguments::Fixed(1);
 }
 
-impl Function for TailFunction {
+impl Callable for TailFunction {
     fn call(
         &self,
         intp: &mut Interpreter,
