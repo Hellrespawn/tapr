@@ -11,11 +11,10 @@ use crate::parser::ast::{Atom, Node};
 use crate::parser::Parser;
 use crate::visitor::interpreter::{Interpreter, Value};
 use crate::Result;
-use once_cell::sync::Lazy;
-use std::collections::HashMap;
 use std::io::Write;
-use std::sync::Arc;
+use std::rc::Rc;
 
+#[derive(Debug)]
 struct PrintFunction;
 
 impl PrintFunction {
@@ -35,8 +34,13 @@ impl Function for PrintFunction {
 
         Ok(Value::Nil)
     }
+
+    fn name(&self) -> &str {
+        "print"
+    }
 }
 
+#[derive(Debug)]
 struct ReadFunction;
 
 impl ReadFunction {
@@ -69,8 +73,13 @@ impl Function for ReadFunction {
             }))
         }
     }
+
+    fn name(&self) -> &str {
+        "read"
+    }
 }
 
+#[derive(Debug)]
 struct EvalFunction;
 
 impl EvalFunction {
@@ -107,7 +116,13 @@ impl Function for EvalFunction {
             }))
         }
     }
+
+    fn name(&self) -> &str {
+        "eval"
+    }
 }
+
+#[derive(Debug)]
 struct QuoteFunction;
 
 impl QuoteFunction {
@@ -145,49 +160,27 @@ impl Function for QuoteFunction {
             }
         }
     }
+
+    fn name(&self) -> &str {
+        "quote"
+    }
 }
 
-pub static BUILTIN_FUNCTIONS: Lazy<HashMap<&str, Arc<dyn Function>>> =
-    Lazy::new(|| {
-        let mut map: HashMap<&str, Arc<dyn Function>> = HashMap::new();
-
-        map.insert(
-            "+",
-            Arc::new(ArithmeticFunction::new(ArithmeticOp::Add, 2)),
-        );
-
-        map.insert(
-            "-",
-            Arc::new(ArithmeticFunction::new(ArithmeticOp::Subtract, 2)),
-        );
-
-        map.insert(
-            "*",
-            Arc::new(ArithmeticFunction::new(ArithmeticOp::Multiply, 2)),
-        );
-
-        map.insert(
-            "/",
-            Arc::new(ArithmeticFunction::new(ArithmeticOp::Divide, 2)),
-        );
-
-        map.insert(">", Arc::new(BooleanFunction::new(BooleanOp::Greater, 2)));
-        map.insert(
-            ">=",
-            Arc::new(BooleanFunction::new(BooleanOp::GreaterOrEqual, 2)),
-        );
-        map.insert("==", Arc::new(BooleanFunction::new(BooleanOp::Equal, 2)));
-        map.insert(
-            "<=",
-            Arc::new(BooleanFunction::new(BooleanOp::LessOrEqual, 2)),
-        );
-        map.insert("<", Arc::new(BooleanFunction::new(BooleanOp::Less, 2)));
-
-        map.insert("quote", Arc::new(QuoteFunction));
-        map.insert("print", Arc::new(PrintFunction));
-        map.insert("read", Arc::new(ReadFunction));
-        map.insert("eval", Arc::new(EvalFunction));
-        map.insert("inc", Arc::new(Increment));
-
-        map
-    });
+pub fn get_builtin_functions() -> Vec<Rc<dyn Function>> {
+    vec![
+        Rc::new(ArithmeticFunction::new(ArithmeticOp::Add, 2)),
+        Rc::new(ArithmeticFunction::new(ArithmeticOp::Subtract, 2)),
+        Rc::new(ArithmeticFunction::new(ArithmeticOp::Multiply, 2)),
+        Rc::new(ArithmeticFunction::new(ArithmeticOp::Divide, 2)),
+        Rc::new(BooleanFunction::new(BooleanOp::Greater, 2)),
+        Rc::new(BooleanFunction::new(BooleanOp::GreaterOrEqual, 2)),
+        Rc::new(BooleanFunction::new(BooleanOp::Equal, 2)),
+        Rc::new(BooleanFunction::new(BooleanOp::LessOrEqual, 2)),
+        Rc::new(BooleanFunction::new(BooleanOp::Less, 2)),
+        Rc::new(QuoteFunction),
+        Rc::new(PrintFunction),
+        Rc::new(ReadFunction),
+        Rc::new(EvalFunction),
+        Rc::new(Increment),
+    ]
+}

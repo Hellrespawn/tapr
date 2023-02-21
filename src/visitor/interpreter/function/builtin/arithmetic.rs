@@ -12,6 +12,7 @@ pub enum ArithmeticOp {
     Divide,
 }
 
+#[derive(Debug)]
 pub struct ArithmeticFunction {
     operator: ArithmeticOp,
     arguments: Arguments,
@@ -53,8 +54,18 @@ impl Function for ArithmeticFunction {
 
         Ok(acc)
     }
+
+    fn name(&self) -> &str {
+        match self.operator {
+            ArithmeticOp::Add => "+",
+            ArithmeticOp::Subtract => "-",
+            ArithmeticOp::Multiply => "*",
+            ArithmeticOp::Divide => "/",
+        }
+    }
 }
 
+#[derive(Debug)]
 pub struct Increment;
 
 impl Increment {
@@ -88,5 +99,9 @@ impl Function for Increment {
                 values: evaluated_args,
             }))
         }
+    }
+
+    fn name(&self) -> &str {
+        "inc"
     }
 }

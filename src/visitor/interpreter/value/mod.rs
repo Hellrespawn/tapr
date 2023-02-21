@@ -5,7 +5,9 @@ pub use function::FunctionValue;
 use crate::error::{Error, ErrorKind};
 use crate::Result;
 use std::cmp::Ordering;
-use std::sync::Arc;
+use std::rc::Rc;
+
+use super::function::Function;
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -15,12 +17,12 @@ pub enum Value {
     String(String),
     Symbol(String),
     List(Vec<Self>),
-    Function(Arc<FunctionValue>),
+    Function(Rc<dyn Function>),
 }
 
 impl From<FunctionValue> for Value {
     fn from(value: FunctionValue) -> Self {
-        Value::Function(Arc::new(value))
+        Value::Function(Rc::new(value))
     }
 }
 
@@ -178,9 +180,9 @@ impl Value {
         }
     }
 
-    pub fn as_function(&self) -> Option<&FunctionValue> {
+    pub fn as_function(&self) -> Option<Rc<dyn Function>> {
         if let Self::Function(value) = self {
-            Some(value)
+            Some(value.clone())
         } else {
             None
         }
@@ -215,7 +217,7 @@ impl std::fmt::Display for Value {
                 write!(f, "\x08)")
             }
             Value::Function(function_value) => {
-                write!(f, "<fn {}>", function_value.name)
+                write!(f, "<fn {}>", function_value.name())
             }
         }
     }

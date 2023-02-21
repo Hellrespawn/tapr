@@ -61,4 +61,8 @@ impl Function for FunctionValue {
 
         Ok(value)
     }
+
+    fn name(&self) -> &str {
+        &self.name
+    }
 }

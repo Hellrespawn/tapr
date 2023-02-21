@@ -1,3 +1,4 @@
+use super::function::get_builtin_functions;
 use super::Value;
 use std::collections::HashMap;
 
@@ -7,7 +8,19 @@ pub struct Environment {
 }
 
 impl Environment {
-    pub fn new() -> Self {
+    pub fn root() -> Self {
+        let builtins = get_builtin_functions();
+
+        let mut map = HashMap::new();
+
+        for function in builtins {
+            map.insert(function.name().to_owned(), Value::Function(function));
+        }
+
+        Self { map, parent: None }
+    }
+
+    pub fn empty() -> Self {
         Self {
             map: HashMap::new(),
             parent: None,
@@ -51,6 +64,6 @@ impl Environment {
 
 impl Default for Environment {
     fn default() -> Self {
-        Self::new()
+        Self::empty()
     }
 }

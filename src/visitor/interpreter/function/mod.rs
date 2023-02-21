@@ -1,17 +1,20 @@
 mod builtin;
 
-pub use builtin::BUILTIN_FUNCTIONS;
+pub use builtin::get_builtin_functions;
 
 use super::{Interpreter, Value};
 use crate::error::{Error, ErrorKind};
 use crate::parser::ast::Node;
 use crate::Result;
-pub trait Function: Sync + Send {
+
+pub trait Function: std::fmt::Debug {
     fn call(
         &self,
         intp: &mut Interpreter,
         argument_nodes: &[Node],
     ) -> Result<Value>;
+
+    fn name(&self) -> &str;
 }
 
 #[derive(Debug, Copy, Clone)]

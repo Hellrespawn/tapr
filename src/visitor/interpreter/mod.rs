@@ -11,8 +11,8 @@ use crate::parser::ast::*;
 use crate::token::Token;
 use crate::visitor::Visitor;
 use crate::Result;
-use function::{Function, BUILTIN_FUNCTIONS};
-use std::sync::Arc;
+use function::Function;
+use std::rc::Rc;
 
 pub struct Interpreter {
     environment: Environment,
@@ -28,7 +28,7 @@ impl Default for Interpreter {
 impl Interpreter {
     pub fn new() -> Self {
         Self {
-            environment: Environment::new(),
+            environment: Environment::root(),
             parser_no: 1,
         }
     }
@@ -37,14 +37,10 @@ impl Interpreter {
         program.accept(self)
     }
 
-    fn get_builtin_function(name: &str) -> Option<Arc<dyn Function>> {
-        BUILTIN_FUNCTIONS.get(name).cloned()
-    }
-
     fn get_function_from_environment(
         &self,
         name: &str,
-    ) -> Option<Arc<dyn Function>> {
+    ) -> Option<Rc<dyn Function>> {
         let value = self.environment.get(name);
 
         if let Some(Value::Function(function_value)) = value {
@@ -54,11 +50,8 @@ impl Interpreter {
         }
     }
 
-    fn get_function(&self, name: &Token) -> Result<Arc<dyn Function>> {
-        let function = self
-            .get_function_from_environment(name.lexeme())
-            .or_else(|| Self::get_builtin_function(name.lexeme()));
-
+    fn get_function(&self, name: &Token) -> Result<Rc<dyn Function>> {
+        let function = self.get_function_from_environment(name.lexeme());
         function.ok_or(Error::new(
             name.line_no,
             name.col_no,
@@ -79,7 +72,7 @@ impl Interpreter {
     }
 
     fn enter_scope(&mut self) {
-        let new_environment = Environment::new();
+        let new_environment = Environment::empty();
 
         let old_environment =
             std::mem::replace(&mut self.environment, new_environment);

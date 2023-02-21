@@ -12,6 +12,7 @@ pub enum BooleanOp {
     Less,
 }
 
+#[derive(Debug)]
 pub struct BooleanFunction {
     operator: BooleanOp,
     arguments: Arguments,
@@ -52,5 +53,15 @@ impl Function for BooleanFunction {
         });
 
         Ok(Value::Boolean(result))
+    }
+
+    fn name(&self) -> &str {
+        match self.operator {
+            BooleanOp::Greater => ">",
+            BooleanOp::GreaterOrEqual => ">=",
+            BooleanOp::Equal => "==",
+            BooleanOp::LessOrEqual => "<=",
+            BooleanOp::Less => "<",
+        }
     }
 }
