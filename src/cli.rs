@@ -1,7 +1,5 @@
 use crate::error::{Error, ErrorKind};
 use crate::interpreter::{Interpreter, Value};
-use crate::lexer::Lexer;
-use crate::parser::Parser;
 use crate::Result;
 use rustyline::error::ReadlineError;
 
@@ -10,7 +8,7 @@ pub fn main() {
 
     let result = match args.len() {
         1 => repl(),
-        2 => run_file(&args.nth(1).expect("Args should be manually checked.")),
+        2 => run_file(&args.nth(1).expect("args to have 2 elements.")),
         _ => Err(Error::without_location(ErrorKind::UsageError)),
     };
 
@@ -24,7 +22,7 @@ fn repl() -> Result<()> {
 
     let mut rl = rustyline::Editor::<()>::new().unwrap();
 
-    let mut intp = Interpreter::new();
+    let mut intp = Interpreter::repl();
 
     loop {
         let readline = rl.readline("> ").map(|s| s.trim().to_owned());
@@ -37,12 +35,7 @@ fn repl() -> Result<()> {
 
                 rl.add_history_entry(&line);
 
-                let result = run_code(&line, &mut intp);
-
-                match result {
-                    Ok(value) => println!("{value}"),
-                    Err(error) => println!("{error}"),
-                }
+                let _result = run_code(&line, &mut intp);
             }
             Err(ReadlineError::Interrupted) => {
                 break;
@@ -60,7 +53,7 @@ fn repl() -> Result<()> {
 
 fn run_file(filename: &str) -> Result<()> {
     let source = std::fs::read_to_string(filename)?;
-    let mut intp = Interpreter::new();
+    let mut intp = Interpreter::default();
 
     if let Err(error) = run_code(&source, &mut intp) {
         eprintln!("{error}");
@@ -70,11 +63,5 @@ fn run_file(filename: &str) -> Result<()> {
 }
 
 fn run_code(source: &str, intp: &mut Interpreter) -> Result<Value> {
-    let lexer = Lexer::new(source);
-
-    let mut parser = Parser::new(lexer);
-
-    let program = parser.parse()?;
-
-    intp.interpret(&program)
+    intp.interpret(source)
 }

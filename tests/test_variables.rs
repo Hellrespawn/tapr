@@ -2,7 +2,7 @@ mod common;
 
 use common::{run_test, TestResult};
 use korisp::error::ErrorKind;
-use korisp::visitor::interpreter::Value;
+use korisp::interpreter::Value;
 
 #[test]
 fn test_scope() -> TestResult {

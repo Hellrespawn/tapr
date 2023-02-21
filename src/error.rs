@@ -104,4 +104,7 @@ pub enum ErrorKind {
     },
     #[error("Expect {expected} args, got {actual}.")]
     WrongAmountOfArgs { expected: String, actual: usize },
+
+    #[error("Called `tail` on empty list.")]
+    TailOnEmptyList,
 }

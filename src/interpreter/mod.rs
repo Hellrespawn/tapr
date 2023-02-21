@@ -8,34 +8,79 @@ pub use value::Value;
 use self::environment::Environment;
 use self::value::FunctionValue;
 use crate::error::{Error, ErrorKind};
+use crate::lexer::Lexer;
 use crate::parser::ast::*;
+use crate::parser::Parser;
 use crate::token::Token;
 use crate::visitor::Visitor;
 use crate::Result;
 use function::Function;
+use std::io::Write;
 use std::rc::Rc;
 
-pub struct Interpreter {
+pub struct Interpreter<'i> {
+    pub output: Box<dyn Write + 'i>,
     environment: Environment,
     parser_no: usize,
+    repl: bool,
 }
 
-impl Default for Interpreter {
+impl<'i> Default for Interpreter<'i> {
     fn default() -> Self {
-        Self::new()
+        Self {
+            output: Box::new(std::io::stdout()),
+            environment: Environment::root(),
+            parser_no: 1,
+            repl: false,
+        }
     }
 }
 
-impl Interpreter {
-    pub fn new() -> Self {
+impl<'i> Interpreter<'i> {
+    pub fn new(
+        output: Box<dyn Write + 'i>,
+        environment: Environment,
+        parser_no: usize,
+        repl: bool,
+    ) -> Self {
         Self {
-            environment: Environment::root(),
-            parser_no: 1,
+            output,
+            environment,
+            parser_no,
+            repl,
         }
     }
 
-    pub fn interpret(&mut self, program: &Node) -> Result<Value> {
-        program.accept(self)
+    pub fn repl() -> Self {
+        Self::new(Box::new(std::io::stdout()), Environment::root(), 1, true)
+    }
+
+    pub fn with_parser_no(parser_no: usize) -> Self {
+        Self::new(
+            Box::new(std::io::stdout()),
+            Environment::root(),
+            parser_no,
+            false,
+        )
+    }
+
+    pub fn interpret(&mut self, source: &str) -> Result<Value> {
+        let lexer = Lexer::new(source);
+
+        let mut parser = Parser::new(lexer);
+
+        let result = parser.parse().and_then(|program| program.accept(self));
+
+        match &result {
+            Ok(value) => {
+                if self.repl {
+                    writeln!(self.output, "{value}")?;
+                }
+            }
+            Err(error) => writeln!(self.output, "{error}")?,
+        };
+
+        result
     }
 
     fn get_function_from_environment(
@@ -91,7 +136,7 @@ impl Interpreter {
     }
 }
 
-impl Visitor<Result<Value>> for Interpreter {
+impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
     fn visit_program(&mut self, program: &Program) -> Result<Value> {
         program.expression.accept(self)
     }

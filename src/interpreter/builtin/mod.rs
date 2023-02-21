@@ -1,16 +1,16 @@
 mod arithmetic;
 mod boolean;
+mod list;
 
 pub use arithmetic::*;
 pub use boolean::*;
+pub use list::*;
 
 use super::function::Arguments;
 use super::Function;
 use crate::error::{Error, ErrorKind};
 use crate::interpreter::{Interpreter, Value};
-use crate::lexer::Lexer;
 use crate::parser::ast::{Atom, Node};
-use crate::parser::Parser;
 use crate::Result;
 use std::io::Write;
 use std::rc::Rc;
@@ -31,7 +31,7 @@ impl Function for PrintFunction {
         let evaluated_args =
             PrintFunction::ARGUMENTS.evaluate(intp, arguments_nodes)?;
 
-        println!("{}", &evaluated_args[0]);
+        writeln!(intp.output, "{}", &evaluated_args[0])?;
 
         Ok(Value::Nil)
     }
@@ -99,17 +99,11 @@ impl Function for EvalFunction {
         let value = &evaluated_args[0];
 
         if let Value::String(source) = value {
-            let lexer = Lexer::new(source);
-            let mut parser = Parser::with_number(lexer, intp.parser_no);
+            let mut intp = Interpreter::with_parser_no(intp.parser_no);
 
             intp.parser_no += 1;
 
-            let program = parser.parse()?;
-
-            let mut intp = Interpreter::new();
-            let value = intp.interpret(&program)?;
-
-            Ok(value)
+            intp.interpret(source)
         } else {
             Err(Error::without_location(ErrorKind::InvalidArguments {
                 expected: "String",
@@ -178,6 +172,7 @@ pub fn get_builtin_functions() -> Vec<Rc<dyn Function>> {
         Rc::new(BooleanFunction::new(BooleanOp::Equal, 2)),
         Rc::new(BooleanFunction::new(BooleanOp::LessOrEqual, 2)),
         Rc::new(BooleanFunction::new(BooleanOp::Less, 2)),
+        Rc::new(TailFunction),
         Rc::new(QuoteFunction),
         Rc::new(PrintFunction),
         Rc::new(ReadFunction),
