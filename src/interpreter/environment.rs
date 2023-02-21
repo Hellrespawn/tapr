@@ -1,4 +1,4 @@
-use super::function::get_builtin_functions;
+use super::builtin::get_builtin_functions;
 use super::Value;
 use std::collections::HashMap;
 

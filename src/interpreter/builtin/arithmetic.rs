@@ -1,7 +1,7 @@
 use crate::error::{Error, ErrorKind};
+use crate::interpreter::function::{Arguments, Function};
+use crate::interpreter::{Interpreter, Value};
 use crate::parser::ast::Node;
-use crate::visitor::interpreter::function::{Arguments, Function};
-use crate::visitor::interpreter::{Interpreter, Value};
 use crate::Result;
 
 #[derive(Debug, Copy, Clone)]

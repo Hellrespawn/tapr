@@ -1,8 +1,5 @@
 use crate::parser::ast::*;
 
-pub mod graph;
-pub mod interpreter;
-
 pub trait Visitor<T: std::fmt::Debug> {
     fn visit_program(&mut self, program: &Program) -> T;
     fn visit_if_expression(&mut self, if_expression: &IfExpression) -> T;

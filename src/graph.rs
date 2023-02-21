@@ -2,13 +2,13 @@ use crate::parser::ast::*;
 use crate::visitor::Visitor;
 use std::process::Command;
 
-pub(crate) struct DotVisitor {
+pub(crate) struct GraphVisitor {
     counter: usize,
     body: String,
 }
 
-impl DotVisitor {
-    pub(crate) fn create_ast_dot(program: &Node, filename: &str) {
+impl GraphVisitor {
+    pub(crate) fn create_ast_graph(program: &Node, filename: &str) {
         let body = "digraph astgraph {\n  \
             edge [arrowsize=.5];\n  \
             rankdir=\"TB\";\n  \
@@ -17,13 +17,13 @@ impl DotVisitor {
             ranksep=0.75;\n  "
             .to_owned();
 
-        let mut dot_visitor = Self { counter: 0, body };
+        let mut visitor = Self { counter: 0, body };
 
-        program.accept(&mut dot_visitor);
+        program.accept(&mut visitor);
 
-        dot_visitor.body.push('}');
+        visitor.body.push('}');
 
-        DotVisitor::write_graph_to_file(dot_visitor.body, filename);
+        GraphVisitor::write_graph_to_file(visitor.body, filename);
     }
 
     fn write_graph_to_file(dot: String, filename: &str) {
@@ -34,7 +34,7 @@ impl DotVisitor {
         }
 
         if which::which("dot").is_ok() {
-            DotVisitor::render_graph(filename);
+            GraphVisitor::render_graph(filename);
             if std::fs::remove_file(filename).is_err() {
                 eprintln!("Unable to remove dot-file after rendering.");
             }
@@ -128,7 +128,7 @@ impl DotVisitor {
     }
 }
 
-impl Visitor<()> for DotVisitor {
+impl Visitor<()> for GraphVisitor {
     fn visit_program(&mut self, program: &Program) {
         let program_node = self.new_node("Program");
 

@@ -1,7 +1,3 @@
-mod builtin;
-
-pub use builtin::get_builtin_functions;
-
 use super::{Interpreter, Value};
 use crate::error::{Error, ErrorKind};
 use crate::parser::ast::Node;
@@ -27,7 +23,7 @@ pub enum Arguments {
 }
 
 impl Arguments {
-    fn check_amount(&self, number_of_arguments: usize) -> Result<()> {
+    pub fn check_amount(&self, number_of_arguments: usize) -> Result<()> {
         let condition = match self {
             Arguments::Fixed(arguments) => number_of_arguments == *arguments,
             Arguments::Minimum(arguments) => number_of_arguments >= *arguments,
@@ -46,7 +42,7 @@ impl Arguments {
         }
     }
 
-    fn evaluate(
+    pub fn evaluate(
         &self,
         intp: &mut Interpreter,
         argument_nodes: &[Node],

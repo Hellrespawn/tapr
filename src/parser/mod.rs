@@ -1,8 +1,8 @@
 use self::ast::*;
 use crate::error::{Error, ErrorKind};
+use crate::graph::GraphVisitor;
 use crate::lexer::Lexer;
 use crate::token::{Token, TokenType};
-use crate::visitor::graph::DotVisitor;
 use crate::Result;
 use once_cell::sync::Lazy;
 
@@ -50,7 +50,7 @@ impl<'p> Parser<'p> {
                 self.parser_no
             );
 
-            DotVisitor::create_ast_dot(&node, &filename);
+            GraphVisitor::create_ast_graph(&node, &filename);
         }
 
         Ok(node)

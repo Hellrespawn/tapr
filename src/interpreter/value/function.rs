@@ -1,7 +1,8 @@
 use super::Value;
 use crate::error::{Error, ErrorKind};
+use crate::interpreter::function::Function;
+use crate::interpreter::Interpreter;
 use crate::parser::ast::Node;
-use crate::visitor::interpreter::function::Function;
 use crate::Result;
 
 #[derive(Debug, Clone)]
@@ -35,7 +36,7 @@ impl FunctionValue {
 impl Function for FunctionValue {
     fn call(
         &self,
-        intp: &mut crate::visitor::interpreter::Interpreter,
+        intp: &mut Interpreter,
         argument_nodes: &[Node],
     ) -> Result<Value> {
         self.check_arguments(argument_nodes)?;

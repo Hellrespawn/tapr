@@ -1,5 +1,5 @@
+use crate::interpreter::Value;
 use crate::token::TokenType;
-use crate::visitor::interpreter::Value;
 use thiserror::Error;
 
 // TODO add function error, handle in call_function, add line info.

@@ -4,12 +4,13 @@ mod boolean;
 pub use arithmetic::*;
 pub use boolean::*;
 
-use super::{Arguments, Function};
+use super::function::Arguments;
+use super::Function;
 use crate::error::{Error, ErrorKind};
+use crate::interpreter::{Interpreter, Value};
 use crate::lexer::Lexer;
 use crate::parser::ast::{Atom, Node};
 use crate::parser::Parser;
-use crate::visitor::interpreter::{Interpreter, Value};
 use crate::Result;
 use std::io::Write;
 use std::rc::Rc;
