@@ -39,6 +39,19 @@ impl Node {
             Node::Atom(atom) => visitor.visit_atom(atom),
         }
     }
+
+    pub fn node_type(&self) -> &str {
+        match self {
+            Node::Program(_) => "Program",
+            Node::IfExpression(_) => "IfExpression",
+            Node::WhileExpression(_) => "WhileExpression",
+            Node::SetExpression(_) => "SetExpression",
+            Node::FunctionCall(_) => "FunctionCall",
+            Node::FunctionDefinition(_) => "FunctionDefinition",
+            Node::List(_) => "List",
+            Node::Atom(_) => "Atom",
+        }
+    }
 }
 
 impl From<Program> for Node {

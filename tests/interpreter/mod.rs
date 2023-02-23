@@ -1,10 +1,14 @@
+mod test_functions;
+mod test_korisp;
+mod test_variables;
+
 use korisp::interpreter::{Interpreter, Value};
 use korisp::Result;
 
-pub type TestResult = Result<()>;
+use crate::TestResult;
 pub type CapturedTestResult = Result<(Value, String)>;
 
-pub fn run_test(source: &str, expectation: Value) -> TestResult {
+pub fn expect(source: &str, expectation: Value) -> TestResult {
     let mut intp = Interpreter::default();
     intp.output = Box::new(std::io::sink());
 
@@ -15,7 +19,7 @@ pub fn run_test(source: &str, expectation: Value) -> TestResult {
     Ok(())
 }
 
-pub fn run_test_and_capture_output(source: &str) -> CapturedTestResult {
+pub fn get_output(source: &str) -> CapturedTestResult {
     let mut buffer = Vec::new();
 
     let mut intp = Interpreter::default();

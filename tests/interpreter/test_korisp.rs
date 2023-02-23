@@ -1,12 +1,11 @@
-mod common;
-
-use common::{run_test, TestResult};
+use super::expect;
+use crate::TestResult;
 use korisp::error::ErrorKind;
 use korisp::interpreter::Value;
 
 #[test]
 fn test_empty_input() -> TestResult {
-    let error = run_test("", Value::Nil).unwrap_err();
+    let error = expect("", Value::Nil).unwrap_err();
 
     assert!(matches!(error.kind, ErrorKind::EmptyInput));
 
@@ -15,7 +14,7 @@ fn test_empty_input() -> TestResult {
 
 #[test]
 fn test_unmatched_parenthesis() -> TestResult {
-    let error = run_test("(", Value::Nil).unwrap_err();
+    let error = expect("(", Value::Nil).unwrap_err();
 
     if let ErrorKind::UnmatchedParenthesis { .. } = error.kind {
         Ok(())
@@ -40,7 +39,7 @@ fn test_truthiness() -> TestResult {
     ];
 
     for (value, expectation) in values {
-        run_test(
+        expect(
             &format!("(if {value} true false)"),
             Value::Boolean(expectation),
         )?;
