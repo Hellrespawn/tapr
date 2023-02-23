@@ -1,42 +1,29 @@
 use crate::error::{Error, ErrorKind};
-use crate::interpreter::callable::{Arguments, Callable};
+use crate::interpreter::parameters::{Parameter, ParameterType, Parameters};
 use crate::interpreter::{Interpreter, Value};
 use crate::parser::ast::Node;
 use crate::Result;
 
-#[derive(Debug)]
-pub struct TailFunction;
+pub fn tail(
+    parameters: &Parameters,
+    argument_nodes: &[Node],
+    intp: &mut Interpreter,
+) -> Result<Value> {
+    let mut arguments = parameters.evaluate_arguments(intp, argument_nodes)?;
 
-impl TailFunction {
-    const ARGUMENTS: Arguments = Arguments::Fixed(1);
+    let Value::List(mut list) = arguments.pop().expect("tail to have one argument") else {
+            unreachable!()
+        };
+
+    list.pop()
+        .ok_or(Error::without_location(ErrorKind::TailOnEmptyList))
 }
 
-impl Callable for TailFunction {
-    fn call(
-        &self,
-        intp: &mut Interpreter,
-        arguments_nodes: &[Node],
-    ) -> Result<Value> {
-        let evaluated_arg = TailFunction::ARGUMENTS
-            .evaluate(intp, arguments_nodes)?
-            .pop()
-            .expect("one argument.");
-
-        if let Value::List(list) = evaluated_arg {
-            if list.is_empty() {
-                Err(Error::without_location(ErrorKind::TailOnEmptyList))
-            } else {
-                Ok(list.last().cloned().expect("list not be empty"))
-            }
-        } else {
-            Err(Error::without_location(ErrorKind::InvalidArguments {
-                expected: "List",
-                values: vec![evaluated_arg],
-            }))
-        }
-    }
-
-    fn name(&self) -> &str {
-        "tail"
-    }
+pub fn tail_params() -> Parameters {
+    Parameters::new(vec![Parameter::new(
+        "_tail".to_owned(),
+        vec![ParameterType::List],
+        false,
+    )])
+    .expect("tail to have valid params.")
 }

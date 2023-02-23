@@ -1,11 +1,14 @@
 mod builtin;
-mod callable;
 mod environment;
 mod value;
+
+pub mod callable;
+pub mod parameters;
 
 pub use value::Value;
 
 use self::environment::Environment;
+use self::parameters::{Parameter, ParameterType, Parameters};
 use self::value::Function;
 use crate::error::{Error, ErrorKind};
 use crate::lexer::Lexer;
@@ -213,13 +216,25 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
         &mut self,
         function_definition: &FunctionDefinition,
     ) -> Result<Value> {
-        let function_value = Function::new(
-            function_definition.name.lexeme().to_owned(),
+        let name = function_definition.name.lexeme().to_owned();
+
+        let parameters = Parameters::new(
             function_definition
                 .parameters
                 .iter()
-                .map(|param| param.lexeme().to_owned())
+                .map(|param| {
+                    Parameter::new(
+                        param.lexeme().to_owned(),
+                        vec![ParameterType::Any],
+                        false,
+                    )
+                })
                 .collect(),
+        )?;
+
+        let function_value = Function::new(
+            name,
+            parameters,
             function_definition.expression.clone(),
         );
 

@@ -1,67 +1,107 @@
-use crate::interpreter::callable::{Arguments, Callable};
+use crate::interpreter::parameters::{Parameter, ParameterType, Parameters};
 use crate::interpreter::{Interpreter, Value};
 use crate::parser::ast::Node;
 use crate::Result;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum BooleanOp {
     Greater,
-    GreaterOrEqual,
+    GreaterEqual,
     Equal,
-    LessOrEqual,
+    LessEqual,
     Less,
+    NotEqual,
 }
 
-#[derive(Debug)]
-pub struct BooleanFunction {
-    operator: BooleanOp,
-    arguments: Arguments,
-}
+fn boolean_function(
+    parameters: &Parameters,
+    argument_nodes: &[Node],
+    op: BooleanOp,
+    intp: &mut Interpreter,
+) -> Result<Value> {
+    let arguments = parameters.evaluate_arguments(intp, argument_nodes)?;
 
-impl BooleanFunction {
-    pub fn new(operator: BooleanOp, arguments: usize) -> Self {
-        Self {
-            operator,
-            arguments: Arguments::Minimum(arguments),
+    let mut value = true;
+
+    for window in arguments.windows(2) {
+        let [lhs, rhs] = window else {
+            unreachable!()
+        };
+
+        value = match op {
+            BooleanOp::Greater => lhs > rhs,
+            BooleanOp::GreaterEqual => lhs >= rhs,
+            BooleanOp::Equal => lhs == rhs,
+            BooleanOp::LessEqual => lhs <= rhs,
+            BooleanOp::Less => lhs < rhs,
+            BooleanOp::NotEqual => lhs != rhs,
         }
     }
 
-    pub fn op(&self, left: &Value, right: &Value) -> bool {
-        match self.operator {
-            BooleanOp::Greater => left > right,
-            BooleanOp::GreaterOrEqual => left >= right,
-            BooleanOp::Equal => left == right,
-            BooleanOp::LessOrEqual => left <= right,
-            BooleanOp::Less => left < right,
-        }
-    }
+    Ok(Value::Boolean(value))
 }
 
-impl Callable for BooleanFunction {
-    fn call(
-        &self,
-        intp: &mut Interpreter,
-        argument_nodes: &[Node],
-    ) -> Result<Value> {
-        let evaluated_args = self.arguments.evaluate(intp, argument_nodes)?;
+pub fn gt(
+    parameters: &Parameters,
+    argument_nodes: &[Node],
+    intp: &mut Interpreter,
+) -> Result<Value> {
+    boolean_function(parameters, argument_nodes, BooleanOp::Greater, intp)
+}
 
-        let result = evaluated_args.windows(2).all(|window| {
-            let left = &window[0];
-            let right = &window[1];
+pub fn gte(
+    parameters: &Parameters,
+    argument_nodes: &[Node],
+    intp: &mut Interpreter,
+) -> Result<Value> {
+    boolean_function(parameters, argument_nodes, BooleanOp::GreaterEqual, intp)
+}
 
-            self.op(left, right)
-        });
+pub fn eq(
+    parameters: &Parameters,
+    argument_nodes: &[Node],
+    intp: &mut Interpreter,
+) -> Result<Value> {
+    boolean_function(parameters, argument_nodes, BooleanOp::Equal, intp)
+}
 
-        Ok(Value::Boolean(result))
-    }
+pub fn lte(
+    parameters: &Parameters,
+    argument_nodes: &[Node],
+    intp: &mut Interpreter,
+) -> Result<Value> {
+    boolean_function(parameters, argument_nodes, BooleanOp::LessEqual, intp)
+}
 
-    fn name(&self) -> &str {
-        match self.operator {
-            BooleanOp::Greater => ">",
-            BooleanOp::GreaterOrEqual => ">=",
-            BooleanOp::Equal => "==",
-            BooleanOp::LessOrEqual => "<=",
-            BooleanOp::Less => "<",
-        }
-    }
+pub fn lt(
+    parameters: &Parameters,
+    argument_nodes: &[Node],
+    intp: &mut Interpreter,
+) -> Result<Value> {
+    boolean_function(parameters, argument_nodes, BooleanOp::Less, intp)
+}
+
+pub fn ne(
+    parameters: &Parameters,
+    argument_nodes: &[Node],
+    intp: &mut Interpreter,
+) -> Result<Value> {
+    boolean_function(parameters, argument_nodes, BooleanOp::NotEqual, intp)
+}
+
+pub fn boolean_params() -> Parameters {
+    let param = Parameter::new(
+        "_arithmetic".to_owned(),
+        vec![ParameterType::Any],
+        false,
+    );
+
+    let remaining_params = Parameter::new(
+        "_arithmetic".to_owned(),
+        vec![ParameterType::Any],
+        true,
+    );
+
+    Parameters::new(vec![param, remaining_params])
+        .expect("arithmetic to have valid params")
 }

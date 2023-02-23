@@ -1,182 +1,88 @@
 mod arithmetic;
 mod boolean;
+mod io;
 mod list;
 
-pub use arithmetic::*;
-pub use boolean::*;
-pub use list::*;
-
-use super::callable::Arguments;
-use super::Callable;
-use crate::error::{Error, ErrorKind};
-use crate::interpreter::{Interpreter, Value};
-use crate::parser::ast::{Atom, Node};
+use super::callable::Callable;
+use super::parameters::Parameters;
+use super::{Interpreter, Value};
+use crate::parser::ast::Node;
 use crate::Result;
-use std::io::Write;
-use std::rc::Rc;
 
-#[derive(Debug)]
-struct PrintFunction;
+type InnerBuiltinFunction = fn(
+    parameters: &Parameters,
+    argument_nodes: &[Node],
+    intp: &mut Interpreter,
+) -> Result<Value>;
 
-impl PrintFunction {
-    const ARGUMENTS: Arguments = Arguments::Fixed(1);
+pub struct BuiltinFunction {
+    name: &'static str,
+    function: InnerBuiltinFunction,
+    parameters: Parameters,
 }
 
-impl Callable for PrintFunction {
-    fn call(
-        &self,
-        intp: &mut Interpreter,
-        arguments_nodes: &[Node],
-    ) -> Result<Value> {
-        let evaluated_args =
-            PrintFunction::ARGUMENTS.evaluate(intp, arguments_nodes)?;
-
-        writeln!(intp.output, "{}", &evaluated_args[0])?;
-
-        Ok(Value::Nil)
+impl std::fmt::Debug for BuiltinFunction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BuiltinFunction")
+            .field("name", &self.name)
+            .field("parameters", &self.parameters)
+            .finish()
     }
+}
 
+impl BuiltinFunction {
+    pub fn new(
+        name: &'static str,
+        function: fn(
+            parameters: &Parameters,
+            argument_nodes: &[Node],
+            intp: &mut Interpreter,
+        ) -> Result<Value>,
+        parameters: Parameters,
+    ) -> Self {
+        Self {
+            name,
+            function,
+            parameters,
+        }
+    }
+}
+
+impl Callable for BuiltinFunction {
     fn name(&self) -> &str {
-        "print"
+        self.name
     }
-}
 
-#[derive(Debug)]
-struct ReadFunction;
-
-impl ReadFunction {
-    const ARGUMENTS: Arguments = Arguments::Fixed(1);
-}
-
-impl Callable for ReadFunction {
     fn call(
         &self,
         intp: &mut Interpreter,
         argument_nodes: &[Node],
     ) -> Result<Value> {
-        let evaluated_arg = ReadFunction::ARGUMENTS
-            .evaluate(intp, argument_nodes)?
-            .pop()
-            .unwrap();
+        let function = self.function;
 
-        if let Value::String(prompt) = evaluated_arg {
-            print!("{prompt}");
-            std::io::stdout().flush()?;
-
-            let mut buffer = String::new();
-            std::io::stdin().read_line(&mut buffer)?;
-
-            Ok(Value::String(buffer.trim_end().to_owned()))
-        } else {
-            Err(Error::without_location(ErrorKind::InvalidArguments {
-                expected: "String",
-                values: vec![evaluated_arg],
-            }))
-        }
-    }
-
-    fn name(&self) -> &str {
-        "read"
+        function(&self.parameters, argument_nodes, intp)
     }
 }
 
-#[derive(Debug)]
-struct EvalFunction;
+pub fn get_builtin_functions() -> Vec<BuiltinFunction> {
+    let builtins: Vec<(&str, InnerBuiltinFunction, Parameters)> = vec![
+        ("+", arithmetic::add, arithmetic::arithmetic_params()),
+        ("-", arithmetic::sub, arithmetic::arithmetic_params()),
+        ("*", arithmetic::mul, arithmetic::arithmetic_params()),
+        ("/", arithmetic::div, arithmetic::arithmetic_params()),
+        (">", boolean::gt, boolean::boolean_params()),
+        (">=", boolean::gte, boolean::boolean_params()),
+        ("==", boolean::eq, boolean::boolean_params()),
+        ("<=", boolean::lte, boolean::boolean_params()),
+        ("<", boolean::lt, boolean::boolean_params()),
+        ("!=", boolean::ne, boolean::boolean_params()),
+        ("print", io::print, io::print_params()),
+        ("tail", list::tail, list::tail_params()),
+        ("quote", io::quote, io::quote_params()),
+    ];
 
-impl EvalFunction {
-    const ARGUMENTS: Arguments = Arguments::Fixed(1);
-}
-
-impl Callable for EvalFunction {
-    fn call(
-        &self,
-        intp: &mut Interpreter,
-        argument_nodes: &[Node],
-    ) -> Result<Value> {
-        let evaluated_args =
-            EvalFunction::ARGUMENTS.evaluate(intp, argument_nodes)?;
-
-        let value = &evaluated_args[0];
-
-        if let Value::String(source) = value {
-            let mut intp = Interpreter::with_parser_no(intp.parser_no);
-
-            intp.parser_no += 1;
-
-            intp.interpret(source)
-        } else {
-            Err(Error::without_location(ErrorKind::InvalidArguments {
-                expected: "String",
-                values: evaluated_args,
-            }))
-        }
-    }
-
-    fn name(&self) -> &str {
-        "eval"
-    }
-}
-
-#[derive(Debug)]
-struct QuoteFunction;
-
-impl QuoteFunction {
-    const ARGUMENTS: Arguments = Arguments::Fixed(1);
-}
-
-impl Callable for QuoteFunction {
-    fn call(
-        &self,
-        intp: &mut Interpreter,
-        argument_nodes: &[Node],
-    ) -> Result<Value> {
-        QuoteFunction::ARGUMENTS.check_amount(argument_nodes.len())?;
-
-        let argument = &argument_nodes[0];
-
-        match argument {
-            Node::Atom(Atom::Symbol(symbol)) => {
-                Ok(Value::Symbol(symbol.lexeme().to_owned()))
-            }
-            Node::List(list) => {
-                let values = list
-                    .expressions
-                    .iter()
-                    .map(|node| node.accept(intp))
-                    .collect::<Result<Vec<_>>>()?;
-
-                Ok(Value::List(values))
-            }
-            _ => {
-                let mut values =
-                    QuoteFunction::ARGUMENTS.evaluate(intp, argument_nodes)?;
-
-                Ok(values.pop().unwrap())
-            }
-        }
-    }
-
-    fn name(&self) -> &str {
-        "quote"
-    }
-}
-
-pub fn get_builtin_functions() -> Vec<Rc<dyn Callable>> {
-    vec![
-        Rc::new(ArithmeticFunction::new(ArithmeticType::Add, 2)),
-        Rc::new(ArithmeticFunction::new(ArithmeticType::Subtract, 2)),
-        Rc::new(ArithmeticFunction::new(ArithmeticType::Multiply, 2)),
-        Rc::new(ArithmeticFunction::new(ArithmeticType::Divide, 2)),
-        Rc::new(BooleanFunction::new(BooleanOp::Greater, 2)),
-        Rc::new(BooleanFunction::new(BooleanOp::GreaterOrEqual, 2)),
-        Rc::new(BooleanFunction::new(BooleanOp::Equal, 2)),
-        Rc::new(BooleanFunction::new(BooleanOp::LessOrEqual, 2)),
-        Rc::new(BooleanFunction::new(BooleanOp::Less, 2)),
-        Rc::new(TailFunction),
-        Rc::new(QuoteFunction),
-        Rc::new(PrintFunction),
-        Rc::new(ReadFunction),
-        Rc::new(EvalFunction),
-        Rc::new(Increment),
-    ]
+    builtins
+        .into_iter()
+        .map(|(name, fun, params)| BuiltinFunction::new(name, fun, params))
+        .collect()
 }

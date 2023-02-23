@@ -1,4 +1,5 @@
-mod test_functions;
+mod test_builtin_functions;
+mod test_custom_functions;
 mod test_korisp;
 mod test_variables;
 
@@ -19,7 +20,7 @@ pub fn expect(source: &str, expectation: Value) -> TestResult {
     Ok(())
 }
 
-pub fn get_output(source: &str) -> CapturedTestResult {
+pub fn capture(source: &str) -> CapturedTestResult {
     let mut buffer = Vec::new();
 
     let mut intp = Interpreter::default();

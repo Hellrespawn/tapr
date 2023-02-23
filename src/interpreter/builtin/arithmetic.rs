@@ -1,107 +1,79 @@
-use crate::error::{Error, ErrorKind};
-use crate::interpreter::callable::{Arguments, Callable};
+use crate::interpreter::parameters::{Parameter, ParameterType, Parameters};
 use crate::interpreter::{Interpreter, Value};
 use crate::parser::ast::Node;
 use crate::Result;
 
-#[derive(Debug, Copy, Clone)]
-pub enum ArithmeticType {
+#[derive(Debug, Clone, Copy)]
+pub enum ArithmeticOp {
     Add,
-    Subtract,
-    Multiply,
-    Divide,
+    Sub,
+    Mul,
+    Div,
 }
 
-#[derive(Debug)]
-pub struct ArithmeticFunction {
-    atype: ArithmeticType,
-    arguments: Arguments,
-}
+fn arithmetic(
+    parameters: &Parameters,
+    argument_nodes: &[Node],
+    op: ArithmeticOp,
+    intp: &mut Interpreter,
+) -> Result<Value> {
+    let arguments = parameters.evaluate_arguments(intp, argument_nodes)?;
 
-impl ArithmeticFunction {
-    pub fn new(atype: ArithmeticType, arguments: usize) -> Self {
-        Self {
-            atype,
-            arguments: Arguments::Minimum(arguments),
+    let mut iter = arguments.into_iter();
+
+    let mut acc = iter.next().expect("at least one arguments");
+
+    for rhs in iter {
+        match op {
+            // parameters here check for Numbers, so this is always safe.
+            ArithmeticOp::Add => acc = (acc + rhs).unwrap(),
+            ArithmeticOp::Sub => acc = (acc - rhs).unwrap(),
+            ArithmeticOp::Mul => acc = (acc * rhs).unwrap(),
+            ArithmeticOp::Div => acc = (acc / rhs).unwrap(),
         }
     }
 
-    pub fn op(&self, left: &Value, right: &Value) -> Result<Value> {
-        match self.atype {
-            ArithmeticType::Add => left.clone() + right.clone(),
-            ArithmeticType::Subtract => left.clone() - right.clone(),
-            ArithmeticType::Multiply => left.clone() * right.clone(),
-            ArithmeticType::Divide => left.clone() / right.clone(),
-        }
-    }
+    Ok(acc)
 }
 
-impl Callable for ArithmeticFunction {
-    fn call(
-        &self,
-        intp: &mut Interpreter,
-        argument_nodes: &[Node],
-    ) -> Result<Value> {
-        let evaluated_args = self.arguments.evaluate(intp, argument_nodes)?;
-
-        let mut iter = evaluated_args.iter();
-
-        let mut acc = iter.next().expect("More than two elements.").clone();
-
-        for value in iter {
-            acc = self.op(&acc, value)?;
-        }
-
-        Ok(acc)
-    }
-
-    fn name(&self) -> &str {
-        match self.atype {
-            ArithmeticType::Add => "+",
-            ArithmeticType::Subtract => "-",
-            ArithmeticType::Multiply => "*",
-            ArithmeticType::Divide => "/",
-        }
-    }
+pub fn add(
+    parameters: &Parameters,
+    argument_nodes: &[Node],
+    intp: &mut Interpreter,
+) -> Result<Value> {
+    arithmetic(parameters, argument_nodes, ArithmeticOp::Add, intp)
 }
 
-#[derive(Debug)]
-pub struct Increment;
-
-impl Increment {
-    const ARGUMENTS: Arguments = Arguments::Fixed(1);
+pub fn sub(
+    parameters: &Parameters,
+    argument_nodes: &[Node],
+    intp: &mut Interpreter,
+) -> Result<Value> {
+    arithmetic(parameters, argument_nodes, ArithmeticOp::Sub, intp)
 }
 
-impl Callable for Increment {
-    fn call(
-        &self,
-        intp: &mut Interpreter,
-        argument_nodes: &[Node],
-    ) -> Result<Value> {
-        let evaluated_args =
-            Increment::ARGUMENTS.evaluate(intp, argument_nodes)?;
+pub fn mul(
+    parameters: &Parameters,
+    argument_nodes: &[Node],
+    intp: &mut Interpreter,
+) -> Result<Value> {
+    arithmetic(parameters, argument_nodes, ArithmeticOp::Mul, intp)
+}
 
-        let key = &evaluated_args[0];
+pub fn div(
+    parameters: &Parameters,
+    argument_nodes: &[Node],
+    intp: &mut Interpreter,
+) -> Result<Value> {
+    arithmetic(parameters, argument_nodes, ArithmeticOp::Div, intp)
+}
 
-        if let Value::Symbol(key) = key {
-            if let Some(Value::Number(value)) = intp.environment.get_mut(key) {
-                *value += 1.0;
-                Ok(Value::Nil)
-            } else {
-                Err(Error::without_location(ErrorKind::InvalidArguments {
-                    expected: "Number",
-                    values: evaluated_args,
-                }))
-            }
-        } else {
-            Err(Error::without_location(ErrorKind::InvalidArguments {
-                expected: "String",
-                values: evaluated_args,
-            }))
-        }
-    }
+pub fn arithmetic_params() -> Parameters {
+    let param = Parameter::new(
+        "_arithmetic".to_owned(),
+        vec![ParameterType::Number],
+        true,
+    );
 
-    fn name(&self) -> &str {
-        "inc"
-    }
+    Parameters::new(vec![param]).expect("arithmetic to have valid params")
 }

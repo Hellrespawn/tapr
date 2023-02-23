@@ -16,7 +16,10 @@ impl Environment {
         let mut map = HashMap::new();
 
         for function in builtins {
-            map.insert(function.name().to_owned(), Value::Function(function));
+            map.insert(
+                function.name().to_owned(),
+                Value::Function(Rc::new(function)),
+            );
         }
 
         Self { map, parent: None }

@@ -1,3 +1,4 @@
+use crate::interpreter::parameters::ParameterType;
 use crate::interpreter::Value;
 use crate::token::TokenType;
 use thiserror::Error;
@@ -97,22 +98,30 @@ pub enum ErrorKind {
     #[error("Undefined symbol '{0}'")]
     UndefinedSymbol(String),
 
-    #[error(
-        "Invalid operands '{}', expected '{expected}'",
-        values
-            .iter()
-            .map(std::string::ToString::to_string)
-            .collect::<Vec<_>>()
-            .join(", ")
-        )
-    ]
-    InvalidArguments {
-        expected: &'static str,
-        values: Vec<Value>,
-    },
-    #[error("Expect {expected} args, got {actual}.")]
-    WrongAmountOfArgs { expected: String, actual: usize },
+    // Parameters
+    #[error("Only the last parameter of a function may be variadic.")]
+    NonLastParameterIsVariadic,
 
+    #[error("Invalid argument '{actual}', expected '{expected:?}'")]
+    InvalidArgument {
+        expected: Vec<ParameterType>,
+        actual: Value,
+    },
+
+    #[error("Expect {expected} args, got {actual}.")]
+    WrongAmountOfFixedArgs { expected: usize, actual: usize },
+
+    #[error("Expect at least{expected} args, got {actual}.")]
+    WrongAmountOfMinArgs { expected: usize, actual: usize },
+
+    // Functions
     #[error("Called `tail` on empty list.")]
     TailOnEmptyList,
+
+    #[error("Unable to {op} {lhs} and {rhs}")]
+    InvalidBinOp {
+        op: &'static str,
+        lhs: Value,
+        rhs: Value,
+    },
 }

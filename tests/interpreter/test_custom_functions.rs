@@ -1,4 +1,4 @@
-use super::{expect, get_output};
+use super::{capture, expect};
 use crate::TestResult;
 use korisp::interpreter::Value;
 
@@ -13,7 +13,7 @@ fn test_empty_function() -> TestResult {
 fn test_shadowing() -> TestResult {
     let source = include_str!("function_scope_test.ksp");
 
-    let (_, output) = get_output(source)?;
+    let (_, output) = capture(source)?;
 
     assert_eq!("4\n40", output.trim());
 
