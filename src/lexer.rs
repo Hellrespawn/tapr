@@ -232,13 +232,13 @@ impl<'l> Lexer<'l> {
         }
 
         let ttype = match string.as_str() {
-            "true" => TokenType::True,
-            "false" => TokenType::False,
-            "nil" => TokenType::Nil,
-            "if" => TokenType::If,
-            "while" => TokenType::While,
-            "set" => TokenType::Set,
             "def" => TokenType::Def,
+            "false" => TokenType::False,
+            "if" => TokenType::If,
+            "lambda" => TokenType::Lambda,
+            "true" => TokenType::True,
+            "while" => TokenType::While,
+            "nil" => TokenType::Nil,
             _ => TokenType::Symbol,
         };
 

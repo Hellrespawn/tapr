@@ -5,41 +5,41 @@ Dit is de code die hoort bij mijn project compilers/interpreters.
 ## Korisp Grammar
 
 ```bnf
-Program             -> Expression
-
-Expression          -> SetExpression
-                     | IfExpression
-                     | WhileExpression
-                     | FunctionDefinition
-                     | FunctionCall
-                     | DataType
+Expression          -> Define
+                     | If
+                     | While
+                     | Lambda
+                     | Call
+                     | "'" Datum
+                     | Datum
 
                                  name   value
-SetExpression       -> "(" "set" Symbol Expression ")"
+Define              -> "(" "def" Symbol Expression ")"
 
                                 condition  then       else
-IfExpression        -> "(" "if" Expression Expression Expression? ")"
+If                  -> "(" "if" Expression Expression Expression? ")"
 
                                    condition  then
-WhileExpression     -> "(" "while" Expression Expression ")"
+While               -> "(" "while" Expression Expression ")"
 
                                  name
-FunctionDefinition  -> "(" "def" Symbol "(" Parameters ")" Expression ")"
-
-                           name   arguments
-FunctionCall        -> "(" Symbol Expression* ")"
-
+Lambda              -> "(" "lambda" "(" Parameters ")" Expression ")"
 
 Parameters          -> Symbol | "(" Symbol+ ")"
 
-DataType            -> "'"? (List | Atom)
+                           name   arguments
+Call                -> "(" Symbol Expression* ")"
+
+
+Datum               -> List
+                     | Atom
 
 List                -> "(" Expression* ")"
 
 Atom                -> "nil" | Boolean | Number | String | Symbol
 
 Boolean             -> "true" | "false"
-Number              -> {digit}+ (. {digit}+)?
+Number              -> {digit}+ ( . {digit}* )?
 String              -> \" {character}* \"
 Symbol              -> {character}+
 ```

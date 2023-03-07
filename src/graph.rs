@@ -8,7 +8,7 @@ pub(crate) struct GraphVisitor {
 }
 
 impl GraphVisitor {
-    pub(crate) fn create_ast_graph(program: &Node, filename: &str) {
+    pub(crate) fn create_ast_graph(program: &Expression, filename: &str) {
         let body = "digraph astgraph {\n  \
             edge [arrowsize=.5];\n  \
             rankdir=\"TB\";\n  \
@@ -127,7 +127,11 @@ impl GraphVisitor {
         self.node_connector(node1, node2, Some(label), true);
     }
 
-    fn accept_and_connect(&mut self, parent_node: usize, to_visit: &Node) {
+    fn accept_and_connect(
+        &mut self,
+        parent_node: usize,
+        to_visit: &Expression,
+    ) {
         let new_node = self.counter;
         to_visit.accept(self);
 
@@ -137,7 +141,7 @@ impl GraphVisitor {
     fn accept_and_connect_with_label(
         &mut self,
         parent_node: usize,
-        to_visit: &Node,
+        to_visit: &Expression,
         label: &str,
     ) {
         let new_node = self.counter;
@@ -149,7 +153,7 @@ impl GraphVisitor {
     fn accept_and_connect_many(
         &mut self,
         parent_node: usize,
-        to_visit: &[Node],
+        to_visit: &[Expression],
     ) {
         for node in to_visit {
             let new_node = self.counter;
@@ -161,109 +165,132 @@ impl GraphVisitor {
 }
 
 impl Visitor<()> for GraphVisitor {
-    fn visit_program(&mut self, program: &Program) {
-        let program_node = self.new_node("Program");
-
-        self.accept_and_connect(program_node, &program.expression);
+    fn visit_define(&mut self, define: &Define) {
+        todo!()
     }
 
-    fn visit_if_expression(&mut self, if_expression: &IfExpression) {
-        let if_node = self.new_node("If");
-
-        self.accept_and_connect_with_label(
-            if_node,
-            &if_expression.condition,
-            "condition",
-        );
-
-        self.accept_and_connect_with_label(
-            if_node,
-            &if_expression.then_branch,
-            "then",
-        );
-
-        if let Some(else_branch) = &if_expression.else_branch {
-            self.accept_and_connect_with_label(if_node, else_branch, "else");
-        }
+    fn visit_if(&mut self, if_expr: &If) {
+        todo!()
     }
 
-    fn visit_while_expression(&mut self, while_expression: &WhileExpression) {
-        let while_node = self.new_node("While");
-
-        self.accept_and_connect_with_label(
-            while_node,
-            &while_expression.condition,
-            "condition",
-        );
-
-        self.accept_and_connect_with_label(
-            while_node,
-            &while_expression.expression,
-            "expression",
-        );
+    fn visit_while(&mut self, while_expr: &While) {
+        todo!()
     }
 
-    fn visit_set_expression(&mut self, set_expression: &SetExpression) {
-        let set_node =
-            self.new_node(&format!("Set\n'{}'", set_expression.name.lexeme()));
-
-        self.accept_and_connect(set_node, &set_expression.expression);
+    fn visit_lambda(&mut self, lambda: &Lambda) {
+        todo!()
     }
 
-    fn visit_function_call(&mut self, function_call: &FunctionCall) {
-        let function_node = self.new_node(&format!(
-            "Function Call\n'{}'",
-            function_call.name.lexeme()
-        ));
-
-        self.accept_and_connect_many(function_node, &function_call.arguments);
+    fn visit_call(&mut self, call: &Call) {
+        todo!()
     }
 
-    fn visit_function_definition(
-        &mut self,
-        function_definition: &FunctionDefinition,
-    ) {
-        let function_node = self
-            .new_node(&format!("def\n'{}'", function_definition.name.lexeme()));
-
-        for param in &function_definition.parameters {
-            let param_node = self.new_node(param.lexeme());
-
-            self.connect_nodes_with_label(
-                function_node,
-                param_node,
-                "parameter",
-            );
-        }
-
-        self.accept_and_connect_with_label(
-            function_node,
-            &function_definition.expression,
-            "expression",
-        );
+    fn visit_datum(&mut self, atom: &Datum) {
+        todo!()
     }
+    // fn visit_program(&mut self, program: &Program) {
+    //     let program_node = self.new_node("Program");
 
-    fn visit_list(&mut self, list: &List) {
-        let list_node = self.new_node("List");
+    //     self.accept_and_connect(program_node, &program.expression);
+    // }
 
-        self.accept_and_connect_many(list_node, &list.expressions);
-    }
+    // fn visit_if_expression(&mut self, if_expression: &IfExpression) {
+    //     let if_node = self.new_node("If");
 
-    fn visit_atom(&mut self, atom: &Atom) {
-        match atom {
-            Atom::Boolean(bool) => {
-                self.new_node(&format!("Boolean\n'{}'", bool.lexeme()))
-            }
-            Atom::Number(number) => {
-                self.new_node(&format!("Number\n'{}'", number.lexeme()))
-            }
-            Atom::String(string) => {
-                self.new_node(&format!("String\n'{}'", string.lexeme()))
-            }
-            Atom::Symbol(symbol) => {
-                self.new_node(&format!("Symbol\n'{}'", symbol.lexeme()))
-            }
-            Atom::Nil(_) => self.new_node("Nil"),
-        };
-    }
+    //     self.accept_and_connect_with_label(
+    //         if_node,
+    //         &if_expression.condition,
+    //         "condition",
+    //     );
+
+    //     self.accept_and_connect_with_label(
+    //         if_node,
+    //         &if_expression.then_branch,
+    //         "then",
+    //     );
+
+    //     if let Some(else_branch) = &if_expression.else_branch {
+    //         self.accept_and_connect_with_label(if_node, else_branch, "else");
+    //     }
+    // }
+
+    // fn visit_while_expression(&mut self, while_expression: &WhileExpression) {
+    //     let while_node = self.new_node("While");
+
+    //     self.accept_and_connect_with_label(
+    //         while_node,
+    //         &while_expression.condition,
+    //         "condition",
+    //     );
+
+    //     self.accept_and_connect_with_label(
+    //         while_node,
+    //         &while_expression.expression,
+    //         "expression",
+    //     );
+    // }
+
+    // fn visit_set_expression(&mut self, set_expression: &SetExpression) {
+    //     let set_node =
+    //         self.new_node(&format!("Set\n'{}'", set_expression.name.lexeme()));
+
+    //     self.accept_and_connect(set_node, &set_expression.expression);
+    // }
+
+    // fn visit_function_call(&mut self, function_call: &FunctionCall) {
+    //     let function_node = self.new_node(&format!(
+    //         "Function Call\n'{}'",
+    //         function_call.name.lexeme()
+    //     ));
+
+    //     self.accept_and_connect_many(function_node, &function_call.arguments);
+    // }
+
+    // fn visit_function_definition(
+    //     &mut self,
+    //     function_definition: &FunctionDefinition,
+    // ) {
+    //     let function_node = self
+    //         .new_node(&format!("def\n'{}'", function_definition.name.lexeme()));
+
+    //     for param in &function_definition.parameters {
+    //         let param_node = self.new_node(param.lexeme());
+
+    //         self.connect_nodes_with_label(
+    //             function_node,
+    //             param_node,
+    //             "parameter",
+    //         );
+    //     }
+
+    //     self.accept_and_connect_with_label(
+    //         function_node,
+    //         &function_definition.expression,
+    //         "expression",
+    //     );
+    // }
+
+    // fn visit_list(&mut self, list: &List) {
+    //     let list_node = self.new_node("List");
+
+    //     self.accept_and_connect_many(list_node, &list.expressions);
+    // }
+
+    // fn visit_atom(&mut self, atom: &Atom) {
+    //     match atom {
+    //         Atom::Boolean(bool) => {
+    //             self.new_node(&format!("Boolean\n'{}'", bool.lexeme()))
+    //         }
+    //         Atom::Number(number) => {
+    //             self.new_node(&format!("Number\n'{}'", number.lexeme()))
+    //         }
+    //         Atom::String(string) => {
+    //             self.new_node(&format!("String\n'{}'", string.lexeme()))
+    //         }
+    //         Atom::Symbol(symbol) => {
+    //             self.new_node(&format!("Symbol\n'{}'", symbol.lexeme()))
+    //         }
+    //         Atom::Nil(_) => self.new_node("Nil"),
+    //     };
+    // }
 }

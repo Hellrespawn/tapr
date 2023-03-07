@@ -1,6 +1,6 @@
 use crate::interpreter::parameters::{Parameter, ParameterType, Parameters};
 use crate::interpreter::{Interpreter, Value};
-use crate::parser::ast::Node;
+use crate::parser::ast::Expression;
 use crate::Result;
 
 #[derive(Debug, Clone, Copy)]
@@ -13,7 +13,7 @@ pub enum ArithmeticOp {
 
 fn arithmetic(
     parameters: &Parameters,
-    argument_nodes: &[Node],
+    argument_nodes: &[Expression],
     op: ArithmeticOp,
     intp: &mut Interpreter,
 ) -> Result<Value> {
@@ -38,7 +38,7 @@ fn arithmetic(
 
 pub fn add(
     parameters: &Parameters,
-    argument_nodes: &[Node],
+    argument_nodes: &[Expression],
     intp: &mut Interpreter,
 ) -> Result<Value> {
     arithmetic(parameters, argument_nodes, ArithmeticOp::Add, intp)
@@ -46,7 +46,7 @@ pub fn add(
 
 pub fn sub(
     parameters: &Parameters,
-    argument_nodes: &[Node],
+    argument_nodes: &[Expression],
     intp: &mut Interpreter,
 ) -> Result<Value> {
     arithmetic(parameters, argument_nodes, ArithmeticOp::Sub, intp)
@@ -54,7 +54,7 @@ pub fn sub(
 
 pub fn mul(
     parameters: &Parameters,
-    argument_nodes: &[Node],
+    argument_nodes: &[Expression],
     intp: &mut Interpreter,
 ) -> Result<Value> {
     arithmetic(parameters, argument_nodes, ArithmeticOp::Mul, intp)
@@ -62,7 +62,7 @@ pub fn mul(
 
 pub fn div(
     parameters: &Parameters,
-    argument_nodes: &[Node],
+    argument_nodes: &[Expression],
     intp: &mut Interpreter,
 ) -> Result<Value> {
     arithmetic(parameters, argument_nodes, ArithmeticOp::Div, intp)

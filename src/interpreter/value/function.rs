@@ -2,18 +2,18 @@ use super::Value;
 use crate::interpreter::callable::Callable;
 use crate::interpreter::parameters::Parameters;
 use crate::interpreter::Interpreter;
-use crate::parser::ast::Node;
+use crate::parser::ast::Expression;
 use crate::Result;
 
 #[derive(Debug, Clone)]
 pub struct Function {
     pub name: String,
     pub parameters: Parameters,
-    pub node: Box<Node>,
+    pub node: Box<Expression>,
 }
 
 impl Function {
-    pub fn new(name: String, parameters: Parameters, node: Box<Node>) -> Self {
+    pub fn new(name: String, parameters: Parameters, node: Box<Expression>) -> Self {
         Self {
             name,
             parameters,
@@ -26,7 +26,7 @@ impl Callable for Function {
     fn call(
         &self,
         intp: &mut Interpreter,
-        argument_nodes: &[Node],
+        argument_nodes: &[Expression],
     ) -> Result<Value> {
         let arguments =
             self.parameters.evaluate_arguments(intp, argument_nodes)?;

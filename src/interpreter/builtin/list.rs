@@ -1,12 +1,12 @@
 use crate::error::{Error, ErrorKind};
 use crate::interpreter::parameters::{Parameter, ParameterType, Parameters};
 use crate::interpreter::{Interpreter, Value};
-use crate::parser::ast::Node;
+use crate::parser::ast::Expression;
 use crate::Result;
 
 pub fn tail(
     parameters: &Parameters,
-    argument_nodes: &[Node],
+    argument_nodes: &[Expression],
     intp: &mut Interpreter,
 ) -> Result<Value> {
     let mut arguments = parameters.evaluate_arguments(intp, argument_nodes)?;

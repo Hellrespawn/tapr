@@ -1,15 +1,15 @@
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum TokenType {
     // Literals
-    Quote,
-    LeftParen,
-    RightParen,
-    True,
+    Def,
     False,
     If,
+    Lambda,
+    LeftParen,
+    Quote,
+    RightParen,
+    True,
     While,
-    Set,
-    Def,
 
     // Terminal rules
     String,

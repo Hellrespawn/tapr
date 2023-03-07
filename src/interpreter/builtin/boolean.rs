@@ -1,6 +1,6 @@
 use crate::interpreter::parameters::{Parameter, ParameterType, Parameters};
 use crate::interpreter::{Interpreter, Value};
-use crate::parser::ast::Node;
+use crate::parser::ast::Expression;
 use crate::Result;
 
 #[derive(Debug, Clone, Copy)]
@@ -15,7 +15,7 @@ pub enum BooleanOp {
 
 fn boolean_function(
     parameters: &Parameters,
-    argument_nodes: &[Node],
+    argument_nodes: &[Expression],
     op: BooleanOp,
     intp: &mut Interpreter,
 ) -> Result<Value> {
@@ -43,7 +43,7 @@ fn boolean_function(
 
 pub fn gt(
     parameters: &Parameters,
-    argument_nodes: &[Node],
+    argument_nodes: &[Expression],
     intp: &mut Interpreter,
 ) -> Result<Value> {
     boolean_function(parameters, argument_nodes, BooleanOp::Greater, intp)
@@ -51,7 +51,7 @@ pub fn gt(
 
 pub fn gte(
     parameters: &Parameters,
-    argument_nodes: &[Node],
+    argument_nodes: &[Expression],
     intp: &mut Interpreter,
 ) -> Result<Value> {
     boolean_function(parameters, argument_nodes, BooleanOp::GreaterEqual, intp)
@@ -59,7 +59,7 @@ pub fn gte(
 
 pub fn eq(
     parameters: &Parameters,
-    argument_nodes: &[Node],
+    argument_nodes: &[Expression],
     intp: &mut Interpreter,
 ) -> Result<Value> {
     boolean_function(parameters, argument_nodes, BooleanOp::Equal, intp)
@@ -67,7 +67,7 @@ pub fn eq(
 
 pub fn lte(
     parameters: &Parameters,
-    argument_nodes: &[Node],
+    argument_nodes: &[Expression],
     intp: &mut Interpreter,
 ) -> Result<Value> {
     boolean_function(parameters, argument_nodes, BooleanOp::LessEqual, intp)
@@ -75,7 +75,7 @@ pub fn lte(
 
 pub fn lt(
     parameters: &Parameters,
-    argument_nodes: &[Node],
+    argument_nodes: &[Expression],
     intp: &mut Interpreter,
 ) -> Result<Value> {
     boolean_function(parameters, argument_nodes, BooleanOp::Less, intp)
@@ -83,7 +83,7 @@ pub fn lt(
 
 pub fn ne(
     parameters: &Parameters,
-    argument_nodes: &[Node],
+    argument_nodes: &[Expression],
     intp: &mut Interpreter,
 ) -> Result<Value> {
     boolean_function(parameters, argument_nodes, BooleanOp::NotEqual, intp)

@@ -1,6 +1,6 @@
 use super::{Interpreter, Value};
 use crate::error::{Error, ErrorKind};
-use crate::parser::ast::Node;
+use crate::parser::ast::Expression;
 use crate::Result;
 
 #[derive(Debug, Copy, Clone)]
@@ -84,7 +84,7 @@ impl Parameters {
     pub fn evaluate_arguments(
         &self,
         intp: &mut Interpreter,
-        argument_nodes: &[Node],
+        argument_nodes: &[Expression],
     ) -> Result<Vec<Value>> {
         self.check_amount_of_args_or_error(argument_nodes.len())?;
 
@@ -132,7 +132,7 @@ impl Parameters {
 
     fn interpret_arguments(
         intp: &mut Interpreter,
-        argument_nodes: &[Node],
+        argument_nodes: &[Expression],
     ) -> Result<Vec<Value>> {
         argument_nodes
             .iter()

@@ -6,12 +6,12 @@ mod list;
 use super::callable::Callable;
 use super::parameters::Parameters;
 use super::{Interpreter, Value};
-use crate::parser::ast::Node;
+use crate::parser::ast::Expression;
 use crate::Result;
 
 type InnerBuiltinFunction = fn(
     parameters: &Parameters,
-    argument_nodes: &[Node],
+    argument_nodes: &[Expression],
     intp: &mut Interpreter,
 ) -> Result<Value>;
 
@@ -35,7 +35,7 @@ impl BuiltinFunction {
         name: &'static str,
         function: fn(
             parameters: &Parameters,
-            argument_nodes: &[Node],
+            argument_nodes: &[Expression],
             intp: &mut Interpreter,
         ) -> Result<Value>,
         parameters: Parameters,
@@ -56,7 +56,7 @@ impl Callable for BuiltinFunction {
     fn call(
         &self,
         intp: &mut Interpreter,
-        argument_nodes: &[Node],
+        argument_nodes: &[Expression],
     ) -> Result<Value> {
         let function = self.function;
 
