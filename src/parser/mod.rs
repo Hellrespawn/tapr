@@ -2,7 +2,7 @@ use self::ast::*;
 use crate::error::{Error, ErrorKind};
 use crate::graph::GraphVisitor;
 use crate::lexer::Lexer;
-use crate::token::{Token, TokenType};
+use crate::token::{Token, TokenType, TokenType as TT};
 use crate::Result;
 use once_cell::sync::Lazy;
 
@@ -12,27 +12,18 @@ static DEBUG_AST: Lazy<bool> = Lazy::new(|| std::env::var("DEBUG_AST").is_ok());
 
 pub struct Parser<'p> {
     lexer: Lexer<'p>,
-    parser_no: usize,
     previous_token: Option<Token>,
     current_token: Option<Token>,
+    next_token: Option<Token>,
 }
 
 impl<'p> Parser<'p> {
     pub fn new(lexer: Lexer<'p>) -> Self {
         Self {
             lexer,
-            parser_no: 0,
             previous_token: None,
             current_token: None,
-        }
-    }
-
-    pub fn with_number(lexer: Lexer<'p>, parser_no: usize) -> Self {
-        Self {
-            lexer,
-            parser_no,
-            previous_token: None,
-            current_token: None,
+            next_token: None,
         }
     }
 
@@ -42,11 +33,7 @@ impl<'p> Parser<'p> {
         let expression = self.expression()?;
 
         if *DEBUG_AST {
-            let filename = format!(
-                "{}.{}.ast.dot",
-                env!("CARGO_PKG_NAME"),
-                self.parser_no
-            );
+            let filename = format!("{}.{}.ast.dot", env!("CARGO_PKG_NAME"), 0);
 
             GraphVisitor::create_ast_graph(&expression, &filename);
         }
@@ -54,22 +41,28 @@ impl<'p> Parser<'p> {
         Ok(expression)
     }
 
+    fn peek(&mut self) -> Result<Option<&Token>> {
+        if self.next_token.is_none() {
+            self.next_token = self.lexer.scan_token()?;
+        }
+
+        Ok(self.next_token.as_ref())
+    }
+
     fn advance(&mut self) -> Result<()> {
         self.previous_token = self.current_token.take();
 
-        self.current_token = self.lexer.scan_token()?;
+        if self.next_token.is_some() {
+            self.current_token = self.next_token.take();
+        } else {
+            self.current_token = self.lexer.scan_token()?;
+        }
 
         Ok(())
     }
 
     fn error(line_no: usize, col_no: usize, kind: ErrorKind) -> Error {
         Error::new(line_no, col_no, kind)
-    }
-
-    fn error_at_current(&self, kind: ErrorKind) -> Error {
-        let (line_no, col_no) = self.current_location();
-
-        Self::error(line_no, col_no, kind)
     }
 
     fn error_at_previous(&self, kind: ErrorKind) -> Error {
@@ -105,14 +98,6 @@ impl<'p> Parser<'p> {
         self.current_token.as_ref().map(|token| token.ttype)
     }
 
-    fn current_location(&self) -> (usize, usize) {
-        if let Some(token) = self.current_token.as_ref() {
-            (token.line_no, token.col_no)
-        } else {
-            (0, 0)
-        }
-    }
-
     fn previous_location(&self) -> (usize, usize) {
         if let Some(token) = self.previous_token.as_ref() {
             (token.line_no, token.col_no)
@@ -138,36 +123,52 @@ impl<'p> Parser<'p> {
             expressions.push(self.expression()?);
         }
 
+        self.advance()?;
+
         Ok(expressions)
     }
 
     fn expression(&mut self) -> Result<Expression> {
-        todo!()
-        // if let Some(TokenType::LeftParen) = self.current_type() {
-        //     self.advance()?;
+        let current_type = self.current_type().unwrap_or(TokenType::EOF);
 
-        //     let expression = match self.current_type().unwrap_or(TokenType::EOF)
-        //     {
-        //         TokenType::If => self.if_expression()?.into(),
-        //         TokenType::While => self.while_expression()?.into(),
-        //         TokenType::Set => self.set_expression()?.into(),
-        //         TokenType::Def => self.function_definition()?.into(),
-        //         TokenType::Symbol => self.function_call()?.into(),
-        //         _ => self.list()?.into(),
-        //     };
+        let next_type = self.peek()?.map_or(TokenType::EOF, |t| t.ttype);
 
-        //     Ok(expression)
-        // } else {
-        //     self.data_type()
-        // }
+        let expr = match (current_type, next_type) {
+            (TT::LeftParen, TT::Def) => Expression::Define(self.define()?),
+            (TT::LeftParen, TT::If) => Expression::If(self.if_expression()?),
+            (TT::LeftParen, TT::While) => {
+                Expression::While(self.while_expression()?)
+            }
+            (TT::LeftParen, TT::Lambda) => Expression::Lambda(self.lambda()?),
+            (TT::LeftParen, TT::Symbol) => Expression::Call(self.call()?),
+            (TT::LeftParen, TT::Quote) => {
+                Expression::QuotedDatum(self.quoted_datum(false)?)
+            }
+            (TT::Apostrophe, _) => {
+                Expression::QuotedDatum(self.quoted_datum(true)?)
+            }
+            _ => Expression::Datum(self.datum()?),
+        };
+
+        Ok(expr)
     }
 
     fn define(&mut self) -> Result<Define> {
-        todo!()
+        self.consume(TokenType::LeftParen, "")?;
+        self.consume(TokenType::Def, "")?;
+
+        let name = self.symbol("Define should have a symbol.")?;
+
+        let expression = Box::new(self.expression()?);
+
+        self.consume(TokenType::RightParen, "Define should be closed by ')'")?;
+
+        Ok(Define { name, expression })
     }
 
     fn if_expression(&mut self) -> Result<If> {
-        self.consume(TokenType::If, "First 'if'")?;
+        self.consume(TokenType::LeftParen, "")?;
+        self.consume(TokenType::If, "")?;
 
         let condition = Box::new(self.expression()?);
 
@@ -179,7 +180,7 @@ impl<'p> Parser<'p> {
             Some(Box::new(self.expression()?))
         };
 
-        self.consume(TokenType::RightParen, "If Expression must end with ')'")?;
+        self.consume(TokenType::RightParen, "If should be closed by ')'")?;
 
         Ok(If {
             condition,
@@ -189,19 +190,14 @@ impl<'p> Parser<'p> {
     }
 
     fn while_expression(&mut self) -> Result<While> {
-        self.consume(
-            TokenType::While,
-            "While Expression must start with 'while'",
-        )?;
+        self.consume(TokenType::LeftParen, "")?;
+        self.consume(TokenType::While, "")?;
 
         let condition = Box::new(self.expression()?);
 
         let expression = Box::new(self.expression()?);
 
-        self.consume(
-            TokenType::RightParen,
-            "While Expression must end with ')'",
-        )?;
+        self.consume(TokenType::RightParen, "While should be closed by ')'")?;
 
         Ok(While {
             condition,
@@ -210,66 +206,131 @@ impl<'p> Parser<'p> {
     }
 
     fn lambda(&mut self) -> Result<Lambda> {
-        todo!()
-        // self.consume(
-        //     TokenType::Def,
-        //     "Function definition must start with 'def'",
-        // )?;
+        self.consume(TokenType::LeftParen, "")?;
+        self.consume(TokenType::Lambda, "")?;
 
-        // let name = self.consume_symbol_token(
-        //     "Function definition must have symbol for name.",
-        // )?;
+        let parameters = self.parameters()?;
 
-        // let parameters = self.parameters()?;
+        let expression = Box::new(self.expression()?);
 
-        // let expression = Box::new(self.expression()?);
+        self.consume(TokenType::RightParen, "Lambda should be closed by ')'")?;
 
-        // self.consume(
-        //     TokenType::RightParen,
-        //     "Function definition must end with ')'",
-        // )?;
+        Ok(Lambda {
+            parameters,
+            expression,
+        })
+    }
 
-        // let function_definition = FunctionDefinition {
-        //     name,
-        //     parameters,
-        //     expression,
-        // };
+    fn parameters(&mut self) -> Result<Vec<Symbol>> {
+        if self.matches(TokenType::LeftParen) {
+            self.advance()?;
+            let mut parameters = Vec::new();
 
-        // Ok(function_definition)
+            while !self.matches(TokenType::RightParen) {
+                parameters
+                    .push(self.symbol("Lambda parameter should be a symbol.")?);
+            }
+
+            self.advance()?;
+
+            Ok(parameters)
+        } else {
+            Ok(vec![self.symbol("Lambda parameter should be a symbol.")?])
+        }
     }
 
     fn call(&mut self) -> Result<Call> {
-        todo!()
-        // let name = self
-        //     .consume_symbol_token("Function call must have symbol for name.")?;
+        self.consume(TokenType::LeftParen, "")?;
 
-        // let arguments = self.gather_expressions_until_paren()?;
+        let symbol = self.symbol("Call should start with a symbol.")?;
 
-        // self.advance()?;
+        let arguments = self.gather_expressions_until_paren()?;
 
-        // Ok(FunctionCall { name, arguments })
+        Ok(Call { symbol, arguments })
+    }
+
+    fn quoted_datum(&mut self, sugar: bool) -> Result<Datum> {
+        if sugar {
+            self.consume(TokenType::Apostrophe, "")?;
+        } else {
+            self.consume(TokenType::LeftParen, "")?;
+            self.consume(TokenType::Quote, "")?;
+        }
+
+        let result = self.datum();
+
+        if !sugar {
+            self.consume(
+                TokenType::RightParen,
+                "Quote should be closed by ')'.",
+            )?;
+        }
+
+        result
     }
 
     fn datum(&mut self) -> Result<Datum> {
-        todo!()
-        // let (line_no, col_no) = self.previous_location();
+        if self.matches(TokenType::LeftParen) {
+            Ok(Datum::List(self.list()?))
+        } else {
+            self.atom()
+        }
+    }
 
-        // let mut expressions: Vec<Node> = Vec::new();
+    fn list(&mut self) -> Result<List> {
+        self.consume(TokenType::LeftParen, "")?;
 
-        // while !self.matches(TokenType::RightParen) {
-        //     if self.current_token.is_none() {
-        //         return Err(Self::error(
-        //             line_no,
-        //             col_no,
-        //             ErrorKind::UnmatchedParenthesis,
-        //         ));
-        //     }
+        let expressions = self.gather_expressions_until_paren()?;
 
-        //     expressions.push(self.expression()?);
-        // }
+        let start_token =
+            self.previous_token.as_ref().cloned().expect(
+                "Previous token should be `Some` after successful consume",
+            );
 
-        // self.advance()?;
+        Ok(List {
+            start_token,
+            expressions,
+        })
+    }
 
-        // Ok(List { expressions })
+    fn atom(&mut self) -> Result<Datum> {
+        let current_token =
+            self.current_token.as_ref().cloned().unwrap_or_else(|| {
+                Token::new(TokenType::EOF, String::new(), 0, 0)
+            });
+
+        let datum = match current_token.ttype {
+            TokenType::True | TokenType::False => {
+                self.advance()?;
+                Datum::Boolean(Boolean(current_token))
+            }
+            TokenType::Number => {
+                self.advance()?;
+                Datum::Number(Number(current_token))
+            }
+            TokenType::String => {
+                self.advance()?;
+                Datum::String(StringNode(current_token))
+            }
+            TokenType::Symbol => Datum::Symbol(self.symbol("")?),
+            _ => {
+                return Err(Error::without_location(ErrorKind::ParserError(
+                    format!("Invalid atom '{current_token:?}'"),
+                )))
+            }
+        };
+
+        Ok(datum)
+    }
+
+    fn symbol(&mut self, message: &str) -> Result<Symbol> {
+        self.consume(TokenType::Symbol, message)?;
+
+        let token =
+            self.previous_token.as_ref().cloned().expect(
+                "Previous token should be set after successful consume",
+            );
+
+        Ok(Symbol(token))
     }
 }

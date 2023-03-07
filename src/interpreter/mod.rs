@@ -147,6 +147,10 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
         todo!()
     }
 
+    fn visit_quoted_datum(&mut self, atom: &Datum) -> Result<Value> {
+        todo!()
+    }
+
     fn visit_datum(&mut self, atom: &Datum) -> Result<Value> {
         todo!()
     }

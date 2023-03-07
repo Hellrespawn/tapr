@@ -156,141 +156,149 @@ impl GraphVisitor {
         to_visit: &[Expression],
     ) {
         for node in to_visit {
-            let new_node = self.counter;
-            node.accept(self);
+            self.accept_and_connect(parent_node, node);
+        }
+    }
 
-            self.connect_nodes(parent_node, new_node);
+    fn accept_and_connect_many_with_label(
+        &mut self,
+        parent_node: usize,
+        to_visit: &[Expression],
+        label: &str,
+    ) {
+        for node in to_visit {
+            self.accept_and_connect_with_label(parent_node, node, label);
         }
     }
 }
 
 impl Visitor<()> for GraphVisitor {
     fn visit_define(&mut self, define: &Define) {
-        todo!()
+        let parent_node = self.new_node("define");
+
+        self.accept_and_connect_with_label(
+            parent_node,
+            &Expression::Datum(Datum::Symbol(define.name.clone())),
+            "symbol",
+        );
+
+        self.accept_and_connect_with_label(
+            parent_node,
+            &define.expression,
+            "expression",
+        );
     }
 
     fn visit_if(&mut self, if_expr: &If) {
-        todo!()
+        let parent_node = self.new_node("if");
+
+        self.accept_and_connect_with_label(
+            parent_node,
+            &if_expr.condition,
+            "condition",
+        );
+
+        self.accept_and_connect_with_label(
+            parent_node,
+            &if_expr.then_branch,
+            "then",
+        );
+
+        if let Some(else_branch) = &if_expr.else_branch {
+            self.accept_and_connect_with_label(
+                parent_node,
+                else_branch,
+                "else",
+            );
+        }
     }
 
     fn visit_while(&mut self, while_expr: &While) {
-        todo!()
+        let parent_node = self.new_node("while");
+
+        self.accept_and_connect_with_label(
+            parent_node,
+            &while_expr.condition,
+            "condition",
+        );
+
+        self.accept_and_connect_with_label(
+            parent_node,
+            &while_expr.expression,
+            "expression",
+        );
     }
 
     fn visit_lambda(&mut self, lambda: &Lambda) {
-        todo!()
+        let parent_node = self.new_node("lambda");
+
+        let symbols = lambda
+            .parameters
+            .iter()
+            .map(|s| Expression::Datum(Datum::Symbol(s.clone())))
+            .collect::<Vec<_>>();
+
+        self.accept_and_connect_many_with_label(
+            parent_node,
+            &symbols,
+            "parameter",
+        );
+
+        self.accept_and_connect_with_label(
+            parent_node,
+            &lambda.expression,
+            "expression",
+        );
     }
 
     fn visit_call(&mut self, call: &Call) {
-        todo!()
+        let parent_node = self.new_node("call");
+
+        self.accept_and_connect_with_label(
+            parent_node,
+            &Expression::Datum(Datum::Symbol(call.symbol.clone())),
+            "symbol",
+        );
+
+        self.accept_and_connect_many_with_label(
+            parent_node,
+            &call.arguments,
+            "expression",
+        );
     }
 
-    fn visit_datum(&mut self, atom: &Datum) {
-        todo!()
+    fn visit_quoted_datum(&mut self, datum: &Datum) {
+        let parent_node = self.new_node("quote");
+
+        let counter = self.counter;
+
+        self.visit_datum(datum);
+
+        self.connect_nodes(parent_node, counter);
     }
-    // fn visit_program(&mut self, program: &Program) {
-    //     let program_node = self.new_node("Program");
 
-    //     self.accept_and_connect(program_node, &program.expression);
-    // }
+    fn visit_datum(&mut self, datum: &Datum) {
+        match datum {
+            Datum::List(list) => {
+                let parent_node = self.new_node("list");
 
-    // fn visit_if_expression(&mut self, if_expression: &IfExpression) {
-    //     let if_node = self.new_node("If");
-
-    //     self.accept_and_connect_with_label(
-    //         if_node,
-    //         &if_expression.condition,
-    //         "condition",
-    //     );
-
-    //     self.accept_and_connect_with_label(
-    //         if_node,
-    //         &if_expression.then_branch,
-    //         "then",
-    //     );
-
-    //     if let Some(else_branch) = &if_expression.else_branch {
-    //         self.accept_and_connect_with_label(if_node, else_branch, "else");
-    //     }
-    // }
-
-    // fn visit_while_expression(&mut self, while_expression: &WhileExpression) {
-    //     let while_node = self.new_node("While");
-
-    //     self.accept_and_connect_with_label(
-    //         while_node,
-    //         &while_expression.condition,
-    //         "condition",
-    //     );
-
-    //     self.accept_and_connect_with_label(
-    //         while_node,
-    //         &while_expression.expression,
-    //         "expression",
-    //     );
-    // }
-
-    // fn visit_set_expression(&mut self, set_expression: &SetExpression) {
-    //     let set_node =
-    //         self.new_node(&format!("Set\n'{}'", set_expression.name.lexeme()));
-
-    //     self.accept_and_connect(set_node, &set_expression.expression);
-    // }
-
-    // fn visit_function_call(&mut self, function_call: &FunctionCall) {
-    //     let function_node = self.new_node(&format!(
-    //         "Function Call\n'{}'",
-    //         function_call.name.lexeme()
-    //     ));
-
-    //     self.accept_and_connect_many(function_node, &function_call.arguments);
-    // }
-
-    // fn visit_function_definition(
-    //     &mut self,
-    //     function_definition: &FunctionDefinition,
-    // ) {
-    //     let function_node = self
-    //         .new_node(&format!("def\n'{}'", function_definition.name.lexeme()));
-
-    //     for param in &function_definition.parameters {
-    //         let param_node = self.new_node(param.lexeme());
-
-    //         self.connect_nodes_with_label(
-    //             function_node,
-    //             param_node,
-    //             "parameter",
-    //         );
-    //     }
-
-    //     self.accept_and_connect_with_label(
-    //         function_node,
-    //         &function_definition.expression,
-    //         "expression",
-    //     );
-    // }
-
-    // fn visit_list(&mut self, list: &List) {
-    //     let list_node = self.new_node("List");
-
-    //     self.accept_and_connect_many(list_node, &list.expressions);
-    // }
-
-    // fn visit_atom(&mut self, atom: &Atom) {
-    //     match atom {
-    //         Atom::Boolean(bool) => {
-    //             self.new_node(&format!("Boolean\n'{}'", bool.lexeme()))
-    //         }
-    //         Atom::Number(number) => {
-    //             self.new_node(&format!("Number\n'{}'", number.lexeme()))
-    //         }
-    //         Atom::String(string) => {
-    //             self.new_node(&format!("String\n'{}'", string.lexeme()))
-    //         }
-    //         Atom::Symbol(symbol) => {
-    //             self.new_node(&format!("Symbol\n'{}'", symbol.lexeme()))
-    //         }
-    //         Atom::Nil(_) => self.new_node("Nil"),
-    //     };
-    // }
+                self.accept_and_connect_many(parent_node, &list.expressions);
+            }
+            Datum::Boolean(bool) => {
+                self.new_node(&format!("Boolean:\n{}", bool.0.lexeme()));
+            }
+            Datum::Number(number) => {
+                self.new_node(&format!("Number:\n{}", number.0.lexeme()));
+            }
+            Datum::String(string) => {
+                self.new_node(&format!("String:\n{}", string.0.lexeme()));
+            }
+            Datum::Symbol(symbol) => {
+                self.new_node(&format!("Symbol:\n{}", symbol.0.lexeme()));
+            }
+            Datum::Nil => {
+                self.new_node("nil");
+            }
+        }
+    }
 }

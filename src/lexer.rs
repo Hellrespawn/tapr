@@ -34,7 +34,7 @@ impl<'l> Lexer<'l> {
             let token = match character {
                 '(' => self.single_character(TokenType::LeftParen),
                 ')' => self.single_character(TokenType::RightParen),
-                '\'' => self.single_character(TokenType::Quote),
+                '\'' => self.single_character(TokenType::Apostrophe),
                 '\"' => self.string()?,
                 _ if self.is_number() => self.number()?,
                 _ if self.is_character() => self.keyword_or_symbol(),
@@ -236,6 +236,7 @@ impl<'l> Lexer<'l> {
             "false" => TokenType::False,
             "if" => TokenType::If,
             "lambda" => TokenType::Lambda,
+            "quote" => TokenType::Quote,
             "true" => TokenType::True,
             "while" => TokenType::While,
             "nil" => TokenType::Nil,

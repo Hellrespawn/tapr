@@ -10,7 +10,7 @@ Expression          -> Define
                      | While
                      | Lambda
                      | Call
-                     | "'" Datum
+                     | QuotedDatum
                      | Datum
 
                                  name   value
@@ -30,6 +30,8 @@ Parameters          -> Symbol | "(" Symbol+ ")"
                            name   arguments
 Call                -> "(" Symbol Expression* ")"
 
+QuotedDatum         -> "(" "quote" Datum ")"
+                     |  "'" Datum
 
 Datum               -> List
                      | Atom

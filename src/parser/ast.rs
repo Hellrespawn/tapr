@@ -1,4 +1,5 @@
-use crate::{token::Token, visitor::Visitor};
+use crate::token::Token;
+use crate::visitor::Visitor;
 
 #[derive(Debug, Clone)]
 pub enum Expression {
@@ -7,6 +8,7 @@ pub enum Expression {
     While(While),
     Lambda(Lambda),
     Call(Call),
+    QuotedDatum(Datum),
     Datum(Datum),
 }
 
@@ -21,24 +23,17 @@ impl Expression {
             Expression::While(while_expr) => visitor.visit_while(while_expr),
             Expression::Lambda(lambda) => visitor.visit_lambda(lambda),
             Expression::Call(call) => visitor.visit_call(call),
+            Expression::QuotedDatum(datum) => visitor.visit_quoted_datum(datum),
             Expression::Datum(datum) => visitor.visit_datum(datum),
-        }
-    }
-
-    pub fn node_type(&self) -> &str {
-        match self {
-            Expression::Define(_) => "def",
-            Expression::If(_) => "if",
-            Expression::While(_) => "while",
-            Expression::Lambda(_) => "lambda",
-            Expression::Call(_) => "call",
-            Expression::Datum(_) => "datum",
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct Define {}
+pub struct Define {
+    pub name: Symbol,
+    pub expression: Box<Expression>,
+}
 
 #[derive(Debug, Clone)]
 pub struct If {
@@ -54,13 +49,41 @@ pub struct While {
 }
 
 #[derive(Debug, Clone)]
-pub struct Lambda {}
+pub struct Lambda {
+    pub parameters: Vec<Symbol>,
+    pub expression: Box<Expression>,
+}
 
 #[derive(Debug, Clone)]
-pub struct Call {}
+pub struct Call {
+    pub symbol: Symbol,
+    pub arguments: Vec<Expression>,
+}
 
 #[derive(Debug, Clone)]
 pub enum Datum {
-    List(Vec<Expression>),
-    Symbol(Token),
+    List(List),
+    Boolean(Boolean),
+    Number(Number),
+    String(StringNode),
+    Symbol(Symbol),
+    Nil,
 }
+
+#[derive(Debug, Clone)]
+pub struct List {
+    pub start_token: Token,
+    pub expressions: Vec<Expression>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Boolean(pub Token);
+
+#[derive(Debug, Clone)]
+pub struct Number(pub Token);
+
+#[derive(Debug, Clone)]
+pub struct StringNode(pub Token);
+
+#[derive(Debug, Clone)]
+pub struct Symbol(pub Token);

@@ -1,9 +1,4 @@
 (
-    (
-        def mathThree
-        (a b c)
-        (+ a (* b c))
-    )
-    (print (mathThree 2 3 4))
-    (print (mathThree 4 5 6))
+    (def add-one (lambda (a) (+ 1 a)))
+    (add-one 2)
 )

@@ -38,6 +38,7 @@ pub fn quote(
     let value = match argument_node {
         Expression::Datum(Datum::List(list)) => {
             let elements = list
+                .expressions
                 .iter()
                 .map(|node| node.accept(intp))
                 .collect::<Result<Vec<_>>>()?;
@@ -45,7 +46,7 @@ pub fn quote(
             Value::List(elements)
         }
         Expression::Datum(Datum::Symbol(symbol)) => {
-            Value::Symbol(symbol.lexeme().to_owned())
+            Value::Symbol(symbol.0.lexeme().to_owned())
         }
         node => node.accept(intp)?,
     };

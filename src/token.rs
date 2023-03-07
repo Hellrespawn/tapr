@@ -1,6 +1,7 @@
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum TokenType {
     // Literals
+    Apostrophe,
     Def,
     False,
     If,

@@ -13,7 +13,11 @@ pub struct Function {
 }
 
 impl Function {
-    pub fn new(name: String, parameters: Parameters, node: Box<Expression>) -> Self {
+    pub fn new(
+        name: String,
+        parameters: Parameters,
+        node: Box<Expression>,
+    ) -> Self {
         Self {
             name,
             parameters,
