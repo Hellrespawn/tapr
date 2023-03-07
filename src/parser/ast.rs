@@ -117,13 +117,13 @@ pub struct IfExpression {
 #[derive(Debug, Clone)]
 pub struct WhileExpression {
     pub condition: Box<Node>,
-    pub then_branch: Box<Node>,
+    pub expression: Box<Node>,
 }
 
 #[derive(Debug, Clone)]
 pub struct SetExpression {
-    pub variables: Vec<Variable>,
-    pub scope: Box<Node>,
+    pub name: Token,
+    pub expression: Box<Node>,
 }
 
 #[derive(Debug, Clone)]

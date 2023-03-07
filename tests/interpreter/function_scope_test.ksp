@@ -2,16 +2,15 @@
     (
         def mathThree           # define function mathThree
         (a b c)                 # declare parameters `a`, `b` and `c`
-        (                       # function body
+        (                       # function expression
             tail (              # return tail of list --------+
                 (print a)       # print `a` in function (4)   |
                 (+ a (* b c))   # tail of list  <-------------+
             )
         )
     )
-    (set (a (mathThree 4 5 6))  # set `a` to `(mathThree 4 5 6)` (34)
-        (                       # enter scope
-            (print (+ a 6))     # print `a` + 6 (40)
-        )                       # exit scope
-    )
+
+    (set a (mathThree 4 5 6))   # set `a` to `(mathThree 4 5 6)` (34)
+
+    (print (+ a 6))             # print `a` + 6 (40)
 )

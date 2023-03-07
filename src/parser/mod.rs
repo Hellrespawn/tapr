@@ -214,75 +214,24 @@ impl<'p> Parser<'p> {
 
         Ok(WhileExpression {
             condition,
-            then_branch,
+            expression: then_branch,
         })
-    }
-
-    fn single_variable(&mut self) -> Result<Variable> {
-        let name = self.consume_symbol_token(
-            "Set expression must be followed by a symbol.",
-        )?;
-
-        let node = Box::new(self.expression()?);
-
-        Ok(Variable { name, node })
-    }
-
-    fn multiple_variables(&mut self) -> Result<Vec<Variable>> {
-        let mut variables = Vec::new();
-
-        loop {
-            self.consume(
-                TokenType::LeftParen,
-                "Variable declaration must start with '('",
-            )?;
-
-            variables.push(self.single_variable()?);
-
-            self.consume(
-                TokenType::RightParen,
-                "Variable declaration must end with ')'",
-            )?;
-
-            if self.matches(TokenType::RightParen) {
-                break;
-            }
-        }
-
-        Ok(variables)
-    }
-
-    fn gather_variables(&mut self) -> Result<Vec<Variable>> {
-        if self.matches(TokenType::LeftParen) {
-            self.multiple_variables()
-        } else {
-            Ok(vec![self.single_variable()?])
-        }
     }
 
     fn set_expression(&mut self) -> Result<SetExpression> {
         self.consume(TokenType::Set, "Set Expression must start with 'set'")?;
 
-        self.consume(
-            TokenType::LeftParen,
-            "Set Expression variables must start with '('",
-        )?;
+        let name =
+            self.consume_symbol_token("'set' must be followed by name.'")?;
 
-        let variables = self.gather_variables()?;
+        let expression = Box::new(self.expression()?);
 
         self.consume(
             TokenType::RightParen,
-            "Set Expression variables must end with ')'",
+            "'set' value must be followed by ')'",
         )?;
 
-        let scope = Box::new(self.expression()?);
-
-        self.consume(
-            TokenType::RightParen,
-            "Set Expression must end with ')'",
-        )?;
-
-        Ok(SetExpression { variables, scope })
+        Ok(SetExpression { name, expression })
     }
 
     fn consume_symbol_token(&mut self, error_message: &str) -> Result<Token> {

@@ -126,71 +126,88 @@ impl GraphVisitor {
     ) {
         self.node_connector(node1, node2, Some(label), true);
     }
+
+    fn accept_and_connect(&mut self, parent_node: usize, to_visit: &Node) {
+        let new_node = self.counter;
+        to_visit.accept(self);
+
+        self.connect_nodes(parent_node, new_node);
+    }
+
+    fn accept_and_connect_with_label(
+        &mut self,
+        parent_node: usize,
+        to_visit: &Node,
+        label: &str,
+    ) {
+        let new_node = self.counter;
+        to_visit.accept(self);
+
+        self.connect_nodes_with_label(parent_node, new_node, label);
+    }
+
+    fn accept_and_connect_many(
+        &mut self,
+        parent_node: usize,
+        to_visit: &[Node],
+    ) {
+        for node in to_visit {
+            let new_node = self.counter;
+            node.accept(self);
+
+            self.connect_nodes(parent_node, new_node);
+        }
+    }
 }
 
 impl Visitor<()> for GraphVisitor {
     fn visit_program(&mut self, program: &Program) {
         let program_node = self.new_node("Program");
 
-        let new_node = self.counter;
-
-        program.expression.accept(self);
-
-        self.connect_nodes(program_node, new_node);
+        self.accept_and_connect(program_node, &program.expression);
     }
 
     fn visit_if_expression(&mut self, if_expression: &IfExpression) {
         let if_node = self.new_node("If");
 
-        let condition_node = self.counter;
-        if_expression.condition.accept(self);
+        self.accept_and_connect_with_label(
+            if_node,
+            &if_expression.condition,
+            "condition",
+        );
 
-        self.connect_nodes_with_label(if_node, condition_node, "condition");
-
-        let then_branch_node = self.counter;
-        if_expression.then_branch.accept(self);
-
-        self.connect_nodes_with_label(if_node, then_branch_node, "then");
+        self.accept_and_connect_with_label(
+            if_node,
+            &if_expression.then_branch,
+            "then",
+        );
 
         if let Some(else_branch) = &if_expression.else_branch {
-            let else_branch_node = self.counter;
-            else_branch.accept(self);
-
-            self.connect_nodes_with_label(if_node, else_branch_node, "else");
+            self.accept_and_connect_with_label(if_node, else_branch, "else");
         }
     }
 
     fn visit_while_expression(&mut self, while_expression: &WhileExpression) {
-        let if_node = self.new_node("While");
+        let while_node = self.new_node("While");
 
-        let condition_node = self.counter;
-        while_expression.condition.accept(self);
+        self.accept_and_connect_with_label(
+            while_node,
+            &while_expression.condition,
+            "condition",
+        );
 
-        self.connect_nodes_with_label(if_node, condition_node, "condition");
-
-        let then_branch_node = self.counter;
-        while_expression.then_branch.accept(self);
-
-        self.connect_nodes_with_label(if_node, then_branch_node, "then");
+        self.accept_and_connect_with_label(
+            while_node,
+            &while_expression.expression,
+            "expression",
+        );
     }
 
     fn visit_set_expression(&mut self, set_expression: &SetExpression) {
-        let set_node = self.new_node("Set");
+        let set_node =
+            self.new_node(&format!("Set\n'{}'", set_expression.name.lexeme()));
 
-        for Variable { name, node } in &set_expression.variables {
-            let var_node = self.new_node(name.lexeme());
-
-            self.connect_nodes_with_label(set_node, var_node, "variable");
-
-            let value_node = self.counter;
-            node.accept(self);
-            self.connect_nodes(var_node, value_node);
-        }
-
-        let scope_node = self.counter;
-        set_expression.scope.accept(self);
-
-        self.connect_nodes_with_label(set_node, scope_node, "scope");
+        self.accept_and_connect(set_node, &set_expression.expression);
     }
 
     fn visit_function_call(&mut self, function_call: &FunctionCall) {
@@ -199,50 +216,37 @@ impl Visitor<()> for GraphVisitor {
             function_call.name.lexeme()
         ));
 
-        for node in &function_call.arguments {
-            let new_node = self.counter;
-            node.accept(self);
-            self.connect_nodes(function_node, new_node);
-        }
+        self.accept_and_connect_many(function_node, &function_call.arguments);
     }
 
     fn visit_function_definition(
         &mut self,
         function_definition: &FunctionDefinition,
     ) {
-        let function_node = self.new_node(&format!(
-            "Function Def\n'{}'",
-            function_definition.name.lexeme()
-        ));
+        let function_node = self
+            .new_node(&format!("def\n'{}'", function_definition.name.lexeme()));
 
         for param in &function_definition.parameters {
             let param_node = self.new_node(param.lexeme());
+
             self.connect_nodes_with_label(
                 function_node,
                 param_node,
-                "Parameter",
+                "parameter",
             );
         }
 
-        let expression_node = self.counter;
-
-        function_definition.expression.accept(self);
-
-        self.connect_nodes_with_label(
+        self.accept_and_connect_with_label(
             function_node,
-            expression_node,
-            "Expression",
+            &function_definition.expression,
+            "expression",
         );
     }
 
     fn visit_list(&mut self, list: &List) {
         let list_node = self.new_node("List");
 
-        for node in &list.expressions {
-            let new_node = self.counter;
-            node.accept(self);
-            self.connect_nodes(list_node, new_node);
-        }
+        self.accept_and_connect_many(list_node, &list.expressions);
     }
 
     fn visit_atom(&mut self, atom: &Atom) {

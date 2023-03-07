@@ -3,8 +3,6 @@ use crate::interpreter::Value;
 use crate::token::TokenType;
 use thiserror::Error;
 
-// TODO add function error, handle in call_function, add line info.
-
 #[derive(Debug)]
 pub struct Error {
     line_no: Option<usize>,

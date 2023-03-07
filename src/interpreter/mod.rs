@@ -173,7 +173,7 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
             let condition = while_expression.condition.accept(self)?;
 
             if condition.is_truthy() {
-                value = while_expression.then_branch.accept(self)?;
+                value = while_expression.expression.accept(self)?;
             } else {
                 break;
             }
@@ -186,21 +186,13 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
         &mut self,
         set_expression: &SetExpression,
     ) -> Result<Value> {
-        let SetExpression { variables, scope } = set_expression;
+        let SetExpression { name, expression } = set_expression;
 
-        self.enter_scope();
+        let value = expression.accept(self)?;
 
-        for Variable { name, node } in variables {
-            let value = node.accept(self)?;
+        self.environment.insert(name.lexeme().to_owned(), value);
 
-            self.environment.insert(name.lexeme().to_owned(), value);
-        }
-
-        let return_value = scope.accept(self)?;
-
-        self.exit_scope();
-
-        Ok(return_value)
+        Ok(Value::Symbol(name.lexeme().to_owned()))
     }
 
     fn visit_function_call(

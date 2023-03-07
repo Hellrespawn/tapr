@@ -14,14 +14,8 @@ Expression          -> SetExpression
                      | FunctionCall
                      | DataType
 
-                                                   scope
-SetExpression       -> "(" "set" "(" Variables ")" Expression ")"
-
-                       name   value
-Variables           -> Variable
-                     | ( "(" Variable ")" )+
-
-Variable            -> Symbol Expression
+                                 name   value
+SetExpression       -> "(" "set" Symbol Expression ")"
 
                                 condition  then       else
 IfExpression        -> "(" "if" Expression Expression Expression? ")"
