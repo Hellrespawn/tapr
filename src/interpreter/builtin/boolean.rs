@@ -3,23 +3,15 @@ use crate::interpreter::{Interpreter, Value};
 use crate::parser::ast::Expression;
 use crate::Result;
 
-#[derive(Debug, Clone, Copy)]
-pub enum BooleanOp {
-    Greater,
-    GreaterEqual,
-    Equal,
-    LessEqual,
-    Less,
-    NotEqual,
-}
+type BooleanOp = fn(&Value, &Value) -> bool;
 
 fn boolean_function(
-    parameters: &Parameters,
-    argument_nodes: &[Expression],
-    op: BooleanOp,
     intp: &mut Interpreter,
+    op: BooleanOp,
+    argument_nodes: &[Expression],
 ) -> Result<Value> {
-    let arguments = parameters.evaluate_arguments(intp, argument_nodes)?;
+    let arguments =
+        boolean_params().evaluate_arguments(intp, argument_nodes)?;
 
     let mut value = true;
 
@@ -28,65 +20,52 @@ fn boolean_function(
             unreachable!()
         };
 
-        value = match op {
-            BooleanOp::Greater => lhs > rhs,
-            BooleanOp::GreaterEqual => lhs >= rhs,
-            BooleanOp::Equal => lhs == rhs,
-            BooleanOp::LessEqual => lhs <= rhs,
-            BooleanOp::Less => lhs < rhs,
-            BooleanOp::NotEqual => lhs != rhs,
-        }
+        value = op(lhs, rhs);
     }
 
     Ok(Value::Boolean(value))
 }
 
 pub fn gt(
-    parameters: &Parameters,
-    argument_nodes: &[Expression],
     intp: &mut Interpreter,
+    argument_nodes: &[Expression],
 ) -> Result<Value> {
-    boolean_function(parameters, argument_nodes, BooleanOp::Greater, intp)
+    boolean_function(intp, |lhs, rhs| rhs > lhs, argument_nodes)
 }
 
 pub fn gte(
-    parameters: &Parameters,
-    argument_nodes: &[Expression],
     intp: &mut Interpreter,
+    argument_nodes: &[Expression],
 ) -> Result<Value> {
-    boolean_function(parameters, argument_nodes, BooleanOp::GreaterEqual, intp)
+    boolean_function(intp, |lhs, rhs| rhs >= lhs, argument_nodes)
 }
 
 pub fn eq(
-    parameters: &Parameters,
-    argument_nodes: &[Expression],
     intp: &mut Interpreter,
-) -> Result<Value> {
-    boolean_function(parameters, argument_nodes, BooleanOp::Equal, intp)
-}
-
-pub fn lte(
-    parameters: &Parameters,
     argument_nodes: &[Expression],
-    intp: &mut Interpreter,
 ) -> Result<Value> {
-    boolean_function(parameters, argument_nodes, BooleanOp::LessEqual, intp)
-}
-
-pub fn lt(
-    parameters: &Parameters,
-    argument_nodes: &[Expression],
-    intp: &mut Interpreter,
-) -> Result<Value> {
-    boolean_function(parameters, argument_nodes, BooleanOp::Less, intp)
+    boolean_function(intp, |lhs, rhs| rhs == lhs, argument_nodes)
 }
 
 pub fn ne(
-    parameters: &Parameters,
-    argument_nodes: &[Expression],
     intp: &mut Interpreter,
+    argument_nodes: &[Expression],
 ) -> Result<Value> {
-    boolean_function(parameters, argument_nodes, BooleanOp::NotEqual, intp)
+    Ok(Value::Boolean(eq(intp, argument_nodes)?.is_falsy()))
+}
+
+pub fn lte(
+    intp: &mut Interpreter,
+    argument_nodes: &[Expression],
+) -> Result<Value> {
+    boolean_function(intp, |lhs, rhs| rhs <= lhs, argument_nodes)
+}
+
+pub fn lt(
+    intp: &mut Interpreter,
+    argument_nodes: &[Expression],
+) -> Result<Value> {
+    boolean_function(intp, |lhs, rhs| rhs < lhs, argument_nodes)
 }
 
 pub fn boolean_params() -> Parameters {

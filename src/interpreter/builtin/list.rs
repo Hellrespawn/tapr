@@ -5,11 +5,11 @@ use crate::parser::ast::Expression;
 use crate::Result;
 
 pub fn tail(
-    parameters: &Parameters,
-    argument_nodes: &[Expression],
     intp: &mut Interpreter,
+    argument_nodes: &[Expression],
 ) -> Result<Value> {
-    let mut arguments = parameters.evaluate_arguments(intp, argument_nodes)?;
+    let mut arguments =
+        tail_params().evaluate_arguments(intp, argument_nodes)?;
 
     let Value::List(mut list) = arguments.pop().expect("tail to have one argument") else {
             unreachable!()

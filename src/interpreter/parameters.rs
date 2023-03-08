@@ -48,6 +48,10 @@ impl Parameter {
         }
     }
 
+    pub fn any(name: &str) -> Self {
+        Self::new(name.to_owned(), vec![ParameterType::Any], false)
+    }
+
     fn value_is_type(&self, value: &Value) -> Result<()> {
         if self.ptypes.iter().any(|ptype| ptype.value_is_type(value)) {
             Ok(())
@@ -79,6 +83,14 @@ impl Parameters {
         }
 
         Ok(Self { parameters })
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.parameters.is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+        self.parameters.len()
     }
 
     pub fn evaluate_arguments(

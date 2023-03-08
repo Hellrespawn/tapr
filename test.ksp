@@ -1,4 +1,4 @@
 (
     (def add-one (lambda (a) (+ 1 a)))
-    (add-one 2)
+    (print (add-one 2))
 )

@@ -1,12 +1,11 @@
-mod function;
+mod lambda;
 
-pub use function::Function;
+pub use lambda::Lambda;
 
-use super::callable::Callable;
+use super::builtin::Builtin;
 use crate::error::{Error, ErrorKind};
 use crate::Result;
 use std::cmp::Ordering;
-use std::rc::Rc;
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -16,13 +15,8 @@ pub enum Value {
     String(String),
     Symbol(String),
     List(Vec<Self>),
-    Function(Rc<dyn Callable>),
-}
-
-impl From<Function> for Value {
-    fn from(value: Function) -> Self {
-        Value::Function(Rc::new(value))
-    }
+    Builtin(Builtin),
+    Lambda(Lambda),
 }
 
 impl PartialEq for Value {
@@ -139,6 +133,10 @@ impl Value {
             _ => true,
         }
     }
+
+    pub fn is_falsy(&self) -> bool {
+        !self.is_truthy()
+    }
 }
 
 impl std::fmt::Display for Value {
@@ -160,8 +158,9 @@ impl std::fmt::Display for Value {
                         .join(" ")
                 )
             }
-            Value::Function(function_value) => {
-                write!(f, "<fn {}>", function_value.name())
+            Value::Builtin(builtin) => builtin.fmt(f),
+            Value::Lambda(lambda) => {
+                write!(f, "<anonymous function ({})>", lambda.parameters.len())
             }
         }
     }

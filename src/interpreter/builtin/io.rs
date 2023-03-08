@@ -4,11 +4,10 @@ use crate::parser::ast::{Datum, Expression};
 use crate::Result;
 
 pub fn print(
-    parameters: &Parameters,
-    argument_nodes: &[Expression],
     intp: &mut Interpreter,
+    argument_nodes: &[Expression],
 ) -> Result<Value> {
-    let arguments = parameters.evaluate_arguments(intp, argument_nodes)?;
+    let arguments = print_params().evaluate_arguments(intp, argument_nodes)?;
 
     for argument in arguments {
         writeln!(intp.output, "{argument}")?;
@@ -27,11 +26,10 @@ pub fn print_params() -> Parameters {
 }
 
 pub fn quote(
-    parameters: &Parameters,
-    argument_nodes: &[Expression],
     intp: &mut Interpreter,
+    argument_nodes: &[Expression],
 ) -> Result<Value> {
-    parameters.check_amount_of_args_or_error(argument_nodes.len())?;
+    quote_params().check_amount_of_args_or_error(argument_nodes.len())?;
 
     let argument_node = argument_nodes.first().expect("one argument node");
 

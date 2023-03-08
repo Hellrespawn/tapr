@@ -96,6 +96,9 @@ pub enum ErrorKind {
     #[error("Undefined symbol '{0}'")]
     UndefinedSymbol(String),
 
+    #[error("Value '{0}' is not callable.")]
+    NotCallable(Value),
+
     // Parameters
     #[error("Only the last parameter of a function may be variadic.")]
     NonLastParameterIsVariadic,

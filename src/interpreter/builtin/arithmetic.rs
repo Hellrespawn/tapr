@@ -3,69 +3,54 @@ use crate::interpreter::{Interpreter, Value};
 use crate::parser::ast::Expression;
 use crate::Result;
 
-#[derive(Debug, Clone, Copy)]
-pub enum ArithmeticOp {
-    Add,
-    Sub,
-    Mul,
-    Div,
-}
+type ArithmeticOp = fn(Value, Value) -> Result<Value>;
 
 fn arithmetic(
-    parameters: &Parameters,
-    argument_nodes: &[Expression],
-    op: ArithmeticOp,
     intp: &mut Interpreter,
+    op: ArithmeticOp,
+    argument_nodes: &[Expression],
 ) -> Result<Value> {
-    let arguments = parameters.evaluate_arguments(intp, argument_nodes)?;
+    let arguments =
+        arithmetic_params().evaluate_arguments(intp, argument_nodes)?;
 
     let mut iter = arguments.into_iter();
 
     let mut acc = iter.next().expect("at least one arguments");
 
     for rhs in iter {
-        match op {
-            // parameters here check for Numbers, so this is always safe.
-            ArithmeticOp::Add => acc = (acc + rhs).unwrap(),
-            ArithmeticOp::Sub => acc = (acc - rhs).unwrap(),
-            ArithmeticOp::Mul => acc = (acc * rhs).unwrap(),
-            ArithmeticOp::Div => acc = (acc / rhs).unwrap(),
-        }
+        acc = op(acc, rhs)
+            .expect("Parameters should have been checked as numbers first.");
     }
 
     Ok(acc)
 }
 
 pub fn add(
-    parameters: &Parameters,
-    argument_nodes: &[Expression],
     intp: &mut Interpreter,
+    argument_nodes: &[Expression],
 ) -> Result<Value> {
-    arithmetic(parameters, argument_nodes, ArithmeticOp::Add, intp)
+    arithmetic(intp, |lhs, rhs| lhs + rhs, argument_nodes)
 }
 
 pub fn sub(
-    parameters: &Parameters,
-    argument_nodes: &[Expression],
     intp: &mut Interpreter,
+    argument_nodes: &[Expression],
 ) -> Result<Value> {
-    arithmetic(parameters, argument_nodes, ArithmeticOp::Sub, intp)
+    arithmetic(intp, |lhs, rhs| lhs - rhs, argument_nodes)
 }
 
 pub fn mul(
-    parameters: &Parameters,
-    argument_nodes: &[Expression],
     intp: &mut Interpreter,
+    argument_nodes: &[Expression],
 ) -> Result<Value> {
-    arithmetic(parameters, argument_nodes, ArithmeticOp::Mul, intp)
+    arithmetic(intp, |lhs, rhs| lhs * rhs, argument_nodes)
 }
 
 pub fn div(
-    parameters: &Parameters,
-    argument_nodes: &[Expression],
     intp: &mut Interpreter,
+    argument_nodes: &[Expression],
 ) -> Result<Value> {
-    arithmetic(parameters, argument_nodes, ArithmeticOp::Div, intp)
+    arithmetic(intp, |lhs, rhs| lhs / rhs, argument_nodes)
 }
 
 pub fn arithmetic_params() -> Parameters {

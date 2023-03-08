@@ -3,86 +3,68 @@ mod boolean;
 mod io;
 mod list;
 
-use super::callable::Callable;
-use super::parameters::Parameters;
 use super::{Interpreter, Value};
 use crate::parser::ast::Expression;
 use crate::Result;
 
-type InnerBuiltinFunction = fn(
-    parameters: &Parameters,
-    argument_nodes: &[Expression],
-    intp: &mut Interpreter,
-) -> Result<Value>;
+type BuiltinFunction =
+    fn(intp: &mut Interpreter, argument_nodes: &[Expression]) -> Result<Value>;
 
-pub struct BuiltinFunction {
+#[derive(Clone)]
+pub struct Builtin {
     name: &'static str,
-    function: InnerBuiltinFunction,
-    parameters: Parameters,
+    function: BuiltinFunction,
 }
 
-impl std::fmt::Debug for BuiltinFunction {
+impl std::fmt::Debug for Builtin {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("BuiltinFunction")
-            .field("name", &self.name)
-            .field("parameters", &self.parameters)
-            .finish()
+        f.debug_struct("Builtin").field("name", &self.name).finish()
     }
 }
 
-impl BuiltinFunction {
-    pub fn new(
-        name: &'static str,
-        function: fn(
-            parameters: &Parameters,
-            argument_nodes: &[Expression],
-            intp: &mut Interpreter,
-        ) -> Result<Value>,
-        parameters: Parameters,
-    ) -> Self {
-        Self {
-            name,
-            function,
-            parameters,
-        }
+impl std::fmt::Display for Builtin {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "<builtin function {}>", self.name)
     }
 }
 
-impl Callable for BuiltinFunction {
-    fn name(&self) -> &str {
+impl Builtin {
+    pub fn new(name: &'static str, function: BuiltinFunction) -> Self {
+        Self { name, function }
+    }
+
+    pub fn name(&self) -> &str {
         self.name
     }
 
-    fn call(
+    pub fn call(
         &self,
         intp: &mut Interpreter,
         argument_nodes: &[Expression],
     ) -> Result<Value> {
-        let function = self.function;
-
-        function(&self.parameters, argument_nodes, intp)
+        (self.function)(intp, argument_nodes)
     }
 }
 
-pub fn get_builtin_functions() -> Vec<BuiltinFunction> {
-    let builtins: Vec<(&str, InnerBuiltinFunction, Parameters)> = vec![
-        ("+", arithmetic::add, arithmetic::arithmetic_params()),
-        ("-", arithmetic::sub, arithmetic::arithmetic_params()),
-        ("*", arithmetic::mul, arithmetic::arithmetic_params()),
-        ("/", arithmetic::div, arithmetic::arithmetic_params()),
-        (">", boolean::gt, boolean::boolean_params()),
-        (">=", boolean::gte, boolean::boolean_params()),
-        ("==", boolean::eq, boolean::boolean_params()),
-        ("<=", boolean::lte, boolean::boolean_params()),
-        ("<", boolean::lt, boolean::boolean_params()),
-        ("!=", boolean::ne, boolean::boolean_params()),
-        ("print", io::print, io::print_params()),
-        ("tail", list::tail, list::tail_params()),
-        ("quote", io::quote, io::quote_params()),
+pub fn get_builtin_functions() -> Vec<Builtin> {
+    let builtins: Vec<(&str, BuiltinFunction)> = vec![
+        ("+", arithmetic::add),
+        ("-", arithmetic::sub),
+        ("*", arithmetic::mul),
+        ("/", arithmetic::div),
+        (">", boolean::gt),
+        (">=", boolean::gte),
+        ("==", boolean::eq),
+        ("<=", boolean::lte),
+        ("<", boolean::lt),
+        ("!=", boolean::ne),
+        ("print", io::print),
+        ("tail", list::tail),
+        ("quote", io::quote),
     ];
 
     builtins
         .into_iter()
-        .map(|(name, fun, params)| BuiltinFunction::new(name, fun, params))
+        .map(|(name, fun)| Builtin::new(name, fun))
         .collect()
 }
