@@ -1,16 +1,13 @@
 (
-    (
-        def mathThree           # define function mathThree
-        (a b c)                 # declare parameters `a`, `b` and `c`
-        (                       # function expression
-            tail (              # return tail of list --------+
-                (print a)       # print `a` in function (4)   |
-                (+ a (* b c))   # tail of list  <-------------+
-            )
+    (def math-three             # define symbol 'math-three'
+        (lambda (a b c)         # lambda function with params `a`, `b` and `c`
+            (tail (             # return last element of list ---
+                (print a)       # print `a` in function (4)     |
+                (+ a (* b c))   # last element  <----------------
+            ))
         )
     )
-
-    (set a (mathThree 4 5 6))   # set `a` to `(mathThree 4 5 6)` (34)
+    (def a (math-three 4 5 6))  # set `a` to function call (34)
 
     (print (+ a 6))             # print `a` + 6 (40)
 )

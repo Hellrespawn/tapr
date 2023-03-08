@@ -236,10 +236,10 @@ impl<'l> Lexer<'l> {
             "false" => TokenType::False,
             "if" => TokenType::If,
             "lambda" => TokenType::Lambda,
+            "nil" => TokenType::Nil,
             "quote" => TokenType::Quote,
             "true" => TokenType::True,
             "while" => TokenType::While,
-            "nil" => TokenType::Nil,
             _ => TokenType::Symbol,
         };
 

@@ -1,6 +1,7 @@
 mod test_builtin_functions;
 mod test_custom_functions;
 mod test_korisp;
+mod test_quote;
 mod test_variables;
 
 use korisp::interpreter::{Interpreter, Value};
@@ -9,11 +10,15 @@ use korisp::Result;
 use crate::TestResult;
 pub type CapturedTestResult = Result<(Value, String)>;
 
-pub fn expect(source: &str, expectation: Value) -> TestResult {
+pub fn interpret(source: &str) -> Result<Value> {
     let mut intp = Interpreter::default();
     intp.output = Box::new(std::io::sink());
 
-    let value = intp.interpret(source)?;
+    intp.interpret(source)
+}
+
+pub fn expect(source: &str, expectation: Value) -> TestResult {
+    let value = interpret(source)?;
 
     assert_eq!(value, expectation);
 
@@ -24,6 +29,7 @@ pub fn capture(source: &str) -> CapturedTestResult {
     let mut buffer = Vec::new();
 
     let mut intp = Interpreter::default();
+
     intp.output = Box::new(&mut buffer);
 
     let value = intp.interpret(source)?;

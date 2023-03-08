@@ -5,8 +5,8 @@ use thiserror::Error;
 
 #[derive(Debug)]
 pub struct Error {
-    line_no: Option<usize>,
-    col_no: Option<usize>,
+    pub line_no: Option<usize>,
+    pub col_no: Option<usize>,
     pub kind: ErrorKind,
 }
 impl Error {

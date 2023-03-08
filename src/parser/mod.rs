@@ -30,10 +30,14 @@ impl<'p> Parser<'p> {
     pub fn parse(&mut self) -> Result<Expression> {
         self.advance()?;
 
+        if self.current_type().unwrap_or(TokenType::EOF) == TokenType::EOF {
+            return Err(Error::without_location(ErrorKind::EmptyInput));
+        }
+
         let expression = self.expression()?;
 
         if *DEBUG_AST {
-            let filename = format!("{}.{}.ast.dot", env!("CARGO_PKG_NAME"), 0);
+            let filename = format!("{}.ast.dot", env!("CARGO_PKG_NAME"));
 
             GraphVisitor::create_ast_graph(&expression, &filename);
         }
@@ -222,21 +226,18 @@ impl<'p> Parser<'p> {
     }
 
     fn parameters(&mut self) -> Result<Vec<Symbol>> {
-        if self.matches(TokenType::LeftParen) {
-            self.advance()?;
-            let mut parameters = Vec::new();
+        self.consume(TokenType::LeftParen, "Parameters should open with '('.")?;
 
-            while !self.matches(TokenType::RightParen) {
-                parameters
-                    .push(self.symbol("Lambda parameter should be a symbol.")?);
-            }
+        let mut parameters = Vec::new();
 
-            self.advance()?;
-
-            Ok(parameters)
-        } else {
-            Ok(vec![self.symbol("Lambda parameter should be a symbol.")?])
+        while !self.matches(TokenType::RightParen) {
+            parameters
+                .push(self.symbol("Lambda parameter should be a symbol.")?);
         }
+
+        self.advance()?;
+
+        Ok(parameters)
     }
 
     fn call(&mut self) -> Result<Call> {
@@ -313,6 +314,10 @@ impl<'p> Parser<'p> {
                 Datum::String(StringNode(current_token))
             }
             TokenType::Symbol => Datum::Symbol(self.symbol("")?),
+            TokenType::Nil => {
+                self.advance()?;
+                Datum::Nil
+            }
             _ => {
                 return Err(Error::without_location(ErrorKind::ParserError(
                     format!("Invalid atom '{current_token:?}'"),

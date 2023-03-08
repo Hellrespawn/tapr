@@ -59,6 +59,7 @@ pub fn get_builtin_functions() -> Vec<Builtin> {
         ("<", boolean::lt),
         ("!=", boolean::ne),
         ("print", io::print),
+        ("head", list::head),
         ("tail", list::tail),
         ("quote", io::quote),
     ];

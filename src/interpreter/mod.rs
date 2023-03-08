@@ -20,7 +20,6 @@ use std::io::Write;
 pub struct Interpreter<'i> {
     pub output: Box<dyn Write + 'i>,
     environment: Environment,
-    parser_no: usize,
     repl: bool,
 }
 
@@ -29,7 +28,6 @@ impl<'i> Default for Interpreter<'i> {
         Self {
             output: Box::new(std::io::stdout()),
             environment: Environment::root(),
-            parser_no: 1,
             repl: false,
         }
     }
@@ -39,28 +37,17 @@ impl<'i> Interpreter<'i> {
     pub fn new(
         output: Box<dyn Write + 'i>,
         environment: Environment,
-        parser_no: usize,
         repl: bool,
     ) -> Self {
         Self {
             output,
             environment,
-            parser_no,
             repl,
         }
     }
 
     pub fn repl() -> Self {
-        Self::new(Box::new(std::io::stdout()), Environment::root(), 1, true)
-    }
-
-    pub fn with_parser_no(parser_no: usize) -> Self {
-        Self::new(
-            Box::new(std::io::stdout()),
-            Environment::root(),
-            parser_no,
-            false,
-        )
+        Self::new(Box::new(std::io::stdout()), Environment::root(), true)
     }
 
     pub fn interpret(&mut self, source: &str) -> Result<Value> {
@@ -68,7 +55,9 @@ impl<'i> Interpreter<'i> {
 
         let mut parser = Parser::new(lexer);
 
-        let result = parser.parse().and_then(|program| program.accept(self));
+        let result = parser
+            .parse()
+            .and_then(|expression| expression.accept(self));
 
         match &result {
             Ok(value) => {
@@ -174,7 +163,13 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
         let value = self.get(&symbol.0)?;
 
         let result = match value {
-            Value::Builtin(builtin) => builtin.call(self, arguments),
+            Value::Builtin(builtin) => {
+                builtin.call(self, arguments).map_err(|mut e| {
+                    e.line_no = Some(symbol.0.line_no);
+                    e.col_no = Some(symbol.0.col_no);
+                    e
+                })
+            }
             Value::Lambda(lambda) => lambda.call(self, arguments),
             _ => Err(Error::new(
                 symbol.0.line_no,
@@ -189,6 +184,7 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
     }
 
     fn visit_quoted_datum(&mut self, datum: &ast::Datum) -> Result<Value> {
+        // Quoted list is handled on the parser level.
         let value = match datum {
             ast::Datum::Symbol(symbol) => {
                 Value::Symbol(symbol.0.lexeme().to_owned())
@@ -233,126 +229,4 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
 
         Ok(value)
     }
-    // fn visit_program(&mut self, program: &Program) -> Result<Value> {
-    //     program.expression.accept(self)
-    // }
-
-    // fn visit_list(&mut self, list: &List) -> Result<Value> {
-    //     let elements = &list.expressions;
-
-    //     let value = if elements.is_empty() {
-    //         Value::Nil
-    //     } else {
-    //         let values = elements
-    //             .iter()
-    //             .map(|node| node.accept(self))
-    //             .collect::<Result<Vec<_>>>()?;
-
-    //         Value::List(values)
-    //     };
-
-    //     Ok(value)
-    // }
-
-    // fn visit_if_expression(
-    //     &mut self,
-    //     if_expression: &IfExpression,
-    // ) -> Result<Value> {
-    //     let condition = if_expression.condition.accept(self)?;
-
-    //     if condition.is_truthy() {
-    //         if_expression.then_branch.accept(self)
-    //     } else if let Some(else_branch) = &if_expression.else_branch {
-    //         else_branch.accept(self)
-    //     } else {
-    //         Ok(Value::Nil)
-    //     }
-    // }
-
-    // fn visit_while_expression(
-    //     &mut self,
-    //     while_expression: &WhileExpression,
-    // ) -> Result<Value> {
-    //     let mut value = Value::Nil;
-
-    //     loop {
-    //         let condition = while_expression.condition.accept(self)?;
-
-    //         if condition.is_truthy() {
-    //             value = while_expression.expression.accept(self)?;
-    //         } else {
-    //             break;
-    //         }
-    //     }
-
-    //     Ok(value)
-    // }
-
-    // fn visit_set_expression(
-    //     &mut self,
-    //     set_expression: &SetExpression,
-    // ) -> Result<Value> {
-    //     let SetExpression { name, expression } = set_expression;
-
-    //     let value = expression.accept(self)?;
-
-    //     self.environment.insert(name.lexeme().to_owned(), value);
-
-    //     Ok(Value::Symbol(name.lexeme().to_owned()))
-    // }
-
-    // fn visit_function_call(
-    //     &mut self,
-    //     function_call: &FunctionCall,
-    // ) -> Result<Value> {
-    //     let function = self.get_function(&function_call.name)?;
-
-    //     function.call(self, &function_call.arguments)
-    // }
-
-    // fn visit_function_definition(
-    //     &mut self,
-    //     function_definition: &FunctionDefinition,
-    // ) -> Result<Value> {
-    //     let name = function_definition.name.lexeme().to_owned();
-
-    //     let parameters = Parameters::new(
-    //         function_definition
-    //             .parameters
-    //             .iter()
-    //             .map(|param| {
-    //                 Parameter::new(
-    //                     param.lexeme().to_owned(),
-    //                     vec![ParameterType::Any],
-    //                     false,
-    //                 )
-    //             })
-    //             .collect(),
-    //     )?;
-
-    //     let function_value = Function::new(
-    //         name,
-    //         parameters,
-    //         function_definition.expression.clone(),
-    //     );
-
-    //     self.environment.insert(
-    //         function_definition.name.lexeme().to_owned(),
-    //         function_value.into(),
-    //     );
-
-    //     Ok(Value::Nil)
-    // }
-
-    // fn visit_atom(&mut self, atom: &Atom) -> Result<Value> {
-    //     let value = match atom {
-    //         Atom::Boolean(token) => Value::Boolean(token.as_bool().unwrap()),
-    //         Atom::Number(token) => Value::Number(token.as_number().unwrap()),
-    //         Atom::String(token) => Value::String(token.lexeme().to_owned()),
-    //         Atom::Symbol(token) => self.evaluate_symbol(token)?,
-    //         Atom::Nil(_) => Value::Nil,
-    //     };
-
-    //     Ok(value)
-    // }
 }

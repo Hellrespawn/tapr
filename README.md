@@ -22,10 +22,7 @@ If                  -> "(" "if" Expression Expression Expression? ")"
                                    condition  then
 While               -> "(" "while" Expression Expression ")"
 
-                                 name
-Lambda              -> "(" "lambda" "(" Parameters ")" Expression ")"
-
-Parameters          -> Symbol | "(" Symbol+ ")"
+Lambda              -> "(" "lambda" "(" Symbol* ")" Expression ")"
 
                            name   arguments
 Call                -> "(" Symbol Expression* ")"
