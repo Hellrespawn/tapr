@@ -32,7 +32,7 @@ impl<'p> Parser<'p> {
         self.advance()?;
 
         if self.current_type().unwrap_or(TokenType::EOF) == TokenType::EOF {
-            return Err(Error::without_location(ErrorKind::EmptyInput));
+            return Err(ErrorKind::EmptyInput.into());
         }
 
         let expression = self.expression()?;
@@ -272,8 +272,8 @@ impl<'p> Parser<'p> {
         Ok(Call { symbol, arguments })
     }
 
-    fn quoted_datum(&mut self, sugar: bool) -> Result<Datum> {
-        if sugar {
+    fn quoted_datum(&mut self, shorthand: bool) -> Result<Datum> {
+        if shorthand {
             self.consume(TokenType::Apostrophe, "")?;
         } else {
             self.consume(TokenType::LeftParen, "")?;
@@ -282,7 +282,7 @@ impl<'p> Parser<'p> {
 
         let result = self.datum();
 
-        if !sugar {
+        if !shorthand {
             self.consume(
                 TokenType::RightParen,
                 "Quote should be closed by ')'.",
@@ -342,9 +342,12 @@ impl<'p> Parser<'p> {
                 Datum::Nil
             }
             _ => {
-                return Err(Error::without_location(ErrorKind::ParserError(
-                    format!("Invalid atom '{current_token:?}'"),
-                )))
+                return Err(Error::new(
+                    current_token.location,
+                    ErrorKind::ParserError(format!(
+                        "Invalid atom '{current_token:?}'"
+                    )),
+                ))
             }
         };
 

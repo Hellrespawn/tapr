@@ -1,13 +1,14 @@
+mod arguments;
 mod builtin;
 mod environment;
+mod parameters;
 mod value;
 
-pub mod parameters;
-
+pub use arguments::Arguments;
+pub use parameters::{Parameter, ParameterType, Parameters};
 pub use value::Value;
 
 use self::environment::Environment;
-use self::parameters::{Parameter, Parameters};
 use self::value::Lambda;
 use crate::error::{Error, ErrorKind};
 use crate::lexer::Lexer;
@@ -141,19 +142,22 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
     fn visit_call(&mut self, call: &ast::Call) -> Result<Value> {
         self.enter_scope();
 
-        let ast::Call { symbol, arguments } = call;
+        let location = call.symbol.0.location;
 
-        let value = self.get(&symbol.0)?;
+        let value = self.get(&call.symbol.0)?;
+
+        let arguments = call
+            .arguments
+            .iter()
+            .map(|e| e.accept(self))
+            .collect::<Result<Vec<_>>>()?;
 
         let result = match value {
             Value::Builtin(builtin) => builtin
                 .call(self, arguments)
-                .map_err(|e| Self::add_location_to_error(e, symbol.0.location)),
+                .map_err(|e| Self::add_location_to_error(e, location)),
             Value::Lambda(lambda) => lambda.call(self, arguments),
-            _ => Err(Error::new(
-                symbol.0.location,
-                ErrorKind::NotCallable(value),
-            )),
+            _ => Err(Error::new(location, ErrorKind::NotCallable(value))),
         };
 
         self.exit_scope();

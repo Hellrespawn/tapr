@@ -1,6 +1,6 @@
 use super::Value;
 use crate::interpreter::parameters::Parameters;
-use crate::interpreter::Interpreter;
+use crate::interpreter::{Arguments, Interpreter};
 use crate::parser::ast::Expression;
 use crate::Result;
 
@@ -21,17 +21,11 @@ impl Lambda {
     pub fn call(
         &self,
         intp: &mut Interpreter,
-        argument_nodes: &[Expression],
+        arguments: Vec<Value>,
     ) -> Result<Value> {
-        let arguments =
-            self.parameters.evaluate_arguments(intp, argument_nodes)?;
+        let arguments = Arguments::new(&self.parameters, arguments)?;
 
-        // Insert arguments into scope
-        for (argument, parameter) in
-            arguments.into_iter().zip(&self.parameters.parameters)
-        {
-            intp.environment.insert(parameter.name.clone(), argument);
-        }
+        arguments.add_to_env(&mut intp.environment)?;
 
         let value = self.expression.accept(intp)?;
 

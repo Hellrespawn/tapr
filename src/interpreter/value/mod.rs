@@ -3,7 +3,7 @@ mod lambda;
 pub use lambda::Lambda;
 
 use super::builtin::Builtin;
-use crate::error::{Error, ErrorKind};
+use crate::error::ErrorKind;
 use crate::Result;
 use std::cmp::Ordering;
 
@@ -66,11 +66,12 @@ impl std::ops::Add for Value {
             (Value::String(left), Value::String(right)) => {
                 Ok(Value::String(format!("{left}{right}")))
             }
-            _ => Err(Error::without_location(ErrorKind::InvalidBinOp {
+            _ => Err(ErrorKind::InvalidBinOp {
                 op: "add",
                 lhs: self,
                 rhs,
-            })),
+            }
+            .into()),
         }
     }
 }
@@ -82,11 +83,12 @@ impl std::ops::Sub for Value {
         if let (Value::Number(left), Value::Number(right)) = (&self, &rhs) {
             Ok(Value::Number(left - right))
         } else {
-            Err(Error::without_location(ErrorKind::InvalidBinOp {
+            Err(ErrorKind::InvalidBinOp {
                 op: "subtract",
                 lhs: self,
                 rhs,
-            }))
+            }
+            .into())
         }
     }
 }
@@ -98,11 +100,12 @@ impl std::ops::Mul for Value {
         if let (Value::Number(left), Value::Number(right)) = (&self, &rhs) {
             Ok(Value::Number(left * right))
         } else {
-            Err(Error::without_location(ErrorKind::InvalidBinOp {
+            Err(ErrorKind::InvalidBinOp {
                 op: "multiply",
                 lhs: self,
                 rhs,
-            }))
+            }
+            .into())
         }
     }
 }
@@ -114,11 +117,12 @@ impl std::ops::Div for Value {
         if let (Value::Number(left), Value::Number(right)) = (&self, &rhs) {
             Ok(Value::Number(left / right))
         } else {
-            Err(Error::without_location(ErrorKind::InvalidBinOp {
+            Err(ErrorKind::InvalidBinOp {
                 op: "divide",
                 lhs: self,
                 rhs,
-            }))
+            }
+            .into())
         }
     }
 }

@@ -1,21 +1,17 @@
 use crate::interpreter::parameters::{Parameter, ParameterType, Parameters};
-use crate::interpreter::{Interpreter, Value};
-use crate::parser::ast::Expression;
+use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::Result;
 
 type BooleanOp = fn(&Value, &Value) -> bool;
 
-fn boolean_function(
-    intp: &mut Interpreter,
-    op: BooleanOp,
-    argument_nodes: &[Expression],
-) -> Result<Value> {
-    let arguments =
-        boolean_params().evaluate_arguments(intp, argument_nodes)?;
+fn boolean_function(op: BooleanOp, arguments: Vec<Value>) -> Result<Value> {
+    let params = boolean_params();
+
+    let arguments = Arguments::new(&params, arguments)?;
 
     let mut value = true;
 
-    for window in arguments.windows(2) {
+    for window in arguments.arguments().windows(2) {
         let [lhs, rhs] = window else {
             unreachable!()
         };
@@ -26,54 +22,34 @@ fn boolean_function(
     Ok(Value::Boolean(value))
 }
 
-pub fn gt(
-    intp: &mut Interpreter,
-    argument_nodes: &[Expression],
-) -> Result<Value> {
-    boolean_function(intp, |lhs, rhs| rhs > lhs, argument_nodes)
+pub fn gt(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
+    boolean_function(|lhs, rhs| rhs > lhs, arguments)
 }
 
-pub fn gte(
-    intp: &mut Interpreter,
-    argument_nodes: &[Expression],
-) -> Result<Value> {
-    boolean_function(intp, |lhs, rhs| rhs >= lhs, argument_nodes)
+pub fn gte(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
+    boolean_function(|lhs, rhs| rhs >= lhs, arguments)
 }
 
-pub fn eq(
-    intp: &mut Interpreter,
-    argument_nodes: &[Expression],
-) -> Result<Value> {
-    boolean_function(intp, |lhs, rhs| rhs == lhs, argument_nodes)
+pub fn eq(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
+    boolean_function(|lhs, rhs| rhs == lhs, arguments)
 }
 
-pub fn ne(
-    intp: &mut Interpreter,
-    argument_nodes: &[Expression],
-) -> Result<Value> {
-    Ok(Value::Boolean(eq(intp, argument_nodes)?.is_falsy()))
+pub fn ne(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
+    Ok(Value::Boolean(eq(intp, arguments)?.is_falsy()))
 }
 
-pub fn lte(
-    intp: &mut Interpreter,
-    argument_nodes: &[Expression],
-) -> Result<Value> {
-    boolean_function(intp, |lhs, rhs| rhs <= lhs, argument_nodes)
+pub fn lte(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
+    boolean_function(|lhs, rhs| rhs <= lhs, arguments)
 }
 
-pub fn lt(
-    intp: &mut Interpreter,
-    argument_nodes: &[Expression],
-) -> Result<Value> {
-    boolean_function(intp, |lhs, rhs| rhs < lhs, argument_nodes)
+pub fn lt(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
+    boolean_function(|lhs, rhs| rhs < lhs, arguments)
 }
 
 pub fn boolean_params() -> Parameters {
-    let param =
-        Parameter::new("_lhs".to_owned(), vec![ParameterType::Any], false);
+    let param = Parameter::anonymous(ParameterType::Any, false);
 
-    let remaining_params =
-        Parameter::new("_rhs".to_owned(), vec![ParameterType::Any], true);
+    let remaining_params = Parameter::anonymous(ParameterType::Any, true);
 
     Parameters::new(vec![param, remaining_params])
         .expect("arithmetic to have valid params")

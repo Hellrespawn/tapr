@@ -1,15 +1,13 @@
 use crate::interpreter::parameters::{Parameter, ParameterType, Parameters};
-use crate::interpreter::{Interpreter, Value};
-use crate::parser::ast::Expression;
+use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::Result;
 
-pub fn print(
-    intp: &mut Interpreter,
-    argument_nodes: &[Expression],
-) -> Result<Value> {
-    let arguments = print_params().evaluate_arguments(intp, argument_nodes)?;
+pub fn print(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
+    let params = print_params();
 
-    for argument in arguments {
+    let arguments = Arguments::new(&params, arguments)?;
+
+    for argument in arguments.arguments() {
         writeln!(intp.output, "{argument}")?;
     }
 
@@ -17,10 +15,6 @@ pub fn print(
 }
 
 pub fn print_params() -> Parameters {
-    Parameters::new(vec![Parameter::new(
-        "_print".to_owned(),
-        vec![ParameterType::Any],
-        true,
-    )])
-    .expect("print to have valid params.")
+    Parameters::new(vec![Parameter::anonymous(ParameterType::Any, true)])
+        .expect("print to have valid params.")
 }

@@ -1,4 +1,4 @@
-use crate::error::{Error, ErrorKind};
+use crate::error::ErrorKind;
 use crate::interpreter::{Interpreter, Value};
 use crate::Result;
 use rustyline::error::ReadlineError;
@@ -9,7 +9,7 @@ pub fn main() {
     let result = match args.len() {
         1 => repl(),
         2 => run_file(&args.nth(1).expect("args to have 2 elements.")),
-        _ => Err(Error::without_location(ErrorKind::UsageError)),
+        _ => Err(ErrorKind::UsageError.into()),
     };
 
     if let Err(error) = result {

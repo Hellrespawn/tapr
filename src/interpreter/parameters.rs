@@ -1,6 +1,5 @@
-use super::{Interpreter, Value};
-use crate::error::{Error, ErrorKind};
-use crate::parser::ast::Expression;
+use super::Value;
+use crate::error::ErrorKind;
 use crate::Result;
 
 #[derive(Debug, Copy, Clone)]
@@ -32,8 +31,8 @@ impl ParameterType {
 
 #[derive(Debug, Clone)]
 pub struct Parameter {
-    pub name: String,
-    ptypes: Vec<ParameterType>,
+    name: Option<String>,
+    parameter_type: ParameterType,
     // TODO Implement optional parameters
     // is_required: bool
     is_variadic: bool,
@@ -42,28 +41,41 @@ pub struct Parameter {
 impl Parameter {
     pub fn new(
         name: String,
-        ptypes: Vec<ParameterType>,
+        parameter_type: ParameterType,
         is_variadic: bool,
     ) -> Self {
         Self {
-            name,
-            ptypes,
+            name: Some(name),
+            parameter_type,
+            is_variadic,
+        }
+    }
+
+    pub fn anonymous(parameter_type: ParameterType, is_variadic: bool) -> Self {
+        Self {
+            name: None,
+            parameter_type,
             is_variadic,
         }
     }
 
     pub fn any(name: &str) -> Self {
-        Self::new(name.to_owned(), vec![ParameterType::Any], false)
+        Self::new(name.to_owned(), ParameterType::Any, false)
     }
 
-    fn value_is_type(&self, value: &Value) -> Result<()> {
-        if self.ptypes.iter().any(|ptype| ptype.value_is_type(value)) {
+    pub fn name(&self) -> Option<&str> {
+        self.name.as_deref()
+    }
+
+    pub fn value_is_type(&self, value: &Value) -> Result<()> {
+        if self.parameter_type.value_is_type(value) {
             Ok(())
         } else {
-            Err(Error::without_location(ErrorKind::InvalidArgument {
-                expected: self.ptypes.clone(),
+            Err(ErrorKind::InvalidArgument {
+                expected: self.parameter_type,
                 actual: value.clone(),
-            }))
+            }
+            .into())
         }
     }
 }
@@ -81,12 +93,14 @@ impl Parameters {
             .any(|(i, param)| param.is_variadic && i != parameters.len() - 1);
 
         if has_variadic_param_before_last {
-            return Err(Error::without_location(
-                ErrorKind::NonLastParameterIsVariadic,
-            ));
+            return Err(ErrorKind::NonLastParameterIsVariadic.into());
         }
 
         Ok(Self { parameters })
+    }
+
+    pub fn is_variadic(&self) -> bool {
+        self.parameters.iter().any(|p| p.is_variadic)
     }
 
     pub fn is_empty(&self) -> bool {
@@ -97,86 +111,11 @@ impl Parameters {
         self.parameters.len()
     }
 
-    pub fn evaluate_arguments(
-        &self,
-        intp: &mut Interpreter,
-        argument_nodes: &[Expression],
-    ) -> Result<Vec<Value>> {
-        self.check_amount_of_args_or_error(argument_nodes.len())?;
-
-        let arguments = Self::interpret_arguments(intp, argument_nodes)?;
-
-        self.check_types_of_args_or_error(&arguments)?;
-
-        Ok(arguments)
+    pub fn iter(&self) -> std::slice::Iter<Parameter> {
+        self.parameters.iter()
     }
 
-    pub fn check_amount_of_args_or_error(
-        &self,
-        number_of_arguments: usize,
-    ) -> Result<()> {
-        if !self.check_amount_of_args(number_of_arguments) {
-            return Err(if self.is_variadic() {
-                Error::without_location(ErrorKind::WrongAmountOfMinArgs {
-                    expected: self.parameters.len(),
-                    actual: number_of_arguments,
-                })
-            } else {
-                Error::without_location(ErrorKind::WrongAmountOfFixedArgs {
-                    expected: self.parameters.len(),
-                    actual: number_of_arguments,
-                })
-            });
-        }
-
-        Ok(())
-    }
-
-    fn is_variadic(&self) -> bool {
-        self.parameters.iter().any(|p| p.is_variadic)
-    }
-
-    fn check_amount_of_args(&self, number_of_arguments: usize) -> bool {
-        let min = self.parameters.len();
-
-        if self.is_variadic() {
-            number_of_arguments >= min
-        } else {
-            number_of_arguments == min
-        }
-    }
-
-    fn interpret_arguments(
-        intp: &mut Interpreter,
-        argument_nodes: &[Expression],
-    ) -> Result<Vec<Value>> {
-        argument_nodes
-            .iter()
-            .map(|node| node.accept(intp))
-            .collect::<Result<Vec<_>>>()
-    }
-
-    fn check_types_of_args_or_error(&self, arguments: &[Value]) -> Result<()> {
-        // Rust zips shortest, so we can always compare the fixed args
-        for (parameter, argument) in self.parameters.iter().zip(arguments) {
-            parameter.value_is_type(argument)?;
-        }
-
-        if self.is_variadic() && arguments.len() > self.parameters.len() {
-            // arguments.len() > self.params.len()
-            let last_param =
-                self.parameters.last().expect("at least one param");
-
-            debug_assert!(last_param.is_variadic);
-
-            // Compare remaing arguments to final (variadic) param
-            let remainder = &arguments[self.parameters.len()..];
-
-            for value in remainder {
-                last_param.value_is_type(value)?;
-            }
-        }
-
-        Ok(())
+    pub fn last(&self) -> Option<&Parameter> {
+        self.parameters.last()
     }
 }

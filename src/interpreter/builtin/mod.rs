@@ -4,11 +4,10 @@ mod io;
 mod list;
 
 use super::{Interpreter, Value};
-use crate::parser::ast::Expression;
 use crate::Result;
 
 type BuiltinFunction =
-    fn(intp: &mut Interpreter, argument_nodes: &[Expression]) -> Result<Value>;
+    fn(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value>;
 
 #[derive(Clone)]
 pub struct Builtin {
@@ -40,17 +39,9 @@ impl Builtin {
     pub fn call(
         &self,
         intp: &mut Interpreter,
-        argument_nodes: &[Expression],
+        arguments: Vec<Value>,
     ) -> Result<Value> {
-        (self.function)(intp, argument_nodes)
-    }
-
-    pub fn call_with_value(
-        &self,
-        intp: &mut Interpreter,
-        argument_nodes: &[Expression],
-    ) -> Result<Value> {
-        (self.function)(intp, argument_nodes)
+        (self.function)(intp, arguments)
     }
 }
 
@@ -60,6 +51,7 @@ pub fn get_builtin_functions() -> Vec<Builtin> {
         ("-", arithmetic::sub),
         ("*", arithmetic::mul),
         ("/", arithmetic::div),
+        ("%", arithmetic::modulus),
         (">", boolean::gt),
         (">=", boolean::gte),
         ("==", boolean::eq),
@@ -70,6 +62,7 @@ pub fn get_builtin_functions() -> Vec<Builtin> {
         ("head", list::head),
         ("tail", list::tail),
         ("map", list::map),
+        ("filter", list::filter),
     ];
 
     builtins

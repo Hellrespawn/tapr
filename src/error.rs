@@ -1,5 +1,4 @@
-use crate::interpreter::parameters::ParameterType;
-use crate::interpreter::Value;
+use crate::interpreter::{ParameterType, Value};
 use crate::location::Location;
 use crate::token::TokenType;
 use thiserror::Error;
@@ -13,13 +12,6 @@ impl Error {
     pub fn new(location: Location, kind: ErrorKind) -> Self {
         Self {
             location: Some(location),
-            kind,
-        }
-    }
-
-    pub fn without_location(kind: ErrorKind) -> Self {
-        Self {
-            location: None,
             kind,
         }
     }
@@ -43,13 +35,19 @@ impl std::error::Error for Error {}
 
 impl From<std::io::Error> for Error {
     fn from(error: std::io::Error) -> Self {
-        Self::without_location(error.into())
+        Self {
+            location: None,
+            kind: error.into(),
+        }
     }
 }
 
 impl From<rustyline::error::ReadlineError> for Error {
     fn from(error: rustyline::error::ReadlineError) -> Self {
-        Self::without_location(error.into())
+        Self {
+            location: None,
+            kind: error.into(),
+        }
     }
 }
 
@@ -107,14 +105,14 @@ pub enum ErrorKind {
 
     #[error("Invalid argument '{actual}', expected '{expected:?}'")]
     InvalidArgument {
-        expected: Vec<ParameterType>,
+        expected: ParameterType,
         actual: Value,
     },
 
     #[error("Expect {expected} args, got {actual}.")]
     WrongAmountOfFixedArgs { expected: usize, actual: usize },
 
-    #[error("Expect at least{expected} args, got {actual}.")]
+    #[error("Expect at least {expected} args, got {actual}.")]
     WrongAmountOfMinArgs { expected: usize, actual: usize },
 
     // Functions
@@ -127,4 +125,13 @@ pub enum ErrorKind {
         lhs: Value,
         rhs: Value,
     },
+}
+
+impl From<ErrorKind> for Error {
+    fn from(kind: ErrorKind) -> Self {
+        Error {
+            location: None,
+            kind,
+        }
+    }
 }
