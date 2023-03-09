@@ -23,7 +23,7 @@ impl std::fmt::Debug for Builtin {
 
 impl std::fmt::Display for Builtin {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "<builtin function {}>", self.name)
+        write!(f, "builtin function {}", self.name)
     }
 }
 
@@ -52,6 +52,7 @@ pub fn get_builtin_functions() -> Vec<Builtin> {
         ("*", arithmetic::mul),
         ("/", arithmetic::div),
         ("%", arithmetic::modulus),
+        ("!", boolean::not),
         (">", boolean::gt),
         (">=", boolean::gte),
         ("==", boolean::eq),
@@ -59,6 +60,8 @@ pub fn get_builtin_functions() -> Vec<Builtin> {
         ("<", boolean::lt),
         ("!=", boolean::ne),
         ("print", io::print),
+        ("read", io::read),
+        ("eval", io::eval),
         ("head", list::head),
         ("tail", list::tail),
         ("map", list::map),

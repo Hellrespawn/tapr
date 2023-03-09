@@ -1,1 +1,6 @@
-(print (map (lambda (a) (* a 2)) 1 ))
+(
+    (defun is-even (n) (== 0 (% n 2)))
+    (print (is-even 2))
+    (print (is-even 3))
+    (print (is-even 4))
+)

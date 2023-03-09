@@ -18,6 +18,7 @@ pub fn main() {
 }
 
 fn repl() -> Result<()> {
+    // TODO Save and load history
     println!("Welcome to Korisp {}.", env!("CARGO_PKG_VERSION"));
 
     let mut rl = rustyline::Editor::<()>::new().unwrap();

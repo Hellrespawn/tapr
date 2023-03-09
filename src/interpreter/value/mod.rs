@@ -3,8 +3,6 @@ mod lambda;
 pub use lambda::Lambda;
 
 use super::builtin::Builtin;
-use crate::error::ErrorKind;
-use crate::Result;
 use std::cmp::Ordering;
 
 #[derive(Debug, Clone)]
@@ -55,78 +53,6 @@ impl PartialOrd for Value {
     }
 }
 
-impl std::ops::Add for Value {
-    type Output = Result<Value>;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        match (&self, &rhs) {
-            (Value::Number(left), Value::Number(right)) => {
-                Ok(Value::Number(left + right))
-            }
-            (Value::String(left), Value::String(right)) => {
-                Ok(Value::String(format!("{left}{right}")))
-            }
-            _ => Err(ErrorKind::InvalidBinOp {
-                op: "add",
-                lhs: self,
-                rhs,
-            }
-            .into()),
-        }
-    }
-}
-
-impl std::ops::Sub for Value {
-    type Output = Result<Value>;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        if let (Value::Number(left), Value::Number(right)) = (&self, &rhs) {
-            Ok(Value::Number(left - right))
-        } else {
-            Err(ErrorKind::InvalidBinOp {
-                op: "subtract",
-                lhs: self,
-                rhs,
-            }
-            .into())
-        }
-    }
-}
-
-impl std::ops::Mul for Value {
-    type Output = Result<Value>;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        if let (Value::Number(left), Value::Number(right)) = (&self, &rhs) {
-            Ok(Value::Number(left * right))
-        } else {
-            Err(ErrorKind::InvalidBinOp {
-                op: "multiply",
-                lhs: self,
-                rhs,
-            }
-            .into())
-        }
-    }
-}
-
-impl std::ops::Div for Value {
-    type Output = Result<Value>;
-
-    fn div(self, rhs: Self) -> Self::Output {
-        if let (Value::Number(left), Value::Number(right)) = (&self, &rhs) {
-            Ok(Value::Number(left / right))
-        } else {
-            Err(ErrorKind::InvalidBinOp {
-                op: "divide",
-                lhs: self,
-                rhs,
-            }
-            .into())
-        }
-    }
-}
-
 impl Value {
     pub fn is_truthy(&self) -> bool {
         match self {
@@ -162,9 +88,10 @@ impl std::fmt::Display for Value {
                         .join(" ")
                 )
             }
+            // TODO impl display for lambda
             Value::Builtin(builtin) => builtin.fmt(f),
             Value::Lambda(lambda) => {
-                write!(f, "<anonymous function ({})>", lambda.parameters.len())
+                write!(f, "function ({} args)", lambda.parameters.len())
             }
         }
     }

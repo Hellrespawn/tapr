@@ -37,6 +37,23 @@ impl<'a> Arguments<'a> {
         &self.arguments
     }
 
+    pub fn unwrap(&self, index: usize) -> Value {
+        self.arguments
+            .get(index)
+            .cloned()
+            .expect("Called unwrap on invalid index.")
+    }
+
+    pub fn unwrap_string(&self, index: usize) -> String {
+        let argument = &self.arguments[index];
+
+        let Value::String(string) = argument else {
+            panic!("Called unwrap_string on non-Value::String")
+        };
+
+        string.clone()
+    }
+
     pub fn unwrap_list(&self, index: usize) -> Vec<Value> {
         let argument = &self.arguments[index];
 

@@ -1,0 +1,4 @@
+(
+    (defun is-even (n) (== 0 (% n 2)))
+    (defun is-odd  (n) (!(is_even n)))
+)

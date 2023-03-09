@@ -85,6 +85,14 @@ pub struct Parameters {
     pub parameters: Vec<Parameter>,
 }
 
+impl TryFrom<Parameter> for Parameters {
+    type Error = crate::error::Error;
+
+    fn try_from(parameter: Parameter) -> Result<Self> {
+        Self::new(vec![parameter])
+    }
+}
+
 impl Parameters {
     pub fn new(parameters: Vec<Parameter>) -> Result<Self> {
         let has_variadic_param_before_last = parameters

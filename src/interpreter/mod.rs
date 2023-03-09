@@ -140,8 +140,6 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
     }
 
     fn visit_call(&mut self, call: &ast::Call) -> Result<Value> {
-        self.enter_scope();
-
         let location = call.symbol.0.location;
 
         let value = self.get(&call.symbol.0)?;
@@ -152,17 +150,13 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
             .map(|e| e.accept(self))
             .collect::<Result<Vec<_>>>()?;
 
-        let result = match value {
+        match value {
             Value::Builtin(builtin) => builtin
                 .call(self, arguments)
                 .map_err(|e| Self::add_location_to_error(e, location)),
             Value::Lambda(lambda) => lambda.call(self, arguments),
             _ => Err(Error::new(location, ErrorKind::NotCallable(value))),
-        };
-
-        self.exit_scope();
-
-        result
+        }
     }
 
     fn visit_quoted_datum(&mut self, datum: &ast::Datum) -> Result<Value> {

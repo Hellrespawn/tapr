@@ -46,6 +46,16 @@ pub fn lt(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
     boolean_function(|lhs, rhs| rhs < lhs, arguments)
 }
 
+pub fn not(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
+    let params = Parameter::anonymous(ParameterType::Any, false).try_into()?;
+
+    let arguments = Arguments::new(&params, arguments)?;
+
+    let argument = arguments.unwrap(0);
+
+    Ok(Value::Boolean(argument.is_falsy()))
+}
+
 pub fn boolean_params() -> Parameters {
     let param = Parameter::anonymous(ParameterType::Any, false);
 

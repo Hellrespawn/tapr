@@ -25,9 +25,13 @@ impl Lambda {
     ) -> Result<Value> {
         let arguments = Arguments::new(&self.parameters, arguments)?;
 
+        intp.enter_scope();
+
         arguments.add_to_env(&mut intp.environment)?;
 
         let value = self.expression.accept(intp)?;
+
+        intp.exit_scope();
 
         Ok(value)
     }
