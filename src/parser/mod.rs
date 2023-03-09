@@ -2,6 +2,7 @@ use self::ast::*;
 use crate::error::{Error, ErrorKind};
 use crate::graph::GraphVisitor;
 use crate::lexer::Lexer;
+use crate::location::Location;
 use crate::token::{Token, TokenType, TokenType as TT};
 use crate::Result;
 use once_cell::sync::Lazy;
@@ -65,14 +66,12 @@ impl<'p> Parser<'p> {
         Ok(())
     }
 
-    fn error(line_no: usize, col_no: usize, kind: ErrorKind) -> Error {
-        Error::new(line_no, col_no, kind)
+    fn error(location: Location, kind: ErrorKind) -> Error {
+        Error::new(location, kind)
     }
 
     fn error_at_previous(&self, kind: ErrorKind) -> Error {
-        let (line_no, col_no) = self.previous_location();
-
-        Self::error(line_no, col_no, kind)
+        Self::error(self.previous_location(), kind)
     }
 
     fn consume(
@@ -102,24 +101,23 @@ impl<'p> Parser<'p> {
         self.current_token.as_ref().map(|token| token.ttype)
     }
 
-    fn previous_location(&self) -> (usize, usize) {
+    fn previous_location(&self) -> Location {
         if let Some(token) = self.previous_token.as_ref() {
-            (token.line_no, token.col_no)
+            token.location
         } else {
-            (0, 0)
+            Location::new(0, 0)
         }
     }
 
     fn gather_expressions_until_paren(&mut self) -> Result<Vec<Expression>> {
         let mut expressions = Vec::new();
 
-        let (line_no, col_no) = self.previous_location();
+        let location = self.previous_location();
 
         while !self.matches(TokenType::RightParen) {
             if self.current_token.is_none() {
                 return Err(Self::error(
-                    line_no,
-                    col_no,
+                    location,
                     ErrorKind::UnmatchedParenthesis,
                 ));
             }
@@ -319,10 +317,11 @@ impl<'p> Parser<'p> {
     }
 
     fn atom(&mut self) -> Result<Datum> {
-        let current_token =
-            self.current_token.as_ref().cloned().unwrap_or_else(|| {
-                Token::new(TokenType::EOF, String::new(), 0, 0)
-            });
+        let current_token = self
+            .current_token
+            .as_ref()
+            .cloned()
+            .expect("This should not be None");
 
         let datum = match current_token.ttype {
             TokenType::True | TokenType::False => {

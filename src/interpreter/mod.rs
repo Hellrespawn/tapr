@@ -11,6 +11,7 @@ use self::parameters::{Parameter, Parameters};
 use self::value::Lambda;
 use crate::error::{Error, ErrorKind};
 use crate::lexer::Lexer;
+use crate::location::Location;
 use crate::parser::{ast, Parser};
 use crate::token::Token;
 use crate::visitor::Visitor;
@@ -54,8 +55,7 @@ impl<'i> Interpreter<'i> {
             Ok(value.clone())
         } else {
             Err(Error::new(
-                name.line_no,
-                name.col_no,
+                name.location,
                 ErrorKind::UndefinedSymbol(name.lexeme().to_owned()),
             ))
         }
@@ -79,13 +79,8 @@ impl<'i> Interpreter<'i> {
         self.environment = parent_environment;
     }
 
-    fn add_location_to_error(
-        mut error: Error,
-        line_no: usize,
-        col_no: usize,
-    ) -> Error {
-        error.line_no = error.line_no.or(Some(line_no));
-        error.col_no = error.col_no.or(Some(col_no));
+    fn add_location_to_error(mut error: Error, location: Location) -> Error {
+        error.location = error.location.or(Some(location));
         error
     }
 }
@@ -151,19 +146,12 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
         let value = self.get(&symbol.0)?;
 
         let result = match value {
-            Value::Builtin(builtin) => {
-                builtin.call(self, arguments).map_err(|e| {
-                    Self::add_location_to_error(
-                        e,
-                        symbol.0.line_no,
-                        symbol.0.col_no,
-                    )
-                })
-            }
+            Value::Builtin(builtin) => builtin
+                .call(self, arguments)
+                .map_err(|e| Self::add_location_to_error(e, symbol.0.location)),
             Value::Lambda(lambda) => lambda.call(self, arguments),
             _ => Err(Error::new(
-                symbol.0.line_no,
-                symbol.0.col_no,
+                symbol.0.location,
                 ErrorKind::NotCallable(value),
             )),
         };

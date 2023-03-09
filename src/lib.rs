@@ -12,6 +12,7 @@ pub mod error;
 pub mod graph;
 pub mod interpreter;
 pub mod lexer;
+pub mod location;
 pub mod parser;
 pub mod token;
 pub mod visitor;

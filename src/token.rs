@@ -1,3 +1,5 @@
+use crate::location::Location;
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum TokenType {
     // Literals
@@ -26,22 +28,15 @@ pub enum TokenType {
 pub struct Token {
     pub ttype: TokenType,
     pub lexeme: String,
-    pub line_no: usize,
-    pub col_no: usize,
+    pub location: Location,
 }
 
 impl Token {
-    pub fn new(
-        ttype: TokenType,
-        lexeme: String,
-        line_no: usize,
-        col_no: usize,
-    ) -> Self {
+    pub fn new(ttype: TokenType, lexeme: String, location: Location) -> Self {
         Self {
             ttype,
             lexeme,
-            line_no,
-            col_no,
+            location,
         }
     }
 

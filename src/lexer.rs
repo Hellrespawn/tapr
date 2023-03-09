@@ -1,4 +1,5 @@
 use crate::error::{Error, ErrorKind};
+use crate::location::Location;
 use crate::token::{Token, TokenType};
 use crate::Result;
 use once_cell::sync::Lazy;
@@ -55,16 +56,20 @@ impl<'l> Lexer<'l> {
         }
     }
 
-    fn error(line_no: usize, col_no: usize, kind: ErrorKind) -> Error {
-        Error::new(line_no, col_no, kind)
+    fn error(location: Location, kind: ErrorKind) -> Error {
+        Error::new(location, kind)
     }
 
     fn error_at_current(&self, kind: ErrorKind) -> Error {
-        Self::error(self.line_no, self.col_no, kind)
+        Self::error(self.location(), kind)
     }
 
     fn get_character(&self, offset: usize) -> Option<char> {
         self.source.as_bytes().get(offset).map(|b| *b as char)
+    }
+
+    fn location(&self) -> Location {
+        Location::new(self.line_no, self.col_no)
     }
 
     fn current_character(&self) -> Option<char> {
@@ -147,8 +152,7 @@ impl<'l> Lexer<'l> {
         let token = Token::new(
             ttype,
             self.current_character().unwrap().to_string(),
-            self.line_no,
-            self.col_no,
+            self.location(),
         );
 
         self.advance();
@@ -160,7 +164,7 @@ impl<'l> Lexer<'l> {
         let mut string = String::new();
 
         // Preserve location at start of string.
-        let (line_no, col_no) = (self.line_no, self.col_no);
+        let location = self.location();
 
         // Advance past opening "
         self.advance();
@@ -168,8 +172,7 @@ impl<'l> Lexer<'l> {
         while self.current_character() != Some('"') {
             if self.at_end() {
                 return Err(Self::error(
-                    line_no,
-                    col_no,
+                    location,
                     ErrorKind::UnterminatedString,
                 ));
             }
@@ -181,7 +184,7 @@ impl<'l> Lexer<'l> {
         // Advance past closing "
         self.advance();
 
-        let token = Token::new(TokenType::String, string, line_no, col_no);
+        let token = Token::new(TokenType::String, string, location);
 
         Ok(token)
     }
@@ -190,7 +193,7 @@ impl<'l> Lexer<'l> {
         let mut string = String::new();
 
         // Preserve location at start of number.
-        let (line_no, col_no) = (self.line_no, self.col_no);
+        let location = self.location();
 
         while self.is_number() {
             string.push(self.current_character().unwrap());
@@ -200,8 +203,7 @@ impl<'l> Lexer<'l> {
         if self.current_character() == Some('.') {
             if !self.is_next_number() {
                 return Err(Self::error(
-                    line_no,
-                    col_no,
+                    location,
                     ErrorKind::DecimalPointNotFollowedByDigits,
                 ));
             }
@@ -215,7 +217,7 @@ impl<'l> Lexer<'l> {
             }
         }
 
-        let token = Token::new(TokenType::Number, string, line_no, col_no);
+        let token = Token::new(TokenType::Number, string, location);
 
         Ok(token)
     }
@@ -224,7 +226,7 @@ impl<'l> Lexer<'l> {
         let mut string = String::new();
 
         // Preserve location at start of string
-        let (line_no, col_no) = (self.line_no, self.col_no);
+        let location = self.location();
 
         while self.is_character() {
             string.push(self.current_character().unwrap());
@@ -244,7 +246,7 @@ impl<'l> Lexer<'l> {
             _ => TokenType::Symbol,
         };
 
-        Token::new(ttype, string, line_no, col_no)
+        Token::new(ttype, string, location)
     }
 }
 
@@ -273,7 +275,7 @@ mod tests {
         line_no: usize,
         col_no: usize,
     ) -> Token {
-        Token::new(ttype, lexeme.to_owned(), line_no, col_no)
+        Token::new(ttype, lexeme.to_owned(), Location::new(line_no, col_no))
     }
 
     fn number(number: f64, line_no: usize, col_no: usize) -> Token {

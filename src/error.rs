@@ -1,40 +1,38 @@
 use crate::interpreter::parameters::ParameterType;
 use crate::interpreter::Value;
+use crate::location::Location;
 use crate::token::TokenType;
 use thiserror::Error;
 
 #[derive(Debug)]
 pub struct Error {
-    pub line_no: Option<usize>,
-    pub col_no: Option<usize>,
+    pub location: Option<Location>,
     pub kind: ErrorKind,
 }
 impl Error {
-    pub fn new(line_no: usize, col_no: usize, kind: ErrorKind) -> Self {
+    pub fn new(location: Location, kind: ErrorKind) -> Self {
         Self {
-            line_no: Some(line_no),
-            col_no: Some(col_no),
+            location: Some(location),
             kind,
         }
     }
 
     pub fn without_location(kind: ErrorKind) -> Self {
         Self {
-            line_no: None,
-            col_no: None,
+            location: None,
             kind,
         }
     }
 
     pub fn has_location(&self) -> bool {
-        self.line_no.is_some() && self.col_no.is_some()
+        self.location.is_some()
     }
 }
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let (Some(line_no), Some(char_no)) = (self.line_no, self.col_no) {
-            write!(f, "[{line_no}:{char_no}] {}", self.kind)
+        if let Some(location) = self.location {
+            write!(f, "{location} {}", self.kind)
         } else {
             write!(f, "{}", self.kind)
         }
