@@ -6,6 +6,7 @@ Dit is de code die hoort bij mijn project compilers/interpreters.
 
 ```bnf
 Expression          -> Define
+                     | Defun
                      | If
                      | While
                      | Lambda
@@ -16,12 +17,16 @@ Expression          -> Define
                                  name   value
 Define              -> "(" "def" Symbol Expression ")"
 
+                                  name    parameters      body
+Defun              -> "(" "defun" Symbol "(" Symbol* ")" Expression ")"
+
                                 condition  then       else
 If                  -> "(" "if" Expression Expression Expression? ")"
 
                                    condition  then
 While               -> "(" "while" Expression Expression ")"
 
+                                     parameters     body
 Lambda              -> "(" "lambda" "(" Symbol* ")" Expression ")"
 
                            name   arguments

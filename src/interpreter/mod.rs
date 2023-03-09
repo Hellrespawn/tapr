@@ -20,7 +20,6 @@ use std::io::Write;
 pub struct Interpreter<'i> {
     pub output: Box<dyn Write + 'i>,
     environment: Environment,
-    repl: bool,
 }
 
 impl<'i> Default for Interpreter<'i> {
@@ -28,26 +27,16 @@ impl<'i> Default for Interpreter<'i> {
         Self {
             output: Box::new(std::io::stdout()),
             environment: Environment::root(),
-            repl: false,
         }
     }
 }
 
 impl<'i> Interpreter<'i> {
-    pub fn new(
-        output: Box<dyn Write + 'i>,
-        environment: Environment,
-        repl: bool,
-    ) -> Self {
+    pub fn new(output: Box<dyn Write + 'i>, environment: Environment) -> Self {
         Self {
             output,
             environment,
-            repl,
         }
-    }
-
-    pub fn repl() -> Self {
-        Self::new(Box::new(std::io::stdout()), Environment::root(), true)
     }
 
     pub fn interpret(&mut self, source: &str) -> Result<Value> {
@@ -55,20 +44,9 @@ impl<'i> Interpreter<'i> {
 
         let mut parser = Parser::new(lexer);
 
-        let result = parser
+        parser
             .parse()
-            .and_then(|expression| expression.accept(self));
-
-        match &result {
-            Ok(value) => {
-                if self.repl {
-                    writeln!(self.output, "{value}")?;
-                }
-            }
-            Err(error) => writeln!(self.output, "{error}")?,
-        };
-
-        result
+            .and_then(|expression| expression.accept(self))
     }
 
     fn get(&self, name: &Token) -> Result<Value> {
@@ -99,6 +77,16 @@ impl<'i> Interpreter<'i> {
             .expect("Scope to have parent.");
 
         self.environment = parent_environment;
+    }
+
+    fn add_location_to_error(
+        mut error: Error,
+        line_no: usize,
+        col_no: usize,
+    ) -> Error {
+        error.line_no = error.line_no.or(Some(line_no));
+        error.col_no = error.col_no.or(Some(col_no));
+        error
     }
 }
 
@@ -164,10 +152,12 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
 
         let result = match value {
             Value::Builtin(builtin) => {
-                builtin.call(self, arguments).map_err(|mut e| {
-                    e.line_no = Some(symbol.0.line_no);
-                    e.col_no = Some(symbol.0.col_no);
-                    e
+                builtin.call(self, arguments).map_err(|e| {
+                    Self::add_location_to_error(
+                        e,
+                        symbol.0.line_no,
+                        symbol.0.col_no,
+                    )
                 })
             }
             Value::Lambda(lambda) => lambda.call(self, arguments),

@@ -69,17 +69,11 @@ pub fn lt(
 }
 
 pub fn boolean_params() -> Parameters {
-    let param = Parameter::new(
-        "_arithmetic".to_owned(),
-        vec![ParameterType::Any],
-        false,
-    );
+    let param =
+        Parameter::new("_lhs".to_owned(), vec![ParameterType::Any], false);
 
-    let remaining_params = Parameter::new(
-        "_arithmetic".to_owned(),
-        vec![ParameterType::Any],
-        true,
-    );
+    let remaining_params =
+        Parameter::new("_rhs".to_owned(), vec![ParameterType::Any], true);
 
     Parameters::new(vec![param, remaining_params])
         .expect("arithmetic to have valid params")

@@ -44,6 +44,14 @@ impl Builtin {
     ) -> Result<Value> {
         (self.function)(intp, argument_nodes)
     }
+
+    pub fn call_with_value(
+        &self,
+        intp: &mut Interpreter,
+        argument_nodes: &[Expression],
+    ) -> Result<Value> {
+        (self.function)(intp, argument_nodes)
+    }
 }
 
 pub fn get_builtin_functions() -> Vec<Builtin> {
@@ -61,7 +69,7 @@ pub fn get_builtin_functions() -> Vec<Builtin> {
         ("print", io::print),
         ("head", list::head),
         ("tail", list::tail),
-        ("quote", io::quote),
+        ("map", list::map),
     ];
 
     builtins

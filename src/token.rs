@@ -3,6 +3,7 @@ pub enum TokenType {
     // Literals
     Apostrophe,
     Def,
+    Defun,
     False,
     If,
     Lambda,

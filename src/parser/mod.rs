@@ -139,6 +139,7 @@ impl<'p> Parser<'p> {
 
         let expr = match (current_type, next_type) {
             (TT::LeftParen, TT::Def) => Expression::Define(self.define()?),
+            (TT::LeftParen, TT::Defun) => Expression::Define(self.defun()?),
             (TT::LeftParen, TT::If) => Expression::If(self.if_expression()?),
             (TT::LeftParen, TT::While) => {
                 Expression::While(self.while_expression()?)
@@ -168,6 +169,29 @@ impl<'p> Parser<'p> {
         self.consume(TokenType::RightParen, "Define should be closed by ')'")?;
 
         Ok(Define { name, expression })
+    }
+
+    fn defun(&mut self) -> Result<Define> {
+        self.consume(TokenType::LeftParen, "")?;
+        self.consume(TokenType::Defun, "")?;
+
+        let name = self.symbol("Defun should have a symbol.")?;
+
+        let parameters = self.parameters()?;
+
+        let expression = Box::new(self.expression()?);
+
+        let lambda = Lambda {
+            parameters,
+            expression,
+        };
+
+        self.consume(TokenType::RightParen, "Defun should be closed by ')'")?;
+
+        Ok(Define {
+            name,
+            expression: Box::new(Expression::Lambda(lambda)),
+        })
     }
 
     fn if_expression(&mut self) -> Result<If> {

@@ -22,7 +22,7 @@ fn repl() -> Result<()> {
 
     let mut rl = rustyline::Editor::<()>::new().unwrap();
 
-    let mut intp = Interpreter::repl();
+    let mut intp = Interpreter::default();
 
     loop {
         let readline = rl.readline("> ").map(|s| s.trim().to_owned());
@@ -35,7 +35,10 @@ fn repl() -> Result<()> {
 
                 rl.add_history_entry(&line);
 
-                let _result = run_code(&line, &mut intp);
+                match run_code(&line, &mut intp) {
+                    Ok(value) => println!("{value}"),
+                    Err(error) => eprintln!("{error}"),
+                }
             }
             Err(ReadlineError::Interrupted) => {
                 break;

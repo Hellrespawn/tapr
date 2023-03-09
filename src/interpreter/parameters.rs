@@ -5,6 +5,7 @@ use crate::Result;
 
 #[derive(Debug, Copy, Clone)]
 pub enum ParameterType {
+    Function,
     List,
     Number,
     String,
@@ -16,6 +17,9 @@ pub enum ParameterType {
 impl ParameterType {
     fn value_is_type(self, value: &Value) -> bool {
         match self {
+            ParameterType::Function => {
+                matches!(value, Value::Lambda(_) | Value::Builtin(_))
+            }
             ParameterType::List => matches!(value, Value::List(_)),
             ParameterType::Number => matches!(value, Value::Number(_)),
             ParameterType::String => matches!(value, Value::String(_)),

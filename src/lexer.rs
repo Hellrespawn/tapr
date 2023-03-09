@@ -233,6 +233,7 @@ impl<'l> Lexer<'l> {
 
         let ttype = match string.as_str() {
             "def" => TokenType::Def,
+            "defun" => TokenType::Defun,
             "false" => TokenType::False,
             "if" => TokenType::If,
             "lambda" => TokenType::Lambda,

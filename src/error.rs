@@ -25,6 +25,10 @@ impl Error {
             kind,
         }
     }
+
+    pub fn has_location(&self) -> bool {
+        self.line_no.is_some() && self.col_no.is_some()
+    }
 }
 
 impl std::fmt::Display for Error {
