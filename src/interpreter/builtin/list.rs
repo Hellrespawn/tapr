@@ -36,7 +36,10 @@ pub fn map(
     intp: &mut Interpreter,
     argument_nodes: &[Expression],
 ) -> Result<Value> {
+    // TODO Make this more ergonomic
     map_params().check_amount_of_args_or_error(argument_nodes.len())?;
+
+    // TODO? if function is still a symbol, get it from env here?
 
     let function = argument_nodes
         .get(0)
