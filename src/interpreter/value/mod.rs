@@ -89,7 +89,6 @@ impl std::fmt::Display for Value {
                         .join(" ")
                 )
             }
-            // TODO impl display for lambda
             Value::Builtin(builtin) => builtin.fmt(f),
             Value::Lambda(lambda) => {
                 write!(f, "function ({} args)", lambda.parameters.len())

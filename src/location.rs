@@ -1,4 +1,6 @@
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+
+// TODO? Add file location to Location?
 pub struct Location(usize, usize);
 
 impl Location {

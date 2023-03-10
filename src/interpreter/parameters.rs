@@ -33,8 +33,6 @@ impl ParameterType {
 pub struct Parameter {
     name: Option<String>,
     parameter_type: ParameterType,
-    // TODO Implement optional parameters
-    // is_required: bool
     is_variadic: bool,
 }
 
