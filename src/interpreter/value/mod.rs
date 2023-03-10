@@ -1,8 +1,9 @@
+mod builtin;
 mod lambda;
 
+pub use builtin::Builtin;
 pub use lambda::Lambda;
 
-use super::builtin::Builtin;
 use std::cmp::Ordering;
 
 #[derive(Debug, Clone)]

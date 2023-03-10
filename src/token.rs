@@ -31,6 +31,14 @@ pub struct Token {
     pub location: Location,
 }
 
+impl std::fmt::Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} Token::{:?}", self.location, self.ttype)?;
+
+        write!(f, "('{}')", self.lexeme)
+    }
+}
+
 impl Token {
     pub fn new(ttype: TokenType, lexeme: String, location: Location) -> Self {
         Self {

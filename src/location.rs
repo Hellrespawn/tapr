@@ -17,6 +17,6 @@ impl Location {
 
 impl std::fmt::Display for Location {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{}:{}]", self.line_no(), self.col_no())
+        write!(f, "[{:03}:{:03}]", self.line_no(), self.col_no())
     }
 }

@@ -184,7 +184,10 @@ impl<'p> Parser<'p> {
             expression,
         };
 
-        self.consume(TokenType::RightParen, "Defun should be closed by ')'")?;
+        self.consume(
+            TokenType::RightParen,
+            &format!("`defun {}` should be closed by ')'", name.0.lexeme()),
+        )?;
 
         Ok(Define {
             name,

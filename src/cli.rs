@@ -3,6 +3,8 @@ use crate::interpreter::{Interpreter, Value};
 use crate::Result;
 use rustyline::error::ReadlineError;
 
+const HISTFILE: &str = "history.txt";
+
 pub fn main() {
     let mut args = std::env::args();
 
@@ -22,6 +24,8 @@ fn repl() -> Result<()> {
     println!("Welcome to Korisp {}.", env!("CARGO_PKG_VERSION"));
 
     let mut rl = rustyline::Editor::<()>::new().unwrap();
+
+    let _result = rl.load_history(HISTFILE);
 
     let mut intp = Interpreter::default();
 
@@ -50,6 +54,7 @@ fn repl() -> Result<()> {
         }
     }
 
+    let _result = rl.save_history(HISTFILE);
     println!("Exiting REPL...");
 
     Ok(())

@@ -1,6 +1,6 @@
 use once_cell::sync::Lazy;
 
-use super::builtin::get_builtin_functions;
+use super::builtins::get_builtin_functions;
 use super::Value;
 use std::collections::HashMap;
 
@@ -84,11 +84,45 @@ impl std::fmt::Display for Environment {
             parent.fmt(f)?;
         }
 
-        writeln!(f, "{}", "-".repeat(20))?;
+        let key_width = self
+            .map
+            .keys()
+            .map(std::string::String::len)
+            .max()
+            .unwrap_or_default();
+
+        let value_width = self
+            .map
+            .values()
+            .map(|v| v.to_string().len())
+            .max()
+            .unwrap_or_default();
+
+        writeln!(
+            f,
+            "+-{}-+-{}-+",
+            "-".repeat(key_width),
+            "-".repeat(value_width)
+        )?;
 
         for (key, value) in &self.map {
-            writeln!(f, "{key:<10} | {value}")?;
+            if key.starts_with('_') {
+                continue;
+            }
+
+            writeln!(
+                f,
+                "| {key:>key_width$} | {:>value_width$} |",
+                value.to_string()
+            )?;
         }
+
+        writeln!(
+            f,
+            "+-{}-+-{}-+",
+            "-".repeat(key_width),
+            "-".repeat(value_width)
+        )?;
 
         Ok(())
     }

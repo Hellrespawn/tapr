@@ -1,5 +1,5 @@
 mod arguments;
-mod builtin;
+mod builtins;
 mod environment;
 mod parameters;
 mod value;

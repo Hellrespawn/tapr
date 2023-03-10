@@ -1,4 +1,74 @@
 (
     (defun is-even (n) (== 0 (% n 2)))
     (defun is-odd  (n) (!(is_even n)))
+
+    # Get highest number from list of values
+    (defun max (values)
+        # Repeatedly apply function to list to produce single value
+        (reduce
+            # Initial value, first element of list
+            (head values)
+            # Anonymous function, applied to every element of list
+            (lambda
+                # Two parameters
+                (lhs rhs)
+                # if (lhs rhs) is monotonically ascending
+                (if (> lhs rhs)
+                    rhs  # then
+                    lhs  # else
+                )
+            )
+            # Input list, all elements after the first.
+            (tail values)
+        )
+    )
+
+    # Get lowest number from list of values
+    (defun min (values)
+        # Repeatedly apply function to list to produce single value
+        (reduce
+            # Initial value, first element of list
+            (head values)
+            # Anonymous function, applied to every element of list
+            (lambda
+                # Two parameters
+                (lhs rhs)
+                # if (lhs rhs) is monotonically descending
+                (if (< lhs rhs)
+                    rhs  # then
+                    lhs  # else
+                )
+            )
+            # Input list, all elements after the first.
+            (tail values)
+        )
+    )
+
+    # Filter values in list based on function, expressed in terms of `reduce`.
+    (defun filter (function values)
+        (reduce
+            # Initial value, empty list
+            (list)
+            # Anonymous function
+            (lambda (acc val) (
+                # Concat `acc` and `val` `function` returns true
+                if (function val) (concat acc val) acc)
+            )
+            values
+        )
+    )
+
+    # Apply a function to every element of list, expressed in terms of `reduce`.
+    (defun map (function values)
+        (reduce
+            # Initial value, empty list
+            (list)
+            # Anonymous function
+            (lambda (acc val)
+                # Concatenate acc and transformed value.
+                (concat acc (function val))
+            )
+            values
+        )
+    )
 )

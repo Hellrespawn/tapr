@@ -85,11 +85,10 @@ pub struct Parameters {
     pub parameters: Vec<Parameter>,
 }
 
-impl TryFrom<Parameter> for Parameters {
-    type Error = crate::error::Error;
-
-    fn try_from(parameter: Parameter) -> Result<Self> {
+impl From<Parameter> for Parameters {
+    fn from(parameter: Parameter) -> Self {
         Self::new(vec![parameter])
+            .expect("Single parameter should always be valid")
     }
 }
 
@@ -105,6 +104,12 @@ impl Parameters {
         }
 
         Ok(Self { parameters })
+    }
+
+    pub fn none() -> Self {
+        Self {
+            parameters: Vec::new(),
+        }
     }
 
     pub fn is_variadic(&self) -> bool {

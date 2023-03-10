@@ -3,7 +3,7 @@ use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::Result;
 
 pub fn print(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let params = Parameter::anonymous(ParameterType::Any, true).try_into()?;
+    let params = Parameter::anonymous(ParameterType::Any, true).into();
 
     let arguments = Arguments::new(&params, arguments)?;
 
@@ -15,8 +15,7 @@ pub fn print(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn read(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let params =
-        Parameter::anonymous(ParameterType::String, false).try_into()?;
+    let params = Parameter::anonymous(ParameterType::String, false).into();
 
     let arguments = Arguments::new(&params, arguments)?;
 
@@ -28,8 +27,7 @@ pub fn read(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn eval(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let params =
-        Parameter::anonymous(ParameterType::String, false).try_into()?;
+    let params = Parameter::anonymous(ParameterType::String, false).into();
 
     let arguments = Arguments::new(&params, arguments)?;
 

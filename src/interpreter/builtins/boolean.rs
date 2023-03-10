@@ -47,7 +47,7 @@ pub fn lt(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn not(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let params = Parameter::anonymous(ParameterType::Any, false).try_into()?;
+    let params = Parameter::anonymous(ParameterType::Any, false).into();
 
     let arguments = Arguments::new(&params, arguments)?;
 

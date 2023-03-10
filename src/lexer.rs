@@ -47,7 +47,7 @@ impl<'l> Lexer<'l> {
             };
 
             if *DEBUG_TOKENS {
-                println!("{token:#?}");
+                println!("{token}");
             }
 
             Ok(Some(token))
