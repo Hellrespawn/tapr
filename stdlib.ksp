@@ -1,6 +1,6 @@
 (
     (defun is-even (n) (== 0 (% n 2)))
-    (defun is-odd  (n) (!(is_even n)))
+    (defun is-odd  (n) (!(is-even n)))
 
     # Get highest number from list of values
     (defun max (values)

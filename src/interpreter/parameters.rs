@@ -33,27 +33,27 @@ impl ParameterType {
 pub struct Parameter {
     name: Option<String>,
     parameter_type: ParameterType,
-    is_variadic: bool,
+    rest: bool,
 }
 
 impl Parameter {
     pub fn new(
         name: String,
         parameter_type: ParameterType,
-        is_variadic: bool,
+        rest: bool,
     ) -> Self {
         Self {
             name: Some(name),
             parameter_type,
-            is_variadic,
+            rest,
         }
     }
 
-    pub fn anonymous(parameter_type: ParameterType, is_variadic: bool) -> Self {
+    pub fn anonymous(parameter_type: ParameterType, rest: bool) -> Self {
         Self {
             name: None,
             parameter_type,
-            is_variadic,
+            rest,
         }
     }
 
@@ -92,13 +92,13 @@ impl From<Parameter> for Parameters {
 
 impl Parameters {
     pub fn new(parameters: Vec<Parameter>) -> Result<Self> {
-        let has_variadic_param_before_last = parameters
+        let has_rest_param_before_last = parameters
             .iter()
             .enumerate()
-            .any(|(i, param)| param.is_variadic && i != parameters.len() - 1);
+            .any(|(i, param)| param.rest && i != parameters.len() - 1);
 
-        if has_variadic_param_before_last {
-            return Err(ErrorKind::NonLastParameterIsVariadic.into());
+        if has_rest_param_before_last {
+            return Err(ErrorKind::NonLastParameterIsRest.into());
         }
 
         Ok(Self { parameters })
@@ -110,8 +110,9 @@ impl Parameters {
         }
     }
 
-    pub fn is_variadic(&self) -> bool {
-        self.parameters.iter().any(|p| p.is_variadic)
+    pub fn has_rest_param(&self) -> bool {
+        // If a `Parameters` object has a rest param, it's always the last one.
+        self.parameters.last().map_or(false, |p| p.rest)
     }
 
     pub fn is_empty(&self) -> bool {

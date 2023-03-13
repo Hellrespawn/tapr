@@ -1,6 +1,7 @@
 (
-    (defun is-even (n) (== 0 (% n 2)))
-    (print (is-even 2))
-    (print (is-even 3))
-    (print (is-even 4))
+    (print "left:  ")
+    (def left (parse-number (read)))
+    (print "right: ")
+    (def right (parse-number (read)))
+    (println (+ left right))
 )

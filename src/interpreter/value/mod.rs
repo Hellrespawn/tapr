@@ -76,7 +76,7 @@ impl std::fmt::Display for Value {
             Value::Nil => write!(f, "nil"),
             Value::Boolean(boolean) => write!(f, "{boolean}"),
             Value::Number(number) => write!(f, "{number}"),
-            Value::String(string) => write!(f, "\"{string}\""),
+            Value::String(string) => write!(f, "{string}"),
             Value::Symbol(symbol) => write!(f, "{symbol}"),
             Value::List(items) => {
                 write!(

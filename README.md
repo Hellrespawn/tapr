@@ -2,6 +2,22 @@
 
 Dit is de code die hoort bij mijn project compilers/interpreters.
 
+## Vereisten
+
+Rust 1.
+
+## Installatie
+
+`korisp` kan geinstalleerd worden door middel van `cargo install`.
+
+## Uitvoeren
+
+Na installatie kan `korisp` op de command line uitgevoerd worden.
+
+- `korisp` zonder argumenten start
+
+
+
 ## Korisp Grammar
 
 ```bnf

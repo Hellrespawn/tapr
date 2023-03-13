@@ -87,7 +87,7 @@ impl<'a> Arguments<'a> {
     }
 
     fn check_length(&self) -> Result<()> {
-        if self.parameters.is_variadic() {
+        if self.parameters.has_rest_param() {
             if self.parameters.len() > self.arguments.len() {
                 Err(ErrorKind::WrongAmountOfMinArgs {
                     expected: self.parameters.len(),
@@ -114,13 +114,13 @@ impl<'a> Arguments<'a> {
             param.value_is_type(arg)?;
         }
 
-        // If function is variadic...
-        if self.parameters.is_variadic() {
+        // If function has a rest parameter...
+        if self.parameters.has_rest_param() {
             let remaining_args = self.arguments.get(self.parameters.len()..);
 
             // and there are more args...
             if let Some(remaining_args) = remaining_args {
-                let last_param = self.parameters.last().expect("Parameters should also have a Parameter if is_variadic is true.");
+                let last_param = self.parameters.last().expect("Parameters should have a Parameter if has_rest_param is true.");
 
                 // Check the last param.
                 for arg in remaining_args {

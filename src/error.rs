@@ -100,8 +100,8 @@ pub enum ErrorKind {
     NotCallable(Value),
 
     // Parameters
-    #[error("Only the last parameter of a function may be variadic.")]
-    NonLastParameterIsVariadic,
+    #[error("Only the last parameter of a function may be a rest parameter.")]
+    NonLastParameterIsRest,
 
     #[error("Invalid argument '{actual}', expected '{expected:?}'")]
     InvalidArgument {
@@ -125,6 +125,9 @@ pub enum ErrorKind {
         lhs: Value,
         rhs: Value,
     },
+
+    #[error("Unable to parse {0:?} as number")]
+    ParseNumberError(String),
 }
 
 impl From<ErrorKind> for Error {
