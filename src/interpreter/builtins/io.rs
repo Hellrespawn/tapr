@@ -23,8 +23,10 @@ pub fn println(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
     let arguments = Arguments::new(&params, arguments)?;
 
     for argument in arguments.arguments() {
-        writeln!(intp.output, "{argument}")?;
+        write!(intp.output, "{argument}")?;
     }
+
+    writeln!(intp.output)?;
 
     Ok(Value::Nil)
 }

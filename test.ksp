@@ -1,7 +1,9 @@
 (
-    (print "left:  ")
-    (def left (parse-number (read)))
-    (print "right: ")
-    (def right (parse-number (read)))
-    (println (+ left right))
+    (eval (read-file "stdlib.ksp"))
+
+    (def a (1 2 3 4 5 6 7 8 9))
+
+    (println "map increment: " (map increment a))
+    (println "filter is-odd: " (filter is-odd a))
+    (println "reduce lambda (sum): " (reduce 0 (lambda (acc n) (+ acc n)) a))
 )
