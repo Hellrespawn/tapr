@@ -4,7 +4,7 @@ use korisp::interpreter::Value;
 
 fn construct_source(source: &str) -> String {
     format!(
-        "(tail
+        "(last
             (
                 (def add-one (lambda (a) (+ 1 a)))
                 {}
@@ -37,7 +37,7 @@ fn test_quote_symbol() -> TestResult {
         panic!("Expected list, got '{value}'")
     };
 
-    assert!(list.len() == 2, "Got more than two elements.");
+    assert!(list.len() == 2, "Expected 2, got {} elements.", list.len());
 
     let Value::Symbol(symbol) = &list[0] else {
         panic!("Expected symbol as first element, got '{}'", &list[0])
@@ -62,7 +62,7 @@ fn test_quote_list() -> TestResult {
         panic!("Expected list, got '{value}'")
     };
 
-    assert!(list.len() == 2, "Got more than two elements.");
+    assert!(list.len() == 2, "Expected 2, got {} elements.", list.len());
 
     let Value::Lambda(_) = &list[0] else {
         panic!("Expected lambda as first element, got '{}'", &list[0])

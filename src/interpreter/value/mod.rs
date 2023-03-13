@@ -18,15 +18,24 @@ pub enum Value {
     Lambda(Lambda),
 }
 
+impl From<f64> for Value {
+    fn from(value: f64) -> Self {
+        Value::Number(value)
+    }
+}
+
 impl PartialEq for Value {
     fn eq(&self, other: &Self) -> bool {
         #[allow(clippy::match_same_arms)]
         match (self, other) {
             (Value::Nil, Value::Nil) => true,
             (Value::Boolean(left), Value::Boolean(right)) => left == right,
-            (Value::Number(left), Value::Number(right)) => left == right,
+            (Value::Number(left), Value::Number(right)) => {
+                (*left - *right).abs() < f64::EPSILON
+            }
             (Value::String(left), Value::String(right)) => left == right,
             (Value::Symbol(left), Value::Symbol(right)) => left == right,
+            (Value::List(left), Value::List(right)) => left == right,
             _ => false,
         }
     }

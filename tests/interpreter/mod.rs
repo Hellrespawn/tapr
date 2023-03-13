@@ -1,8 +1,9 @@
-mod test_builtin_functions;
 mod test_custom_functions;
 mod test_korisp;
 mod test_quote;
 mod test_variables;
+
+mod builtin;
 
 use korisp::interpreter::{Interpreter, Value};
 use korisp::Result;

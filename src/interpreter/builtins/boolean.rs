@@ -6,20 +6,21 @@ type BooleanOp = fn(&Value, &Value) -> bool;
 
 fn boolean_function(op: BooleanOp, arguments: Vec<Value>) -> Result<Value> {
     let params = boolean_params();
-
     let arguments = Arguments::new(&params, arguments)?;
-
-    let mut value = true;
 
     for window in arguments.arguments().windows(2) {
         let [lhs, rhs] = window else {
             unreachable!()
         };
 
-        value = op(lhs, rhs);
+        // Short-circuit and return false if the condition is false.
+        if !op(lhs, rhs) {
+            return Ok(Value::Boolean(false));
+        }
     }
 
-    Ok(Value::Boolean(value))
+    // Return true at the end.
+    Ok(Value::Boolean(true))
 }
 
 pub fn gt(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {

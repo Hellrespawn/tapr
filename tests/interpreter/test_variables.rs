@@ -9,7 +9,7 @@ fn test_can_only_read_variable_after_setting() -> TestResult {
 
     assert!(matches!(error.kind, ErrorKind::UndefinedSymbol { .. }));
 
-    expect("(tail ((def value 1) (== value 1)))", Value::Boolean(true))?;
+    expect("(last ((def value 1) (== value 1)))", Value::Boolean(true))?;
 
     Ok(())
 }

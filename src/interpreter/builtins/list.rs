@@ -2,11 +2,9 @@ use crate::interpreter::parameters::{Parameter, ParameterType, Parameters};
 use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::Result;
 
+#[allow(clippy::unnecessary_wraps)]
 pub fn list(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let parameters = Parameters::none();
-    Arguments::new(&parameters, arguments)?;
-
-    Ok(Value::List(Vec::new()))
+    Ok(Value::List(arguments))
 }
 
 pub fn head(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
@@ -42,7 +40,7 @@ pub fn last(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn concat(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let parameters = append_params();
+    let parameters = concat_params();
 
     let arguments = Arguments::new(&parameters, arguments)?;
 
@@ -120,7 +118,7 @@ pub fn reduce(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
     Ok(output)
 }
 
-pub fn append_params() -> Parameters {
+pub fn concat_params() -> Parameters {
     Parameters::new(vec![
         Parameter::anonymous(ParameterType::List, false),
         Parameter::anonymous(ParameterType::Any, true),
