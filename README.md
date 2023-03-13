@@ -4,7 +4,7 @@ Dit is een interpreter voor mijn _LISP_-achtige programmeertaal `korisp`. Deze g
 
 ## Vereisten
 
-Rust 1.
+De minimale versie is Rust 1.65.
 
 ## Installatie
 
