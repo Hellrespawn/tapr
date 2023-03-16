@@ -17,7 +17,7 @@ impl std::fmt::Debug for Builtin {
 
 impl std::fmt::Display for Builtin {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "builtin function {}", self.name)
+        write!(f, "<builtin function {}>", self.name)
     }
 }
 

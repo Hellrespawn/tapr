@@ -100,7 +100,7 @@ impl std::fmt::Display for Value {
             }
             Value::Builtin(builtin) => builtin.fmt(f),
             Value::Lambda(lambda) => {
-                write!(f, "function ({} args)", lambda.parameters.len())
+                write!(f, "<function ({} args)>", lambda.parameters.len())
             }
         }
     }

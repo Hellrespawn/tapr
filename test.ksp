@@ -1,10 +1,13 @@
 (
     (eval (read-file "stdlib.ksp"))
 
-    (def a (1 2 3 4 5 6 7 8 9))
+    (def number-list (1 2 3 4 5 6 7 8 9))
 
-    (println "input: " a)
-    (println "map increment: " (map increment a))
-    (println "filter is-odd: " (filter is-odd a))
-    (println "reduce lambda (sum): " (reduce 0 (lambda (acc n) (+ acc n)) a))
+    (println number-list)
+
+    (println (map increment number-list))
+
+    (println (filter is-odd number-list))
+
+    (println (reduce 0 (lambda (acc n) (+ acc n)) number-list))
 )
