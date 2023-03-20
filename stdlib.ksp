@@ -53,7 +53,7 @@
             (list)
             # Anonymous function
             (lambda (acc val) (
-                # Concat `acc` and `val` `function` returns true
+                # Concat `acc` and `val` if `function` returns true
                 if (function val) (concat acc val) acc)
             )
             values

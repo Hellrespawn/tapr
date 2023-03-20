@@ -11,7 +11,7 @@ impl GraphVisitor {
     pub(crate) fn create_ast_graph(program: &Expression, filename: &str) {
         let body = "digraph astgraph {\n  \
             edge [arrowsize=.5];\n  \
-            rankdir=\"TB\";\n  \
+            rankdir=\"LR\";\n  \
             newrank=true;\n  \
             nodesep=0.75;\n  \
             ranksep=0.75;\n  "

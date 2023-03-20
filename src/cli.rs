@@ -39,7 +39,7 @@ fn repl() -> Result<()> {
 
                 rl.add_history_entry(&line);
 
-                match run_code(&line, &mut intp) {
+                match run_code(&line, &mut intp, "repl") {
                     Ok(value) => println!("{value}"),
                     Err(error) => eprintln!("{error}"),
                 }
@@ -63,13 +63,13 @@ fn run_file(filename: &str) -> Result<()> {
     let source = std::fs::read_to_string(filename)?;
     let mut intp = Interpreter::default();
 
-    if let Err(error) = run_code(&source, &mut intp) {
+    if let Err(error) = run_code(&source, &mut intp, filename) {
         eprintln!("{error}");
     }
 
     Ok(())
 }
 
-fn run_code(source: &str, intp: &mut Interpreter) -> Result<Value> {
-    intp.interpret(source)
+fn run_code(source: &str, intp: &mut Interpreter, name: &str) -> Result<Value> {
+    intp.interpret(source, name)
 }

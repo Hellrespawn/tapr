@@ -15,7 +15,7 @@ pub fn interpret(source: &str) -> Result<Value> {
     let mut intp = Interpreter::default();
     intp.output = Box::new(std::io::sink());
 
-    intp.interpret(source)
+    intp.interpret(source, "test")
 }
 
 pub fn expect(source: &str, expectation: Value) -> TestResult {
@@ -33,7 +33,7 @@ pub fn capture(source: &str) -> CapturedTestResult {
 
     intp.output = Box::new(&mut buffer);
 
-    let value = intp.interpret(source)?;
+    let value = intp.interpret(source, "test")?;
 
     std::mem::drop(intp);
 

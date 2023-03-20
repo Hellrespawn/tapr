@@ -64,7 +64,7 @@ pub fn eval(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 
     let string = arguments.unwrap_string(0);
 
-    let value = intp.interpret(&string)?;
+    let value = intp.interpret(&string, "eval")?;
 
     Ok(value)
 }

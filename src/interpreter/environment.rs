@@ -1,10 +1,6 @@
-use once_cell::sync::Lazy;
-
 use super::builtins::get_builtin_functions;
 use super::Value;
 use std::collections::HashMap;
-
-static DEBUG_ENV: Lazy<bool> = Lazy::new(|| std::env::var("DEBUG_ENV").is_ok());
 
 pub struct Environment {
     map: HashMap<String, Value>,
@@ -42,29 +38,13 @@ impl Environment {
     }
 
     pub fn insert(&mut self, key: String, value: Value) -> Option<Value> {
-        let option = self.map.insert(key, value);
-
-        if *DEBUG_ENV {
-            println!("{self}");
-        }
-
-        option
+        self.map.insert(key, value)
     }
 
     pub fn get(&self, key: &str) -> Option<&Value> {
         self.map.get(key).or_else(|| {
             if let Some(environment) = &self.parent {
                 environment.get(key)
-            } else {
-                None
-            }
-        })
-    }
-
-    pub fn get_mut(&mut self, key: &str) -> Option<&mut Value> {
-        self.map.get_mut(key).or_else(|| {
-            if let Some(environment) = &mut self.parent {
-                environment.get_mut(key)
             } else {
                 None
             }

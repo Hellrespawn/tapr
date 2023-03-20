@@ -12,6 +12,7 @@ pub mod ast;
 static DEBUG_AST: Lazy<bool> = Lazy::new(|| std::env::var("DEBUG_AST").is_ok());
 
 pub struct Parser<'p> {
+    name: &'p str,
     lexer: Lexer<'p>,
     previous_token: Option<Token>,
     current_token: Option<Token>,
@@ -19,8 +20,9 @@ pub struct Parser<'p> {
 }
 
 impl<'p> Parser<'p> {
-    pub fn new(lexer: Lexer<'p>) -> Self {
+    pub fn new(lexer: Lexer<'p>, name: &'p str) -> Self {
         Self {
+            name,
             lexer,
             previous_token: None,
             current_token: None,
@@ -38,7 +40,8 @@ impl<'p> Parser<'p> {
         let expression = self.expression()?;
 
         if *DEBUG_AST {
-            let filename = format!("{}.ast.dot", env!("CARGO_PKG_NAME"));
+            let filename =
+                format!("{}.{}.ast.dot", env!("CARGO_PKG_NAME"), self.name);
 
             GraphVisitor::create_ast_graph(&expression, &filename);
         }

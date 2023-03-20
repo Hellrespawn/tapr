@@ -41,10 +41,10 @@ impl<'i> Interpreter<'i> {
         }
     }
 
-    pub fn interpret(&mut self, source: &str) -> Result<Value> {
+    pub fn interpret(&mut self, source: &str, name: &str) -> Result<Value> {
         let lexer = Lexer::new(source);
 
-        let mut parser = Parser::new(lexer);
+        let mut parser = Parser::new(lexer, name);
 
         parser
             .parse()

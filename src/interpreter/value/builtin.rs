@@ -11,7 +11,7 @@ pub struct Builtin {
 
 impl std::fmt::Debug for Builtin {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Builtin").field("name", &self.name).finish()
+        write!(f, "{self}")
     }
 }
 

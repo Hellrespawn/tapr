@@ -9,7 +9,7 @@ mod test_expression;
 pub fn parse(source: &str) -> Result<Expression> {
     let lexer = Lexer::new(source);
 
-    let mut parser = Parser::new(lexer);
+    let mut parser = Parser::new(lexer, "test");
 
     let expression = parser.parse()?;
 
