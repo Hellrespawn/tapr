@@ -1,45 +1,45 @@
 ## Korisp Grammar
 
 ```bnf
-Expression          -> Define
-                     | Defun
-                     | If
-                     | While
-                     | Lambda
-                     | Call
-                     | QuotedDatum
-                     | Datum
+Expression   -> Define
+              | Defun
+              | If
+              | While
+              | Lambda
+              | Call
+              | QuotedDatum
+              | Datum
 
-                                 name   value
-Define              -> "(" "def" Symbol Expression ")"
+                          name   value
+Define       -> "(" "def" Symbol Expression ")"
 
-                                  name    parameters      body
-Defun               -> "(" "defun" Symbol "(" Symbol* ")" Expression ")"
+                            name   parameters      body
+Defun        -> "(" "defun" Symbol "(" Symbol* ")" Expression ")"
 
-                                condition  then       else
-If                  -> "(" "if" Expression Expression Expression? ")"
+                         condition  then       else
+If           -> "(" "if" Expression Expression Expression? ")"
 
-                                   condition  then
-While               -> "(" "while" Expression Expression ")"
+                            condition  then
+While        -> "(" "while" Expression Expression ")"
 
-                                     parameters     body
-Lambda              -> "(" "lambda" "(" Symbol* ")" Expression ")"
+                              parameters     body
+Lambda       -> "(" "lambda" "(" Symbol* ")" Expression ")"
 
-                           name   arguments
-Call                -> "(" Symbol Expression* ")"
+                    name   arguments
+Call         -> "(" Symbol Expression* ")"
 
-QuotedDatum         -> "(" "quote" Datum ")"
-                     |  "'" Datum
+QuotedDatum  -> "(" "quote" Datum ")"
+              |  "'" Datum
 
-Datum               -> List
-                     | Atom
+Datum        -> List
+              | Atom
 
-List                -> "(" Expression* ")"
+List         -> "(" Expression* ")"
 
-Atom                -> "nil" | Boolean | Number | String | Symbol
+Atom         -> "nil" | Boolean | Number | String | Symbol
 
-Boolean             -> "true" | "false"
-Number              -> {digit}+ ( . {digit}* )?
-String              -> \" {character}* \"
-Symbol              -> {character}+
+Boolean      -> "true" | "false"
+Number       -> {digit}+ ( . {digit}* )?
+String       -> \" {character}* \"
+Symbol       -> {character}+
 ```
