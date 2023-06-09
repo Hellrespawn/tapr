@@ -1,38 +1,35 @@
-# `korisp`
+# KorISP
 
-Dit is een interpreter voor mijn _LISP_-achtige programmeertaal `korisp`. Deze gemaakt voor als onderdeel van de vrije-keuze ruimte van de opleiding AD Software Development.
+**NOTE**: This project is published for reference only. There is no license and all rights are reserved.
 
-## Vereisten
+This is an interpreter for a _Lisp_-style programming language called KorISP.
 
-De minimale versie is Rust 1.65.
+This project was originally created for an elective course on compilers and interpreters of the Associate Degree in Software Development at the Amsterdam University of Applied Sciences.
 
-Om de AST te laten af te beelden is ook _GraphViz_ vereist.
+## Requirements
 
-## Installatie
+- Rust (MSRV: 1.65)
+- GraphViz (Optional, for visualizing Abstract Syntax Trees)
 
-`korisp` kan geïnstalleerd worden door middel van `cargo install`.
+## Installation
 
-## Uitvoeren
+1. Ensure `cargo` and Cargo's `bin` folder are on your `PATH`.
+1. Clone the repository.
+1. Run `cargo install --path korisp`.
 
-Na installatie kan `korisp` op de command line uitgevoerd worden.
+## Usage
 
-Indien installatie niet gewenst is, kan deze ook uitgevoerd worden met behulp van `cargo run`. Let er dan op dat voor `korisp` na een `--` verschijnen, bijv. `cargo run -- file.ksp`.
+Running `korisp` without arguments starts the REPL. An empty line or Ctrl-C will exit.
 
-- `korisp`
+`korisp <filename>` will run the specified file.
 
-   Zonder argumenten start de REPL (_R_ead-_E_valuate-_P_rint _L_oop), een interactieve shell. Hier kun je _expressions_ uitvoeren en het resultaat zien. Een lege regel of Ctrl-C stopt de REPL.
-
-- `korisp file.ksp`: Voert het gegeven bestand uit.
+Use `(eval (read-file "stdlib.ksp"))` to import the standard library.
 
 ## Debugging
 
-Er zijn een aantal _environment variables_ beschikbaar.
+There are two environment variables:
 
-- `DEBUG_AST`: Als deze `1` is, dan wordt de AST gevisualizeerd.
-- `DEBUG_TOKENS`: Als deze `1`, dan worden tokens geprint op de command line.
+- `DEBUG_AST`: If set and not empty, will visualize the Abstract Syntax Tree of the program using GraphViz.
+- `DEBUG_TOKENS`: If set and not empty, will print scanned tokens on the command line.
 
-Ook kan de functie `_env()` uitgevoerd worden om de huidige environment te printen.
-
-## Tests
-
-De tests kunnen uitgevoerd worden door `cargo test` uit te voeren. Dit zijn voornamelijk _integration tests_ in de maps `/tests/`. Er zitten ook een aantal _unit tests_ van de Lexer is `src/lexer.rs` (co-locatie van unit tests en code is gebruikelijk in Rust).
+Within the REPL or programs, the `(_env)`-function, will print the interpreter's current environment.
