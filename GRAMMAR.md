@@ -1,45 +1,27 @@
-## Korisp Grammar
+# Grammar
 
-```bnf
-Expression   -> Define
-              | Defun
-              | If
-              | While
-              | Lambda
-              | Call
-              | QuotedDatum
-              | Datum
-
-                          name   value
-Define       -> "(" "def" Symbol Expression ")"
-
-                            name   parameters      body
-Defun        -> "(" "defun" Symbol "(" Symbol* ")" Expression ")"
-
-                         condition  then       else
-If           -> "(" "if" Expression Expression Expression? ")"
-
-                            condition  then
-While        -> "(" "while" Expression Expression ")"
-
-                              parameters     body
-Lambda       -> "(" "lambda" "(" Symbol* ")" Expression ")"
-
-                    name   arguments
-Call         -> "(" Symbol Expression* ")"
-
-QuotedDatum  -> "(" "quote" Datum ")"
-              |  "'" Datum
-
-Datum        -> List
-              | Atom
-
-List         -> "(" Expression* ")"
-
-Atom         -> "nil" | Boolean | Number | String | Symbol
-
-Boolean      -> "true" | "false"
-Number       -> {digit}+ ( . {digit}* )?
-String       -> \" {character}* \"
-Symbol       -> {character}+
+```clojure
+(def grammar
+  ~{:ws (set " \t\r\f\n\0\v")
+    :symchars (+ (range "09" "AZ" "az" "\x80\xFF") (set "!$%&*+-./:<?=>@^_"))
+    :token (some :symchars)
+    :hex (range "09" "af" "AF")
+    :escape (* "\\" (+ (set "ntrzfev0\"\\")
+                       (* "x" :hex :hex)
+                       (* "u" [4 :hex])
+                       (* "U" [6 :hex])
+                       (error (constant "bad escape"))))
+    :comment (* "#" (any (if-not (+ "\n" -1) 1)))
+    :symbol :token
+    :keyword (* ":" (any :symchars))
+    :constant (* (+ "true" "false" "nil") (not :symchars))
+    :string (* "\"" (any (+ :escape (if-not "\"" 1))) "\"")
+    :number (cmt (<- :token) ,scan-number)
+    :raw-value (+ :comment :constant :number :keyword
+                  :string :plist :blist :symbol)
+    :value (* (any :ws) :raw-value (any :ws))
+    :root (any :value)
+    :plist (* "(" :root (+ ")" (error "")))
+    :blist (* "[" :root (+ "]" (error "")))
+    :main :root})
 ```

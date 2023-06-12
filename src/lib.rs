@@ -7,14 +7,9 @@
 #![allow(clippy::module_inception)]
 #![allow(clippy::wildcard_imports)]
 
-pub mod cli;
-pub mod error;
-pub mod graph;
-pub mod interpreter;
-pub mod lexer;
-pub mod location;
-pub mod parser;
-pub mod token;
-pub mod visitor;
+extern crate pest;
+#[macro_use]
+extern crate pest_derive;
 
-pub type Result<T> = std::result::Result<T, error::Error>;
+pub mod cli;
+pub mod parser;

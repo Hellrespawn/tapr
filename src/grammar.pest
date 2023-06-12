@@ -1,0 +1,31 @@
+WHITESPACE = _{ " " | "\n" | "\t" | "\0" }
+COMMENT    =  { "#" ~ (!("\n") ~ ANY)* }
+
+sym_chars =  { ASCII_ALPHANUMERIC | "!" | "$" | "%" | "&" | "*" | "+" | "-" | "." | ":" | "<" | "?" | "=" | ">" | "@" | "^" | "_" }
+
+symbol    = @{ sym_chars+ }
+keyword   = @{ ":" ~ sym_chars* }
+constant  =  { ("true" | "false" | "nil") ~ !sym_chars }
+
+string = ${ "\"" ~ inner ~ "\"" }
+inner  = @{ char* }
+char   =  {
+    !("\"" | "\\") ~ ANY
+  | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+  | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+}
+
+number = @{
+    "-"? ~ ("0" | ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*) ~ ("." ~ ASCII_DIGIT*)? ~ (^"e" ~ ("+" | "-")? ~ ASCII_DIGIT+)?
+}
+
+value = _{ constant | number | keyword | string | plist | blist | symbol }
+
+root = { value* }
+
+plist = { "()" | "(" ~ root ~ ")" }
+blist = { "[]" | "[" ~ root ~ "]" }
+
+// TODO Encode special forms in grammar?
+
+main = { SOI ~ root ~ EOI }
