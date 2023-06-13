@@ -94,6 +94,9 @@ pub enum ErrorKind {
     },
 
     // Interpreter
+    #[error("Undefined module '{0}'")]
+    ModuleNotDefined(String),
+
     #[error("Undefined symbol '{0}'")]
     SymbolNotDefined(String),
 

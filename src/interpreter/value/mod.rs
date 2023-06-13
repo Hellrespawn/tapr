@@ -4,6 +4,7 @@ mod function;
 pub use builtin::Builtin;
 pub use function::Function;
 
+use super::environment::Environment;
 use super::Interpreter;
 use crate::Result;
 use std::cmp::Ordering;
@@ -19,6 +20,10 @@ pub enum Value {
     List(Vec<Self>),
     Builtin(Builtin),
     Function(Function),
+    Module {
+        prefix: String,
+        environment: Environment,
+    },
 }
 
 impl From<f64> for Value {
@@ -111,6 +116,12 @@ impl std::fmt::Display for Value {
             Value::Builtin(builtin) => builtin.fmt(f),
             Value::Function(function) => {
                 write!(f, "<function ({} args)>", function.parameters.len())
+            }
+            Value::Module {
+                prefix: name,
+                environment,
+            } => {
+                write!(f, "<module {} ({})>", name, environment.len())
             }
         }
     }

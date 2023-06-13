@@ -189,6 +189,9 @@ impl Visitor<()> for GraphVisitor {
                 Special::Var { name, value } => {
                     self.visit_var(name, value, node.location());
                 }
+                Special::Import { name, prefix } => {
+                    self.visit_import(name, prefix.as_ref());
+                }
             },
             NodeData::List { literal, nodes } => {
                 self.visit_list(*literal, nodes);
@@ -223,6 +226,13 @@ impl Visitor<()> for GraphVisitor {
         self.accept_and_connect_many(parent_node, nodes);
     }
 
+    fn visit_fn(&mut self, parameters: &[String], body: &[Node]) {
+        let parent_node =
+            self.new_node(&format!("fn\n[{}]", parameters.join(", ")));
+
+        self.accept_and_connect_many_with_label(parent_node, body, "body");
+    }
+
     fn visit_if(
         &mut self,
         condition: &Node,
@@ -244,11 +254,11 @@ impl Visitor<()> for GraphVisitor {
         }
     }
 
-    fn visit_fn(&mut self, parameters: &[String], body: &[Node]) {
-        let parent_node =
-            self.new_node(&format!("fn\n[{}]", parameters.join(", ")));
-
-        self.accept_and_connect_many_with_label(parent_node, body, "body");
+    fn visit_import(&mut self, name: &str, prefix: Option<&String>) {
+        self.new_node(&format!(
+            "import '{name}'\nas '{}'",
+            if let Some(prefix) = prefix { prefix } else { name }
+        ));
     }
 
     fn visit_set(

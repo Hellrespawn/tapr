@@ -144,14 +144,18 @@ impl Node {
 
 #[derive(Debug, Clone)]
 pub enum Special {
+    Fn {
+        parameters: Vec<String>,
+        body: Vec<Node>,
+    },
     If {
         condition: Node,
         then: Node,
         else_branch: Option<Node>,
     },
-    Fn {
-        parameters: Vec<String>,
-        body: Vec<Node>,
+    Import {
+        name: String,
+        prefix: Option<String>,
     },
     Set {
         name: String,
@@ -171,29 +175,16 @@ impl Special {
             .expect("Rule::special did not have inner pair.");
 
         match special.as_rule() {
-            Rule::if_ => Special::if_(special),
             Rule::defn => Special::defn(special),
             Rule::fn_ => Special::fn_(special),
+            Rule::if_ => Special::if_(special),
+            Rule::import => Special::import(special),
             Rule::set => Special::set(special),
             Rule::var => Special::var(special),
             _ => unreachable!(
                 "Encountered '{}' inside Rule::special.",
                 special.as_str()
             ),
-        }
-    }
-
-    fn if_(pair: Pair<Rule>) -> Special {
-        let mut inner = pair.into_inner();
-
-        Special::If {
-            condition: Node::parse_value(
-                inner.next().expect("Rule::if_ should have condition"),
-            ),
-            then: Node::parse_value(
-                inner.next().expect("Rule::if_ should have then-branch"),
-            ),
-            else_branch: inner.next().map(Node::parse_value),
         }
     }
 
@@ -241,6 +232,34 @@ impl Special {
                 .collect(),
             body: inner.map(Node::parse_value).collect(),
         }
+    }
+
+    fn if_(pair: Pair<Rule>) -> Special {
+        let mut inner = pair.into_inner();
+
+        Special::If {
+            condition: Node::parse_value(
+                inner.next().expect("Rule::if_ should have condition"),
+            ),
+            then: Node::parse_value(
+                inner.next().expect("Rule::if_ should have then-branch"),
+            ),
+            else_branch: inner.next().map(Node::parse_value),
+        }
+    }
+
+    fn import(pair: Pair<Rule>) -> Special {
+        let mut inner = pair.into_inner();
+
+        let name = inner
+            .next()
+            .expect("Rule::import did not have name.")
+            .as_str()
+            .to_owned();
+
+        let prefix = inner.next().map(|p| p.as_str().to_owned());
+
+        Special::Import { name, prefix }
     }
 
     fn set(pair: Pair<Rule>) -> Special {

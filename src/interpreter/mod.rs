@@ -19,6 +19,7 @@ use crate::parser::{ast, DEBUG_AST};
 use crate::visitor::Visitor;
 use crate::Result;
 use std::io::Write;
+use std::path::PathBuf;
 
 pub struct Interpreter<'i> {
     pub output: Box<dyn Write + 'i>,
@@ -72,13 +73,20 @@ impl<'i> Interpreter<'i> {
         self.environment.set_parent(old_environment);
     }
 
-    fn exit_scope(&mut self) {
+    fn enter_scope_with(&mut self, new_environment: Environment) {
+        let old_environment =
+            std::mem::replace(&mut self.environment, new_environment);
+
+        self.environment.set_parent(old_environment);
+    }
+
+    fn exit_scope(&mut self) -> Environment {
         let parent_environment = self
             .environment
             .take_parent()
             .expect("Scope to have parent.");
 
-        self.environment = parent_environment;
+        std::mem::replace(&mut self.environment, parent_environment)
     }
 
     fn add_location_to_error(mut error: Error, location: Location) -> Error {
@@ -107,6 +115,9 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
                 ast::Special::Var { name, value } => {
                     self.visit_var(name, value, node.location())
                 }
+                ast::Special::Import { name, prefix } => {
+                    self.visit_import(name, prefix.as_ref())
+                }
             },
             ast::NodeData::List { literal, nodes } => {
                 self.visit_list(*literal, nodes)
@@ -134,6 +145,18 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
         Ok(values.pop().unwrap_or(Value::Nil))
     }
 
+    fn visit_fn(
+        &mut self,
+        parameters: &[String],
+        body: &[Node],
+    ) -> Result<Value> {
+        let parameters = Parameters::new(
+            parameters.iter().map(|s| Parameter::any(s)).collect(),
+        )?;
+
+        Ok(Value::Function(Function::new(parameters, body.to_vec())))
+    }
+
     fn visit_if(
         &mut self,
         condition: &Node,
@@ -149,16 +172,41 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
         }
     }
 
-    fn visit_fn(
+    fn visit_import(
         &mut self,
-        parameters: &[String],
-        body: &[Node],
+        name: &str,
+        prefix: Option<&String>,
     ) -> Result<Value> {
-        let parameters = Parameters::new(
-            parameters.iter().map(|s| Parameter::any(s)).collect(),
-        )?;
+        let path = PathBuf::from(name);
+        let source = std::fs::read_to_string(&path)?;
 
-        Ok(Value::Function(Function::new(parameters, body.to_vec())))
+        let prefix = prefix
+        .cloned()
+        .unwrap_or(path.file_stem().expect("std::fs::read_to_string should guarantee existence of file and file name.").to_string_lossy().to_string());
+
+        // If prefix is empty, run everything in the current scope.
+        if !prefix.is_empty() {
+            // Do this to check that prefix isn't inserted yet.
+            self.environment.insert(prefix.clone(), Value::Nil)?;
+            self.enter_scope();
+        }
+
+        self.interpret(&source, name)?;
+
+        if !prefix.is_empty() {
+            let module_environment = self.exit_scope();
+
+            let value = Value::Module {
+                prefix: prefix.clone(),
+                environment: module_environment,
+            };
+
+            self.environment.set(prefix, value).expect(
+                "The module prefix should have already been initialized to Nil",
+            );
+        }
+
+        Ok(Value::Nil)
     }
 
     fn visit_set(
@@ -230,13 +278,21 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
         value: &str,
         location: Location,
     ) -> Result<Value> {
-        let key = if let Some(module) = module {
-            format!("{module}/{value}")
-        } else {
-            value.to_owned()
-        };
+        if let Some(module) = module {
+            let Value::Module { environment, .. } = self.get(module, location)? else {
+                return Err(Error::new(location, ErrorKind::ModuleNotDefined(module.clone())));
+            };
 
-        self.get(&key, location)
+            self.enter_scope_with(environment);
+
+            let value = self.get(value, location)?;
+
+            self.exit_scope();
+
+            Ok(value)
+        } else {
+            self.get(value, location)
+        }
     }
 
     // fn visit_while(&mut self, while_expr: &ast::While) -> Result<Value> {

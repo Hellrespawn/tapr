@@ -4,6 +4,7 @@ use crate::error::ErrorKind;
 use crate::Result;
 use std::collections::HashMap;
 
+#[derive(Debug, Clone)]
 pub struct Environment {
     map: HashMap<String, Value>,
     parent: Option<Box<Environment>>,
@@ -75,6 +76,10 @@ impl Environment {
 
     pub fn has_in_scope(&self, key: &str) -> bool {
         self.map.get(key).is_some()
+    }
+
+    pub fn len(&self) -> usize {
+        self.map.len()
     }
 }
 

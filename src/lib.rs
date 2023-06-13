@@ -22,9 +22,11 @@ mod visitor;
 
 pub type Result<T> = std::result::Result<T, error::Error>;
 
-// TODO? Add module system
+// TODO Add module system
 // (mod "filename")
 // Runs filename in it's own scope, then makes the top-level environment
 // available in a new Value::Module(env).
 // (mod/val) attempts to retrieve val from mod.
 // Functions from module must run in the module's env
+//
+// TODO Port builtins to module system
