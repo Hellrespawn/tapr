@@ -1,4 +1,4 @@
-use crate::parser::ast::{Node, Special};
+use crate::parser::ast::{Node, NodeData, Special};
 use crate::visitor::Visitor;
 use std::process::Command;
 
@@ -172,77 +172,28 @@ impl GraphVisitor {
 
 impl Visitor<()> for GraphVisitor {
     fn visit_node(&mut self, node: &Node) {
-        match node {
-            Node::Main(nodes) => {
-                let parent_node = self.new_node("main");
-
-                self.accept_and_connect_many(parent_node, nodes);
-            }
-            Node::Special(special) => match &**special {
+        match node.data() {
+            NodeData::Main(nodes) => self.visit_main(nodes),
+            NodeData::Special(special) => match &**special {
                 Special::If {
                     condition,
                     then,
                     else_branch,
-                } => {
-                    let parent_node = self.new_node("if");
-
-                    self.accept_and_connect_with_label(
-                        parent_node,
-                        condition,
-                        "condition",
-                    );
-
-                    self.accept_and_connect_with_label(
-                        parent_node,
-                        then,
-                        "then",
-                    );
-
-                    if let Some(else_branch) = else_branch {
-                        self.accept_and_connect_with_label(
-                            parent_node,
-                            else_branch,
-                            "else",
-                        );
-                    }
-                }
-                Special::Defn {
-                    name,
-                    arguments,
-                    body,
-                } => {
-                    let parent_node = self.new_node(&format!("defn\n'{name}'"));
-
-                    self.accept_and_connect_many_with_label(
-                        parent_node,
-                        arguments,
-                        "arguments",
-                    );
-
-                    self.accept_and_connect_many_with_label(
-                        parent_node,
-                        body,
-                        "body",
-                    );
+                } => self.visit_if(condition, then, else_branch.as_ref()),
+                Special::Fn { parameters, body } => {
+                    self.visit_fn(parameters, body);
                 }
                 Special::Set { name, value } => {
-                    let parent_node = self.new_node(&format!("set\n'{name}'"));
-
-                    self.accept_and_connect(parent_node, value);
+                    self.visit_set(name, value, node.location());
                 }
                 Special::Var { name, value } => {
-                    let parent_node = self.new_node(&format!("var\n'{name}'"));
-
-                    self.accept_and_connect(parent_node, value);
+                    self.visit_var(name, value, node.location());
                 }
             },
-            Node::List { literal, nodes } => {
-                let parent_node =
-                    self.new_node(if *literal { "list" } else { "form" });
-
-                self.accept_and_connect_many(parent_node, nodes);
+            NodeData::List { literal, nodes } => {
+                self.visit_list(*literal, nodes);
             }
-            Node::Symbol { module, value } => {
+            NodeData::Symbol { module, value } => {
                 let symbol = if let Some(module) = module {
                     format!("{module}/{value}")
                 } else {
@@ -251,24 +202,86 @@ impl Visitor<()> for GraphVisitor {
 
                 self.new_node(&format!("symbol\n{symbol}"));
             }
-            Node::Keyword(keyword) => {
+            NodeData::Keyword(keyword) => {
                 self.new_node(&format!("keyword:\n{keyword}"));
             }
-            Node::Number(number) => {
+            NodeData::Number(number) => {
                 self.new_node(&format!("number:\n{number}"));
             }
-            Node::String(string) => {
+            NodeData::String(string) => {
                 self.new_node(&format!("string:\n\\\"{string}\\\""));
             }
-            Node::True => {
+            NodeData::True => {
                 self.new_node("true");
             }
-            Node::False => {
+            NodeData::False => {
                 self.new_node("false");
             }
-            Node::Nil => {
+            NodeData::Nil => {
                 self.new_node("nil");
             }
         }
+    }
+
+    fn visit_main(&mut self, nodes: &[Node]) {
+        let parent_node = self.new_node("main");
+
+        self.accept_and_connect_many(parent_node, nodes);
+    }
+
+    fn visit_if(
+        &mut self,
+        condition: &Node,
+        then: &Node,
+        else_branch: Option<&Node>,
+    ) {
+        let parent_node = self.new_node("if");
+
+        self.accept_and_connect_with_label(parent_node, condition, "condition");
+
+        self.accept_and_connect_with_label(parent_node, then, "then");
+
+        if let Some(else_branch) = else_branch {
+            self.accept_and_connect_with_label(
+                parent_node,
+                else_branch,
+                "else",
+            );
+        }
+    }
+
+    fn visit_fn(&mut self, parameters: &[String], body: &[Node]) {
+        let parent_node =
+            self.new_node(&format!("fn\n[{}]", parameters.join(", ")));
+
+        self.accept_and_connect_many_with_label(parent_node, body, "body");
+    }
+
+    fn visit_set(
+        &mut self,
+        name: &str,
+        value: &Node,
+        _location: crate::location::Location,
+    ) {
+        let parent_node = self.new_node(&format!("set\n'{name}'"));
+
+        self.accept_and_connect(parent_node, value);
+    }
+
+    fn visit_var(
+        &mut self,
+        name: &str,
+        value: &Node,
+        _location: crate::location::Location,
+    ) {
+        let parent_node = self.new_node(&format!("var\n'{name}'"));
+
+        self.accept_and_connect(parent_node, value);
+    }
+
+    fn visit_list(&mut self, literal: bool, nodes: &[Node]) {
+        let parent_node = self.new_node(if literal { "list" } else { "form" });
+
+        self.accept_and_connect_many(parent_node, nodes);
     }
 }

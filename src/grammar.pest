@@ -19,17 +19,21 @@ char   =  {
 number = @{
     "-"? ~ ("0" | ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*) ~ ("." ~ ASCII_DIGIT*)? ~ (^"e" ~ ("+" | "-")? ~ ASCII_DIGIT+)?
 }
-plist   = { "()" | "(" ~ root ~ ")" }
-blist   = { "[]" | "[" ~ root ~ "]" }
+plist   = { "(" ~ root ~ ")" }
+blist   = { "[" ~ root ~ "]" }
 
 value = _{ constant | number | keyword | string | special | plist | blist | symbol }
 
 root = _{ value* }
 
-special = { if_ | defn | set | var }
+special = { if_ | defn | fn_ | set | var }
 if_  = { "(" ~ "if" ~ #cond = value ~ #then = value ~ #else = value? ~ ")" }
 defn = { "(" ~ "defn" ~ #name = token ~ #args = blist ~ #body = value+ ~ ")" }
+fn_  = { "(" ~ "fn" ~ #args = arguments ~ #body = value+ ~ ")"}
+arguments = _{ "[" ~ token+ ~ "]" }
 set  = { "(" ~ "set" ~ #name = token ~ value ~ ")" }
 var  = { "(" ~ "var" ~ #name = token ~ value ~ ")" }
+
+// TODO? Separate `var` and `def`?
 
 main = { SOI ~ root ~ EOI }

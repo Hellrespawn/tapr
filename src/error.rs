@@ -1,3 +1,4 @@
+use crate::interpreter::{ParameterType, Value};
 use crate::location::Location;
 use crate::parser::Rule;
 use thiserror::Error;
@@ -91,4 +92,44 @@ pub enum ErrorKind {
         #[from]
         source: rustyline::error::ReadlineError,
     },
+
+    // Interpreter
+    #[error("Undefined symbol '{0}'")]
+    SymbolNotDefined(String),
+
+    #[error("Undefined symbol '{0}'")]
+    SymbolDefined(String),
+
+    #[error("Value '{0}' is not callable.")]
+    NotCallable(Value),
+
+    // Parameters
+    #[error("Only the last parameter of a function may be a rest parameter.")]
+    NonLastParameterIsRest,
+
+    #[error("Invalid argument '{actual}', expected '{expected:?}'")]
+    InvalidArgument {
+        expected: ParameterType,
+        actual: Value,
+    },
+
+    #[error("Expect {expected} args, got {actual}.")]
+    WrongAmountOfFixedArgs { expected: usize, actual: usize },
+
+    #[error("Expect at least {expected} args, got {actual}.")]
+    WrongAmountOfMinArgs { expected: usize, actual: usize },
+
+    // Functions
+    #[error("Called `tail` on empty list.")]
+    TailOnEmptyList,
+
+    #[error("Unable to {op} {lhs} and {rhs}")]
+    InvalidBinOp {
+        op: &'static str,
+        lhs: Value,
+        rhs: Value,
+    },
+
+    #[error("Unable to parse {0:?} as number")]
+    ParseNumberError(String),
 }

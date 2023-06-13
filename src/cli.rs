@@ -1,5 +1,6 @@
 use crate::error::ErrorKind;
 use crate::graph::GraphVisitor;
+use crate::interpreter::{Interpreter, Value};
 use crate::parser::DEBUG_AST;
 // use crate::interpreter::{Interpreter, Value};
 use crate::parser::ast::Node;
@@ -29,7 +30,7 @@ fn repl() -> Result<()> {
 
     let _result = rl.load_history(HISTFILE);
 
-    // let mut intp = Interpreter::default();
+    let mut intp = Interpreter::default();
 
     loop {
         let readline = rl.readline("> ").map(|s| s.trim().to_owned());
@@ -42,8 +43,8 @@ fn repl() -> Result<()> {
 
                 rl.add_history_entry(&line);
 
-                match run_code(&line, "repl") {
-                    Ok(value) => (),
+                match run_code(&line, &mut intp, "repl") {
+                    Ok(value) => println!("{value}"),
                     Err(error) => eprintln!("{error}"),
                 }
             }
@@ -64,21 +65,21 @@ fn repl() -> Result<()> {
 
 fn run_file(filename: &str) -> Result<()> {
     let source = std::fs::read_to_string(filename)?;
-    // let mut intp = Interpreter::default();
+    let mut intp = Interpreter::default();
 
-    if let Err(error) = run_code(&source, filename) {
+    if let Err(error) = run_code(&source, &mut intp, filename) {
         eprintln!("{error}");
     }
 
     Ok(())
 }
 
-fn run_code(source: &str, name: &str) -> Result<()> {
+fn run_code(source: &str, intp: &mut Interpreter, name: &str) -> Result<Value> {
     let node = Node::from_string(source)?;
 
     if *DEBUG_AST {
         GraphVisitor::create_ast_graph(&node, name);
     }
 
-    Ok(())
+    node.accept(intp)
 }
