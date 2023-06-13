@@ -23,7 +23,7 @@ mod visitor;
 
 pub type Result<T> = std::result::Result<T, error::Error>;
 
-// TODO Add module system
+// # Add module system
 // (mod "filename")
 // Runs filename in it's own scope, then makes the top-level environment
 // available in a new Value::Module(env).
@@ -31,3 +31,7 @@ pub type Result<T> = std::result::Result<T, error::Error>;
 // Functions from module must run in the module's env
 //
 // TODO Port builtins to module system
+
+// TODO More sophisticated command line handling.
+// TODO Save repl-history in a config dir
+// TODO Allow resetting of REPL history
