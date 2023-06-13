@@ -3,7 +3,7 @@ COMMENT    = _{ "#" ~ (!("\n") ~ ANY)* }
 
 sym_chars = _{ ASCII_ALPHANUMERIC | "!" | "$" | "%" | "&" | "*" | "+" | "-" | "." | ":" | "<" | "?" | "=" | ">" | "@" | "^" | "_" }
 
-token    =  { sym_chars+ }
+token    = @{ sym_chars+ }
 symbol   = ${ (token ~ "/")? ~ token+ }
 keyword  = ${ ":" ~ token }
 constant =  { "true" | "false" | "nil" }
@@ -28,9 +28,11 @@ root = _{ value* }
 
 special = { if_ | defn | fn_ | set | var }
 if_  = { "(" ~ "if" ~ #cond = value ~ #then = value ~ #else = value? ~ ")" }
-defn = { "(" ~ "defn" ~ #name = token ~ #args = blist ~ #body = value+ ~ ")" }
+defn = { "(" ~ "defn" ~ #name = token ~ #args = arguments ~ #body = value+ ~ ")" }
+
 fn_  = { "(" ~ "fn" ~ #args = arguments ~ #body = value+ ~ ")"}
-arguments = _{ "[" ~ token+ ~ "]" }
+arguments = { "[" ~ token* ~ "]" }
+
 set  = { "(" ~ "set" ~ #name = token ~ value ~ ")" }
 var  = { "(" ~ "var" ~ #name = token ~ value ~ ")" }
 

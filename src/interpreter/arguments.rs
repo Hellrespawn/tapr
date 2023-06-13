@@ -67,8 +67,8 @@ impl<'a> Arguments<'a> {
     pub fn unwrap_function(&self, index: usize) -> Value {
         let argument = &self.arguments[index];
 
-        if !matches!(argument, Value::Lambda(_) | Value::Builtin(_)) {
-            panic!("Called unwrap_function on non-Value::{{Builtin, Lambda}}")
+        if !matches!(argument, Value::Function(_) | Value::Builtin(_)) {
+            panic!("Called unwrap_function on non-Value::{{Builtin, Function}}")
         }
 
         argument.clone()

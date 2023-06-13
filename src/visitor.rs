@@ -14,4 +14,10 @@ pub trait Visitor<T: std::fmt::Debug> {
     fn visit_set(&mut self, name: &str, value: &Node, location: Location) -> T;
     fn visit_var(&mut self, name: &str, value: &Node, location: Location) -> T;
     fn visit_list(&mut self, literal: bool, nodes: &[Node]) -> T;
+    fn visit_symbol(
+        &mut self,
+        module: Option<&String>,
+        value: &str,
+        location: Location,
+    ) -> T;
 }

@@ -97,7 +97,7 @@ pub enum ErrorKind {
     #[error("Undefined symbol '{0}'")]
     SymbolNotDefined(String),
 
-    #[error("Undefined symbol '{0}'")]
+    #[error("Already defined symbol '{0}'")]
     SymbolDefined(String),
 
     #[error("Value '{0}' is not callable.")]

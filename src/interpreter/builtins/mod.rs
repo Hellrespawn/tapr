@@ -38,8 +38,8 @@ pub fn get_builtin_functions() -> Vec<Builtin> {
         ("last", list::last),
         ("concat", list::concat),
         ("reduce", list::reduce),
-        ("map-native", list::map),
-        ("filter-native", list::filter),
+        ("map", list::map),
+        ("filter", list::filter),
     ];
 
     builtins

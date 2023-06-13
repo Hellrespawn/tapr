@@ -1,5 +1,7 @@
 use super::builtins::get_builtin_functions;
 use super::Value;
+use crate::error::ErrorKind;
+use crate::Result;
 use std::collections::HashMap;
 
 pub struct Environment {
@@ -37,8 +39,24 @@ impl Environment {
         env.map(|e| *e)
     }
 
-    pub fn insert(&mut self, key: String, value: Value) -> Option<Value> {
-        self.map.insert(key, value)
+    pub fn insert(&mut self, key: String, value: Value) -> Result<()> {
+        if self.has_in_scope(&key) {
+            Err(ErrorKind::SymbolDefined(key).into())
+        } else {
+            self.map.insert(key, value);
+            Ok(())
+        }
+    }
+
+    pub fn set(&mut self, key: String, value: Value) -> Result<()> {
+        if self.has_in_scope(&key) {
+            let old_value = self.map.insert(key, value);
+
+            debug_assert!(old_value.is_some());
+            Ok(())
+        } else {
+            Err(ErrorKind::SymbolNotDefined(key).into())
+        }
     }
 
     pub fn get(&self, key: &str) -> Option<&Value> {

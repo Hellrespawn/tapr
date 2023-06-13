@@ -1,9 +1,11 @@
 mod builtin;
-mod lambda;
+mod function;
 
 pub use builtin::Builtin;
-pub use lambda::Lambda;
+pub use function::Function;
 
+use super::Interpreter;
+use crate::Result;
 use std::cmp::Ordering;
 
 #[derive(Debug, Clone)]
@@ -13,9 +15,10 @@ pub enum Value {
     Number(f64),
     String(String),
     Symbol(String),
+    Keyword(String),
     List(Vec<Self>),
     Builtin(Builtin),
-    Lambda(Lambda),
+    Function(Function),
 }
 
 impl From<f64> for Value {
@@ -68,14 +71,20 @@ impl Value {
         match self {
             Value::Nil => false,
             Value::Boolean(boolean) => *boolean,
-            Value::Number(number) => *number != 0.,
-            Value::String(string) => !string.is_empty(),
             _ => true,
         }
     }
 
     pub fn is_falsy(&self) -> bool {
         !self.is_truthy()
+    }
+
+    pub fn as_callable(&self) -> Option<&dyn Callable> {
+        match self {
+            Value::Builtin(b) => Some(b),
+            Value::Function(f) => Some(f),
+            _ => None,
+        }
     }
 }
 
@@ -87,6 +96,7 @@ impl std::fmt::Display for Value {
             Value::Number(number) => write!(f, "{number}"),
             Value::String(string) => write!(f, "{string}"),
             Value::Symbol(symbol) => write!(f, "{symbol}"),
+            Value::Keyword(keyword) => write!(f, ":{keyword}"),
             Value::List(items) => {
                 write!(
                     f,
@@ -99,9 +109,17 @@ impl std::fmt::Display for Value {
                 )
             }
             Value::Builtin(builtin) => builtin.fmt(f),
-            Value::Lambda(lambda) => {
-                write!(f, "<function ({} args)>", lambda.parameters.len())
+            Value::Function(function) => {
+                write!(f, "<function ({} args)>", function.parameters.len())
             }
         }
     }
+}
+
+pub trait Callable: std::fmt::Debug + std::fmt::Display {
+    fn call(
+        &self,
+        intp: &mut Interpreter,
+        arguments: Vec<Value>,
+    ) -> Result<Value>;
 }

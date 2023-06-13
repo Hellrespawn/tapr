@@ -5,6 +5,8 @@ use crate::Result;
 use pest::iterators::Pair;
 use pest::Parser as PestParser;
 
+use super::DEBUG_PARSER;
+
 #[derive(Debug, Clone)]
 pub struct Node {
     location: Location,
@@ -49,6 +51,10 @@ impl Node {
 
     pub fn from_string(source: &str) -> Result<Node> {
         let mut pairs = Parser::parse(Rule::main, source)?;
+
+        if *DEBUG_PARSER {
+            println!("{pairs:#?}");
+        }
 
         let node = Node::parse_value(
             pairs.next().expect("Pairs<Rule::main> panicked on next()"),

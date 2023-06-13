@@ -1,4 +1,4 @@
-use super::Value;
+use super::{Callable, Value};
 use crate::interpreter::builtins::BuiltinFunction;
 use crate::interpreter::Interpreter;
 use crate::Result;
@@ -29,8 +29,10 @@ impl Builtin {
     pub fn name(&self) -> &str {
         self.name
     }
+}
 
-    pub fn call(
+impl Callable for Builtin {
+    fn call(
         &self,
         intp: &mut Interpreter,
         arguments: Vec<Value>,

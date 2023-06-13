@@ -194,13 +194,7 @@ impl Visitor<()> for GraphVisitor {
                 self.visit_list(*literal, nodes);
             }
             NodeData::Symbol { module, value } => {
-                let symbol = if let Some(module) = module {
-                    format!("{module}/{value}")
-                } else {
-                    value.clone()
-                };
-
-                self.new_node(&format!("symbol\n{symbol}"));
+                self.visit_symbol(module.as_ref(), value, node.location());
             }
             NodeData::Keyword(keyword) => {
                 self.new_node(&format!("keyword:\n{keyword}"));
@@ -283,5 +277,20 @@ impl Visitor<()> for GraphVisitor {
         let parent_node = self.new_node(if literal { "list" } else { "form" });
 
         self.accept_and_connect_many(parent_node, nodes);
+    }
+
+    fn visit_symbol(
+        &mut self,
+        module: Option<&String>,
+        value: &str,
+        _location: crate::location::Location,
+    ) {
+        let symbol = if let Some(module) = module {
+            format!("{module}/{value}")
+        } else {
+            value.to_owned()
+        };
+
+        self.new_node(&format!("symbol\n{symbol}"));
     }
 }

@@ -9,7 +9,7 @@ pub use parameters::{Parameter, ParameterType, Parameters};
 pub use value::Value;
 
 use self::environment::Environment;
-use self::value::Lambda;
+use self::value::Function;
 use crate::error::{Error, ErrorKind};
 use crate::graph::GraphVisitor;
 use crate::location::Location;
@@ -111,13 +111,17 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
             ast::NodeData::List { literal, nodes } => {
                 self.visit_list(*literal, nodes)
             }
-            ast::NodeData::Symbol { module, value } => todo!(),
-            ast::NodeData::Keyword(_) => todo!(),
-            ast::NodeData::Number(_) => todo!(),
-            ast::NodeData::String(_) => todo!(),
-            ast::NodeData::True => todo!(),
-            ast::NodeData::False => todo!(),
-            ast::NodeData::Nil => todo!(),
+            ast::NodeData::Symbol { module, value } => {
+                self.visit_symbol(module.as_ref(), value, node.location())
+            }
+            ast::NodeData::Keyword(keyword) => {
+                Ok(Value::Keyword(keyword.clone()))
+            }
+            ast::NodeData::Number(number) => Ok(Value::Number(*number)),
+            ast::NodeData::String(string) => Ok(Value::String(string.clone())),
+            ast::NodeData::True => Ok(Value::Boolean(true)),
+            ast::NodeData::False => Ok(Value::Boolean(false)),
+            ast::NodeData::Nil => Ok(Value::Nil),
         }
     }
 
@@ -154,7 +158,7 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
             parameters.iter().map(|s| Parameter::any(s)).collect(),
         )?;
 
-        Ok(Value::Lambda(Lambda::new(parameters, body.to_vec())))
+        Ok(Value::Function(Function::new(parameters, body.to_vec())))
     }
 
     fn visit_set(
@@ -165,14 +169,9 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
     ) -> Result<Value> {
         let value = value.accept(self)?;
 
-        if !self.environment.has_in_scope(name) {
-            return Err(Error::new(
-                location,
-                ErrorKind::SymbolNotDefined(name.to_owned()),
-            ));
-        }
-
-        self.environment.insert(name.to_owned(), value);
+        self.environment
+            .set(name.to_owned(), value)
+            .map_err(|e| Self::add_location_to_error(e, location))?;
 
         Ok(Value::Symbol(name.to_owned()))
     }
@@ -185,14 +184,9 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
     ) -> Result<Value> {
         let value = value.accept(self)?;
 
-        if self.environment.has_in_scope(name) {
-            return Err(Error::new(
-                location,
-                ErrorKind::SymbolDefined(name.to_owned()),
-            ));
-        }
-
-        self.environment.insert(name.to_owned(), value);
+        self.environment
+            .insert(name.to_owned(), value)
+            .map_err(|e| Self::add_location_to_error(e, location))?;
 
         Ok(Value::Symbol(name.to_owned()))
     }
@@ -211,29 +205,38 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
                     return Ok(Value::Nil);
                 }
 
-                let symbol = nodes[0].accept(self)?;
+                let node = &nodes[0];
+                let value = nodes[0].accept(self)?;
 
-                todo!()
+                let Some(callable) = value.as_callable() else {
+                    return Err(Error::new(node.location(), ErrorKind::NotCallable(value)))
+                };
 
-                // let value = self.get(&call.symbol.0)?;
+                let arguments = nodes[1..]
+                    .iter()
+                    .map(|n| n.accept(self))
+                    .collect::<Result<Vec<_>>>()?;
 
-                // let arguments = call
-                //     .arguments
-                //     .iter()
-                //     .map(|e| e.accept(self))
-                //     .collect::<Result<Vec<_>>>()?;
-
-                // match value {
-                //     Value::Builtin(builtin) => builtin
-                //         .call(self, arguments)
-                //         .map_err(|e| Self::add_location_to_error(e, location)),
-                //     Value::Lambda(lambda) => lambda.call(self, arguments),
-                //     _ => {
-                //         Err(Error::new(location, ErrorKind::NotCallable(value)))
-                //     }
-                // }
+                callable.call(self, arguments).map_err(|e| {
+                    Self::add_location_to_error(e, node.location())
+                })
             }
         }
+    }
+
+    fn visit_symbol(
+        &mut self,
+        module: Option<&String>,
+        value: &str,
+        location: Location,
+    ) -> Result<Value> {
+        let key = if let Some(module) = module {
+            format!("{module}/{value}")
+        } else {
+            value.to_owned()
+        };
+
+        self.get(&key, location)
     }
 
     // fn visit_while(&mut self, while_expr: &ast::While) -> Result<Value> {
@@ -249,72 +252,5 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
     //     }
 
     //     Ok(Value::List(list))
-    // }
-
-    // fn visit_call(&mut self, call: &ast::Call) -> Result<Value> {
-    //     let location = call.symbol.0.location;
-
-    //     let value = self.get(&call.symbol.0)?;
-
-    //     let arguments = call
-    //         .arguments
-    //         .iter()
-    //         .map(|e| e.accept(self))
-    //         .collect::<Result<Vec<_>>>()?;
-
-    //     match value {
-    //         Value::Builtin(builtin) => builtin
-    //             .call(self, arguments)
-    //             .map_err(|e| Self::add_location_to_error(e, location)),
-    //         Value::Lambda(lambda) => lambda.call(self, arguments),
-    //         _ => Err(Error::new(location, ErrorKind::NotCallable(value))),
-    //     }
-    // }
-
-    // fn visit_quoted_datum(&mut self, datum: &ast::Datum) -> Result<Value> {
-    //     // Quoted list is handled on the parser level.
-    //     let value = match datum {
-    //         ast::Datum::Symbol(symbol) => {
-    //             Value::Symbol(symbol.0.lexeme().to_owned())
-    //         }
-    //         datum => self.visit_datum(datum)?,
-    //     };
-
-    //     Ok(value)
-    // }
-
-    // fn visit_datum(&mut self, datum: &ast::Datum) -> Result<Value> {
-    //     let value = match datum {
-    //         ast::Datum::List(list) => {
-    //             let list = list
-    //                 .expressions
-    //                 .iter()
-    //                 .map(|e| e.accept(self))
-    //                 .collect::<Result<Vec<_>>>()?;
-
-    //             Value::List(list)
-    //         }
-    //         ast::Datum::Boolean(boolean) => Value::Boolean(
-    //             boolean
-    //                 .0
-    //                 .lexeme()
-    //                 .parse()
-    //                 .expect("Lexer should have checked boolean validity."),
-    //         ),
-    //         ast::Datum::Number(number) => Value::Number(
-    //             number
-    //                 .0
-    //                 .lexeme()
-    //                 .parse()
-    //                 .expect("Lexer should have checked number validity."),
-    //         ),
-    //         ast::Datum::String(string) => {
-    //             Value::String(string.0.lexeme().to_owned())
-    //         }
-    //         ast::Datum::Symbol(symbol) => self.get(&symbol.0)?,
-    //         ast::Datum::Nil => Value::Nil,
-    //     };
-
-    //     Ok(value)
     // }
 }

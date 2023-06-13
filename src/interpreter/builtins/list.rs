@@ -1,4 +1,5 @@
 use crate::interpreter::parameters::{Parameter, ParameterType, Parameters};
+use crate::interpreter::value::Callable;
 use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::Result;
 
@@ -64,7 +65,7 @@ pub fn map(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
         .into_iter()
         .map(|value| match &function {
             Value::Builtin(builtin) => builtin.call(intp, vec![value]),
-            Value::Lambda(lambda) => lambda.call(intp, vec![value]),
+            Value::Function(function) => function.call(intp, vec![value]),
             _ => unreachable!("checked above."),
         })
         .collect::<Result<Vec<_>>>()?;
@@ -84,7 +85,9 @@ pub fn filter(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
     for value in input {
         let is_truthy = match &function {
             Value::Builtin(builtin) => builtin.call(intp, vec![value.clone()]),
-            Value::Lambda(lambda) => lambda.call(intp, vec![value.clone()]),
+            Value::Function(function) => {
+                function.call(intp, vec![value.clone()])
+            }
             _ => unreachable!("checked above."),
         }?
         .is_truthy();
@@ -110,7 +113,9 @@ pub fn reduce(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
     for value in input {
         output = match &function {
             Value::Builtin(builtin) => builtin.call(intp, vec![output, value]),
-            Value::Lambda(lambda) => lambda.call(intp, vec![output, value]),
+            Value::Function(function) => {
+                function.call(intp, vec![output, value])
+            }
             _ => unreachable!("checked above."),
         }?;
     }
