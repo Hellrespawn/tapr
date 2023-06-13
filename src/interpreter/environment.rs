@@ -95,17 +95,19 @@ impl std::fmt::Display for Environment {
             parent.fmt(f)?;
         }
 
-        let key_width = self
-            .map
-            .keys()
-            .map(std::string::String::len)
+        let mut values = self.map.iter().collect::<Vec<_>>();
+
+        values.sort_by(|(l, _), (r, _)| l.cmp(r));
+
+        let key_width = values
+            .iter()
+            .map(|(k, _)| k.len())
             .max()
             .unwrap_or_default();
 
-        let value_width = self
-            .map
-            .values()
-            .map(|v| v.to_string().len())
+        let value_width = values
+            .iter()
+            .map(|(_, v)| v.to_string().len())
             .max()
             .unwrap_or_default();
 
@@ -116,7 +118,7 @@ impl std::fmt::Display for Environment {
             "-".repeat(value_width)
         )?;
 
-        for (key, value) in &self.map {
+        for (key, value) in values {
             if key.starts_with('_') {
                 continue;
             }
