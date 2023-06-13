@@ -177,7 +177,15 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
         name: &str,
         prefix: Option<&String>,
     ) -> Result<Value> {
-        let path = PathBuf::from(name);
+        let path = {
+            let path = PathBuf::from(name);
+            if path.extension().is_some() {
+                path
+            } else {
+                path.with_extension("tsp")
+            }
+        };
+
         let source = std::fs::read_to_string(&path)?;
 
         let prefix = prefix
