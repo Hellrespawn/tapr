@@ -36,7 +36,10 @@ pub fn add(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
     arithmetic(|lhs, rhs| lhs + rhs, arguments)
 }
 
-pub fn sub(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
+pub fn subtract(
+    _intp: &mut Interpreter,
+    arguments: Vec<Value>,
+) -> Result<Value> {
     if arguments.len() == 1 {
         unary(|n| -n, arguments)
     } else {
@@ -44,11 +47,14 @@ pub fn sub(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
     }
 }
 
-pub fn mul(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
+pub fn multiply(
+    _intp: &mut Interpreter,
+    arguments: Vec<Value>,
+) -> Result<Value> {
     arithmetic(|lhs, rhs| lhs * rhs, arguments)
 }
 
-pub fn div(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
+pub fn divide(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
     arithmetic(|lhs, rhs| lhs / rhs, arguments)
 }
 
@@ -57,6 +63,20 @@ pub fn modulus(
     arguments: Vec<Value>,
 ) -> Result<Value> {
     arithmetic(|lhs, rhs| lhs % rhs, arguments)
+}
+
+pub fn increment(
+    _intp: &mut Interpreter,
+    arguments: Vec<Value>,
+) -> Result<Value> {
+    unary(|n| n + 1.0, arguments)
+}
+
+pub fn decrement(
+    _intp: &mut Interpreter,
+    arguments: Vec<Value>,
+) -> Result<Value> {
+    unary(|n| n - 1.0, arguments)
 }
 
 pub fn unary_params() -> Parameters {

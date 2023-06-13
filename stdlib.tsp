@@ -1,7 +1,5 @@
 (defn is-even [n] (== 0 (% n 2)))
 (defn is-odd  [n] (!(is-even n)))
-(defn increment [n] (+ n 1))
-(defn decrement [n] (- n 1))
 
 # Get highest number from list of values
 (defn max [values]

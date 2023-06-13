@@ -4,7 +4,7 @@
 
 (println number-list)
 
-(println (map increment number-list))
+(println (map ++ number-list))
 
 (println (filter is-odd number-list))
 
