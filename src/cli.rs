@@ -1,11 +1,8 @@
 use crate::error::ErrorKind;
-use crate::graph::GraphVisitor;
 use crate::interpreter::{Interpreter, Value};
-use crate::parser::DEBUG_AST;
-// use crate::interpreter::{Interpreter, Value};
-use crate::parser::ast::Node;
 use crate::Result;
 use rustyline::error::ReadlineError;
+use rustyline::Editor;
 
 const HISTFILE: &str = "history.txt";
 
@@ -26,34 +23,18 @@ pub fn main() {
 fn repl() -> Result<()> {
     println!("Welcome to Tasp {}.", env!("CARGO_PKG_VERSION"));
 
-    let mut rl = rustyline::Editor::<()>::new().unwrap();
+    let mut rl = Editor::<()>::new().unwrap();
 
     let _result = rl.load_history(HISTFILE);
+    let starting_index = std::fs::read_to_string(HISTFILE)
+        .map(|s| s.trim().lines().count())
+        .unwrap_or(1);
 
     let mut intp = Interpreter::default();
 
-    loop {
-        let readline = rl.readline("> ").map(|s| s.trim().to_owned());
-
-        match readline {
-            Ok(line) => {
-                if line.is_empty() {
-                    break;
-                }
-
-                rl.add_history_entry(&line);
-
-                match run_code(&line, &mut intp, "repl") {
-                    Ok(value) => println!("{value}"),
-                    Err(error) => eprintln!("{error}"),
-                }
-            }
-            Err(ReadlineError::Interrupted) => {
-                break;
-            }
-            Err(err) => {
-                return Err(err.into());
-            }
+    for line_no in starting_index.. {
+        if eval_line(&mut rl, line_no, &mut intp)? {
+            break;
         }
     }
 
@@ -61,6 +42,35 @@ fn repl() -> Result<()> {
     println!("Exiting REPL...");
 
     Ok(())
+}
+
+fn eval_line(
+    rl: &mut Editor<()>,
+    line_no: usize,
+    intp: &mut Interpreter,
+) -> Result<bool> {
+    let readline = rl
+        .readline(&format!("[{line_no}]> "))
+        .map(|s| s.trim().to_owned());
+
+    match readline {
+        Ok(line) => {
+            if line.is_empty() {
+                return Ok(true);
+            }
+
+            rl.add_history_entry(&line);
+
+            match run_code(&line, intp, &format!("repl_{line_no}")) {
+                Ok(value) => println!("{value}"),
+                Err(error) => eprintln!("{error}"),
+            }
+
+            Ok(false)
+        }
+        Err(ReadlineError::Interrupted) => Ok(true),
+        Err(err) => Err(err.into()),
+    }
 }
 
 fn run_file(filename: &str) -> Result<()> {
@@ -75,11 +85,5 @@ fn run_file(filename: &str) -> Result<()> {
 }
 
 fn run_code(source: &str, intp: &mut Interpreter, name: &str) -> Result<Value> {
-    let node = Node::from_string(source)?;
-
-    if *DEBUG_AST {
-        GraphVisitor::create_ast_graph(&node, name);
-    }
-
-    node.accept(intp)
+    intp.interpret(source, name)
 }

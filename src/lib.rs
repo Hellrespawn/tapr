@@ -13,6 +13,7 @@ extern crate pest;
 extern crate pest_derive;
 
 pub mod cli;
+mod env;
 mod error;
 mod graph;
 mod interpreter;

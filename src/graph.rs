@@ -8,7 +8,7 @@ pub(crate) struct GraphVisitor {
 }
 
 impl GraphVisitor {
-    pub(crate) fn create_ast_graph(node: &Node, name: &str) {
+    pub(crate) fn create_ast_graph(node: &Node, name: &str, retain_dot: bool) {
         let body = "digraph astgraph {\n  \
             edge [arrowsize=.5];\n  \
             rankdir=\"LR\";\n  \
@@ -25,10 +25,10 @@ impl GraphVisitor {
 
         let filename = format!("{name}.ast.dot");
 
-        GraphVisitor::write_graph_to_file(visitor.body, &filename);
+        GraphVisitor::write_graph_to_file(visitor.body, &filename, retain_dot);
     }
 
-    fn write_graph_to_file(dot: String, filename: &str) {
+    fn write_graph_to_file(dot: String, filename: &str, retain_dot: bool) {
         let result = std::fs::write(filename, dot);
 
         if result.is_err() {
@@ -37,8 +37,12 @@ impl GraphVisitor {
 
         if which::which("dot").is_ok() {
             GraphVisitor::render_graph(filename);
-            if std::fs::remove_file(filename).is_err() {
-                eprintln!("Unable to remove dot-file after rendering.");
+            if !retain_dot {
+                let result = std::fs::remove_file(filename);
+
+                if result.is_err() {
+                    eprintln!("Unable to remove dot-file after rendering.");
+                }
             }
         }
     }

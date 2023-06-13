@@ -11,11 +11,10 @@ pub use value::Value;
 use self::environment::Environment;
 use self::value::Function;
 use crate::error::{Error, ErrorKind};
-use crate::graph::GraphVisitor;
 use crate::location::Location;
+use crate::parser::ast;
 use crate::parser::ast::Node;
 use crate::parser::ast::Special::If;
-use crate::parser::{ast, DEBUG_AST};
 use crate::visitor::Visitor;
 use crate::Result;
 use std::io::Write;
@@ -44,11 +43,7 @@ impl<'i> Interpreter<'i> {
     }
 
     pub fn interpret(&mut self, source: &str, name: &str) -> Result<Value> {
-        let node = Node::from_string(source)?;
-
-        if *DEBUG_AST {
-            GraphVisitor::create_ast_graph(&node, name);
-        }
+        let node = Node::from_string(source, name)?;
 
         node.accept(self)
     }

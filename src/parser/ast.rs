@@ -1,11 +1,11 @@
+use crate::env::{DebugAst, DEBUG_AST, DEBUG_PARSER};
+use crate::graph::GraphVisitor;
 use crate::location::Location;
 use crate::parser::{Parser, Rule};
 use crate::visitor::Visitor;
 use crate::Result;
 use pest::iterators::Pair;
 use pest::Parser as PestParser;
-
-use super::DEBUG_PARSER;
 
 #[derive(Debug, Clone)]
 pub struct Node {
@@ -49,7 +49,7 @@ impl Node {
         self.location
     }
 
-    pub fn from_string(source: &str) -> Result<Node> {
+    pub fn from_string(source: &str, name: &str) -> Result<Node> {
         let mut pairs = Parser::parse(Rule::main, source)?;
 
         if *DEBUG_PARSER {
@@ -59,6 +59,14 @@ impl Node {
         let node = Node::parse_value(
             pairs.next().expect("Pairs<Rule::main> panicked on next()"),
         );
+
+        if !matches!(*DEBUG_AST, DebugAst::Off) {
+            GraphVisitor::create_ast_graph(
+                &node,
+                name,
+                matches!(*DEBUG_AST, DebugAst::RetainDot),
+            );
+        }
 
         Ok(node)
     }
