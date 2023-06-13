@@ -7,9 +7,16 @@
 #![allow(clippy::module_inception)]
 #![allow(clippy::wildcard_imports)]
 
+extern crate alloc;
 extern crate pest;
 #[macro_use]
 extern crate pest_derive;
 
 pub mod cli;
-pub mod parser;
+mod error;
+mod graph;
+mod location;
+mod parser;
+mod visitor;
+
+pub type Result<T> = std::result::Result<T, error::Error>;

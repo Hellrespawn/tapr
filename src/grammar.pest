@@ -1,31 +1,35 @@
 WHITESPACE = _{ " " | "\n" | "\t" | "\0" }
-COMMENT    =  { "#" ~ (!("\n") ~ ANY)* }
+COMMENT    = _{ "#" ~ (!("\n") ~ ANY)* }
 
-sym_chars =  { ASCII_ALPHANUMERIC | "!" | "$" | "%" | "&" | "*" | "+" | "-" | "." | ":" | "<" | "?" | "=" | ">" | "@" | "^" | "_" }
+sym_chars = _{ ASCII_ALPHANUMERIC | "!" | "$" | "%" | "&" | "*" | "+" | "-" | "." | ":" | "<" | "?" | "=" | ">" | "@" | "^" | "_" }
 
-symbol    = @{ sym_chars+ }
-keyword   = @{ ":" ~ sym_chars* }
-constant  =  { ("true" | "false" | "nil") ~ !sym_chars }
+token    =  { sym_chars+ }
+symbol   = ${ (token ~ "/")? ~ token+ }
+keyword  = ${ ":" ~ token }
+constant =  { "true" | "false" | "nil" }
 
 string = ${ "\"" ~ inner ~ "\"" }
 inner  = @{ char* }
 char   =  {
     !("\"" | "\\") ~ ANY
-  | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+  | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t" | "0")
   | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
 }
 
 number = @{
     "-"? ~ ("0" | ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*) ~ ("." ~ ASCII_DIGIT*)? ~ (^"e" ~ ("+" | "-")? ~ ASCII_DIGIT+)?
 }
+plist   = { "()" | "(" ~ root ~ ")" }
+blist   = { "[]" | "[" ~ root ~ "]" }
 
-value = _{ constant | number | keyword | string | plist | blist | symbol }
+value = _{ constant | number | keyword | string | special | plist | blist | symbol }
 
-root = { value* }
+root = _{ value* }
 
-plist = { "()" | "(" ~ root ~ ")" }
-blist = { "[]" | "[" ~ root ~ "]" }
-
-// TODO Encode special forms in grammar?
+special = { if_ | defn | set | var }
+if_  = { "(" ~ "if" ~ #cond = value ~ #then = value ~ #else = value? ~ ")" }
+defn = { "(" ~ "defn" ~ #name = token ~ #args = blist ~ #body = value+ ~ ")" }
+set  = { "(" ~ "set" ~ #name = token ~ value ~ ")" }
+var  = { "(" ~ "var" ~ #name = token ~ value ~ ")" }
 
 main = { SOI ~ root ~ EOI }

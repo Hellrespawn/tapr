@@ -11,11 +11,11 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=korisp",
-                    "--package=korisp"
+                    "--bin=tasp",
+                    "--package=tasp"
                 ],
                 "filter": {
-                    "name": "korisp",
+                    "name": "tasp",
                     "kind": "bin"
                 }
             },
@@ -25,33 +25,33 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug 'test.ksp'",
+            "name": "Debug 'test.tsp'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=korisp",
-                    "--package=korisp"
+                    "--bin=tasp",
+                    "--package=tasp"
                 ],
                 "filter": {
-                    "name": "korisp",
+                    "name": "tasp",
                     "kind": "bin"
                 }
             },
             "args": [
-                "test.ksp"
+                "test.tsp"
             ],
             "cwd": "${workspaceFolder}"
         },
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'korisp'",
+            "name": "Debug unit tests in library 'tasp'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
                     "--lib",
-                    "--package=korisp"
+                    "--package=tasp"
                 ],
                 "filter": {
                     "name": "tfmt",

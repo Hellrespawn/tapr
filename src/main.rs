@@ -1,3 +1,3 @@
 fn main() {
-    korisp::cli::main();
+    tasp::cli::main();
 }
