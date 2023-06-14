@@ -4,7 +4,7 @@ use crate::interpreter::{Arguments, Interpreter, Parameters, Value};
 use crate::Result;
 
 pub fn print(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let params = Parameter::anonymous(ParameterType::Any, true).into();
+    let params = Parameter::anonymous(vec![ParameterType::Any], true).into();
 
     let arguments = Arguments::new(&params, arguments)?;
 
@@ -18,7 +18,7 @@ pub fn print(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn println(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let params = Parameter::anonymous(ParameterType::Any, true).into();
+    let params = Parameter::anonymous(vec![ParameterType::Any], true).into();
 
     let arguments = Arguments::new(&params, arguments)?;
 
@@ -46,7 +46,8 @@ pub fn read_file(
     _intp: &mut Interpreter,
     arguments: Vec<Value>,
 ) -> Result<Value> {
-    let params = Parameter::anonymous(ParameterType::String, false).into();
+    let params =
+        Parameter::anonymous(vec![ParameterType::String], false).into();
 
     let arguments = Arguments::new(&params, arguments)?;
 
@@ -58,7 +59,8 @@ pub fn read_file(
 }
 
 pub fn eval(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let params = Parameter::anonymous(ParameterType::String, false).into();
+    let params =
+        Parameter::anonymous(vec![ParameterType::String], false).into();
 
     let arguments = Arguments::new(&params, arguments)?;
 
@@ -73,7 +75,8 @@ pub fn parse_number(
     _intp: &mut Interpreter,
     arguments: Vec<Value>,
 ) -> Result<Value> {
-    let params = Parameter::anonymous(ParameterType::String, false).into();
+    let params =
+        Parameter::anonymous(vec![ParameterType::String], false).into();
 
     let arguments = Arguments::new(&params, arguments)?;
 

@@ -44,6 +44,10 @@ impl<'a> Arguments<'a> {
             .expect("Called unwrap on invalid index.")
     }
 
+    pub fn unwrap_from(&self, index: usize) -> Vec<Value> {
+        self.arguments[index..].to_vec()
+    }
+
     pub fn unwrap_string(&self, index: usize) -> String {
         let argument = &self.arguments[index];
 
@@ -52,6 +56,22 @@ impl<'a> Arguments<'a> {
         };
 
         string.clone()
+    }
+
+    pub fn unwrap_strings(&self) -> Vec<String> {
+        self.unwrap_strings_from(0)
+    }
+
+    pub fn unwrap_strings_from(&self, start_index: usize) -> Vec<String> {
+        self.arguments[start_index..]
+            .iter()
+            .map(|v| {
+                let Value::String(string) = v else {
+                panic!("Called unwrap_strings on non-Value::String")
+            };
+                string.clone()
+            })
+            .collect()
     }
 
     pub fn unwrap_list(&self, index: usize) -> Vec<Value> {

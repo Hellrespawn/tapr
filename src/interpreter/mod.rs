@@ -8,6 +8,7 @@ pub use arguments::Arguments;
 pub use parameters::{Parameter, ParameterType, Parameters};
 pub use value::Value;
 
+use self::builtins::get_builtin_environment;
 use self::environment::Environment;
 use self::value::Function;
 use crate::error::{Error, ErrorKind};
@@ -27,9 +28,11 @@ pub struct Interpreter<'i> {
 
 impl<'i> Default for Interpreter<'i> {
     fn default() -> Self {
+        let environment = get_builtin_environment();
+
         Self {
             output: Box::new(std::io::stdout()),
-            environment: Environment::root(),
+            environment,
         }
     }
 }
@@ -60,7 +63,7 @@ impl<'i> Interpreter<'i> {
     }
 
     fn enter_scope(&mut self) {
-        let new_environment = Environment::empty();
+        let new_environment = Environment::new();
 
         let old_environment =
             std::mem::replace(&mut self.environment, new_environment);

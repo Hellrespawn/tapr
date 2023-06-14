@@ -112,7 +112,7 @@ pub enum ErrorKind {
 
     #[error("Invalid argument '{actual}', expected '{expected:?}'")]
     InvalidArgument {
-        expected: ParameterType,
+        expected: Vec<ParameterType>,
         actual: Value,
     },
 

@@ -1,4 +1,3 @@
-use super::builtins::get_builtin_functions;
 use super::Value;
 use crate::error::ErrorKind;
 use crate::Result;
@@ -11,19 +10,7 @@ pub struct Environment {
 }
 
 impl Environment {
-    pub fn root() -> Self {
-        let builtins = get_builtin_functions();
-
-        let mut map = HashMap::new();
-
-        for builtin in builtins {
-            map.insert(builtin.name().to_owned(), Value::Builtin(builtin));
-        }
-
-        Self { map, parent: None }
-    }
-
-    pub fn empty() -> Self {
+    pub fn new() -> Self {
         Self {
             map: HashMap::new(),
             parent: None,
@@ -85,7 +72,7 @@ impl Environment {
 
 impl Default for Environment {
     fn default() -> Self {
-        Self::empty()
+        Self::new()
     }
 }
 

@@ -62,7 +62,7 @@ fn eval_line(
             rl.add_history_entry(&line);
 
             match run_code(&line, intp, &format!("repl_{line_no}")) {
-                Ok(value) => println!("{value}"),
+                Ok(value) => println!("{}", value.repl_repr()),
                 Err(error) => eprintln!("{error}"),
             }
 

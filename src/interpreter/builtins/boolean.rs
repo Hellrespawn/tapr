@@ -48,7 +48,7 @@ pub fn lt(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn not(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let params = Parameter::anonymous(ParameterType::Any, false).into();
+    let params = Parameter::anonymous(vec![ParameterType::Any], false).into();
 
     let arguments = Arguments::new(&params, arguments)?;
 
@@ -58,9 +58,9 @@ pub fn not(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn boolean_params() -> Parameters {
-    let param = Parameter::anonymous(ParameterType::Any, false);
+    let param = Parameter::anonymous(vec![ParameterType::Any], false);
 
-    let remaining_params = Parameter::anonymous(ParameterType::Any, true);
+    let remaining_params = Parameter::anonymous(vec![ParameterType::Any], true);
 
     Parameters::new(vec![param, remaining_params])
         .expect("arithmetic to have valid params")

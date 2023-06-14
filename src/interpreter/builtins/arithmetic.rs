@@ -2,11 +2,11 @@ use crate::interpreter::parameters::{Parameter, ParameterType, Parameters};
 use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::Result;
 
-type ArithmeticOp = fn(f64, f64) -> f64;
+type BinaryOp = fn(f64, f64) -> f64;
 type UnaryOp = fn(f64) -> f64;
 
-fn arithmetic(op: ArithmeticOp, arguments: Vec<Value>) -> Result<Value> {
-    let params = arithmetic_params();
+fn arbitrary(op: BinaryOp, arguments: Vec<Value>) -> Result<Value> {
+    let params = arbitrary_params();
 
     let arguments = Arguments::new(&params, arguments)?;
 
@@ -33,7 +33,7 @@ fn unary(op: UnaryOp, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn add(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    arithmetic(|lhs, rhs| lhs + rhs, arguments)
+    arbitrary(|lhs, rhs| lhs + rhs, arguments)
 }
 
 pub fn subtract(
@@ -43,7 +43,7 @@ pub fn subtract(
     if arguments.len() == 1 {
         unary(|n| -n, arguments)
     } else {
-        arithmetic(|lhs, rhs| lhs - rhs, arguments)
+        arbitrary(|lhs, rhs| lhs - rhs, arguments)
     }
 }
 
@@ -51,18 +51,18 @@ pub fn multiply(
     _intp: &mut Interpreter,
     arguments: Vec<Value>,
 ) -> Result<Value> {
-    arithmetic(|lhs, rhs| lhs * rhs, arguments)
+    arbitrary(|lhs, rhs| lhs * rhs, arguments)
 }
 
 pub fn divide(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    arithmetic(|lhs, rhs| lhs / rhs, arguments)
+    arbitrary(|lhs, rhs| lhs / rhs, arguments)
 }
 
 pub fn modulus(
     _intp: &mut Interpreter,
     arguments: Vec<Value>,
 ) -> Result<Value> {
-    arithmetic(|lhs, rhs| lhs % rhs, arguments)
+    arbitrary(|lhs, rhs| lhs % rhs, arguments)
 }
 
 pub fn increment(
@@ -80,14 +80,17 @@ pub fn decrement(
 }
 
 pub fn unary_params() -> Parameters {
-    Parameters::new(vec![Parameter::anonymous(ParameterType::Number, false)])
-        .expect("unary to have valid params")
+    Parameters::new(vec![Parameter::anonymous(
+        vec![ParameterType::Number],
+        false,
+    )])
+    .expect("unary to have valid params")
 }
 
-pub fn arithmetic_params() -> Parameters {
+pub fn arbitrary_params() -> Parameters {
     Parameters::new(vec![
-        Parameter::anonymous(ParameterType::Number, false),
-        Parameter::anonymous(ParameterType::Number, true),
+        Parameter::anonymous(vec![ParameterType::Number], false),
+        Parameter::anonymous(vec![ParameterType::Number], true),
     ])
     .expect("arithmetic to have valid params")
 }

@@ -26,6 +26,35 @@ pub enum Value {
     },
 }
 
+impl Value {
+    pub fn is_truthy(&self) -> bool {
+        match self {
+            Value::Nil => false,
+            Value::Boolean(boolean) => *boolean,
+            _ => true,
+        }
+    }
+
+    pub fn is_falsy(&self) -> bool {
+        !self.is_truthy()
+    }
+
+    pub fn as_callable(&self) -> Option<&dyn Callable> {
+        match self {
+            Value::Builtin(b) => Some(b),
+            Value::Function(f) => Some(f),
+            _ => None,
+        }
+    }
+
+    pub fn repl_repr(&self) -> String {
+        match self {
+            Value::String(string) => format!("\"{string}\""),
+            other => other.to_string(),
+        }
+    }
+}
+
 impl From<f64> for Value {
     fn from(value: f64) -> Self {
         Value::Number(value)
@@ -66,28 +95,6 @@ impl PartialOrd for Value {
             (Value::Symbol(left), Value::Symbol(right)) => {
                 left.partial_cmp(right)
             }
-            _ => None,
-        }
-    }
-}
-
-impl Value {
-    pub fn is_truthy(&self) -> bool {
-        match self {
-            Value::Nil => false,
-            Value::Boolean(boolean) => *boolean,
-            _ => true,
-        }
-    }
-
-    pub fn is_falsy(&self) -> bool {
-        !self.is_truthy()
-    }
-
-    pub fn as_callable(&self) -> Option<&dyn Callable> {
-        match self {
-            Value::Builtin(b) => Some(b),
-            Value::Function(f) => Some(f),
             _ => None,
         }
     }

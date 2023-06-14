@@ -10,6 +10,8 @@ pub enum ParameterType {
     String,
     Boolean,
     Symbol,
+    Keyword,
+    Nil,
     Any,
 }
 
@@ -24,6 +26,8 @@ impl ParameterType {
             ParameterType::String => matches!(value, Value::String(_)),
             ParameterType::Boolean => matches!(value, Value::Boolean(_)),
             ParameterType::Symbol => matches!(value, Value::Symbol(_)),
+            ParameterType::Keyword => matches!(value, Value::Keyword(_)),
+            ParameterType::Nil => matches!(value, Value::Nil),
             ParameterType::Any => true,
         }
     }
@@ -32,33 +36,33 @@ impl ParameterType {
 #[derive(Debug, Clone)]
 pub struct Parameter {
     name: Option<String>,
-    parameter_type: ParameterType,
+    parameter_types: Vec<ParameterType>,
     rest: bool,
 }
 
 impl Parameter {
     pub fn new(
         name: String,
-        parameter_type: ParameterType,
+        parameter_type: Vec<ParameterType>,
         rest: bool,
     ) -> Self {
         Self {
             name: Some(name),
-            parameter_type,
+            parameter_types: parameter_type,
             rest,
         }
     }
 
-    pub fn anonymous(parameter_type: ParameterType, rest: bool) -> Self {
+    pub fn anonymous(parameter_types: Vec<ParameterType>, rest: bool) -> Self {
         Self {
             name: None,
-            parameter_type,
+            parameter_types,
             rest,
         }
     }
 
     pub fn any(name: &str) -> Self {
-        Self::new(name.to_owned(), ParameterType::Any, false)
+        Self::new(name.to_owned(), vec![ParameterType::Any], false)
     }
 
     pub fn name(&self) -> Option<&str> {
@@ -66,11 +70,15 @@ impl Parameter {
     }
 
     pub fn value_is_type(&self, value: &Value) -> Result<()> {
-        if self.parameter_type.value_is_type(value) {
+        if self
+            .parameter_types
+            .iter()
+            .any(|pt| pt.value_is_type(value))
+        {
             Ok(())
         } else {
             Err(ErrorKind::InvalidArgument {
-                expected: self.parameter_type,
+                expected: self.parameter_types.clone(),
                 actual: value.clone(),
             }
             .into())

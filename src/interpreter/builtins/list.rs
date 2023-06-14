@@ -9,7 +9,8 @@ pub fn list(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn head(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let parameters = Parameter::anonymous(ParameterType::List, false).into();
+    let parameters =
+        Parameter::anonymous(vec![ParameterType::List], false).into();
     let arguments = Arguments::new(&parameters, arguments)?;
 
     let list = arguments.unwrap_list(0);
@@ -18,7 +19,8 @@ pub fn head(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn tail(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let parameters = Parameter::anonymous(ParameterType::List, false).into();
+    let parameters =
+        Parameter::anonymous(vec![ParameterType::List], false).into();
 
     let arguments = Arguments::new(&parameters, arguments)?;
 
@@ -32,7 +34,8 @@ pub fn tail(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn last(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let parameters = Parameter::anonymous(ParameterType::List, false).into();
+    let parameters =
+        Parameter::anonymous(vec![ParameterType::List], false).into();
     let arguments = Arguments::new(&parameters, arguments)?;
 
     let mut list = arguments.unwrap_list(0);
@@ -125,25 +128,25 @@ pub fn reduce(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 
 pub fn concat_params() -> Parameters {
     Parameters::new(vec![
-        Parameter::anonymous(ParameterType::List, false),
-        Parameter::anonymous(ParameterType::Any, true),
+        Parameter::anonymous(vec![ParameterType::List], false),
+        Parameter::anonymous(vec![ParameterType::Any], true),
     ])
     .unwrap()
 }
 
 pub fn map_filter_params() -> Parameters {
     Parameters::new(vec![
-        Parameter::anonymous(ParameterType::Function, false),
-        Parameter::anonymous(ParameterType::List, false),
+        Parameter::anonymous(vec![ParameterType::Function], false),
+        Parameter::anonymous(vec![ParameterType::List], false),
     ])
     .unwrap()
 }
 
 pub fn reduce_params() -> Parameters {
     Parameters::new(vec![
-        Parameter::anonymous(ParameterType::Any, false),
-        Parameter::anonymous(ParameterType::Function, false),
-        Parameter::anonymous(ParameterType::List, false),
+        Parameter::anonymous(vec![ParameterType::Any], false),
+        Parameter::anonymous(vec![ParameterType::Function], false),
+        Parameter::anonymous(vec![ParameterType::List], false),
     ])
     .unwrap()
 }
