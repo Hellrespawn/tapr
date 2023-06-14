@@ -2,8 +2,11 @@ use super::Value;
 use crate::error::ErrorKind;
 use crate::Result;
 
+// TODO Optional parameters
+
 #[derive(Debug, Copy, Clone)]
 pub enum ParameterType {
+    Module,
     Function,
     List,
     Number,
@@ -18,6 +21,9 @@ pub enum ParameterType {
 impl ParameterType {
     fn value_is_type(self, value: &Value) -> bool {
         match self {
+            ParameterType::Module => {
+                matches!(value, Value::Module { .. })
+            }
             ParameterType::Function => {
                 matches!(value, Value::Function(_) | Value::Builtin(_))
             }

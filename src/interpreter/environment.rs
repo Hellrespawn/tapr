@@ -68,22 +68,8 @@ impl Environment {
     pub fn len(&self) -> usize {
         self.map.len()
     }
-}
 
-impl Default for Environment {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl std::fmt::Display for Environment {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Some(parent) = &self.parent {
-            parent.fmt(f)?;
-        }
-
-        let mut values = self.map.iter().collect::<Vec<_>>();
-
+    pub fn format_table(mut values: Vec<(&str, &Value)>) -> String {
         values.sort_by(|(l, _), (r, _)| l.cmp(r));
 
         let key_width = values
@@ -98,32 +84,51 @@ impl std::fmt::Display for Environment {
             .max()
             .unwrap_or_default();
 
-        writeln!(
-            f,
-            "+-{}-+-{}-+",
+        let mut string = format!(
+            "+-{}-+-{}-+\n",
             "-".repeat(key_width),
             "-".repeat(value_width)
-        )?;
+        );
 
         for (key, value) in values {
             if key.starts_with('_') {
                 continue;
             }
 
-            writeln!(
-                f,
-                "| {key:>key_width$} | {:>value_width$} |",
+            string += &format!(
+                "| {key:>key_width$} | {:>value_width$} |\n",
                 value.to_string()
-            )?;
+            );
         }
 
-        writeln!(
-            f,
+        string += &format!(
             "+-{}-+-{}-+",
             "-".repeat(key_width),
             "-".repeat(value_width)
-        )?;
+        );
 
-        Ok(())
+        string
+    }
+}
+
+impl Default for Environment {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl std::fmt::Display for Environment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(parent) = &self.parent {
+            parent.fmt(f)?;
+        }
+
+        let values = self
+            .map
+            .iter()
+            .map(|(k, v)| (k.as_str(), v))
+            .collect::<Vec<_>>();
+
+        writeln!(f, "{}", Self::format_table(values))
     }
 }

@@ -84,6 +84,20 @@ impl<'a> Arguments<'a> {
         list.clone()
     }
 
+    pub fn unwrap_module(&self, index: usize) -> (&str, &Environment) {
+        let argument = &self.arguments[index];
+
+        if let Value::Module {
+            prefix,
+            environment,
+        } = argument
+        {
+            (prefix, environment)
+        } else {
+            panic!("Called unwrap_function on non-Value::Module")
+        }
+    }
+
     pub fn unwrap_function(&self, index: usize) -> Value {
         let argument = &self.arguments[index];
 

@@ -71,7 +71,8 @@ fn get_core_environment() -> Environment {
 }
 
 fn get_debug_environment() -> Environment {
-    let builtins: Vec<(&str, BuiltinFunction)> = vec![("env", debug::env)];
+    let builtins: Vec<(&str, BuiltinFunction)> =
+        vec![("env", debug::env), ("lsmod", debug::lsmod)];
 
     add_functions_to_environment(builtins)
 }
