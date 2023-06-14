@@ -25,13 +25,13 @@ blist   = { "[" ~ root ~ "]" }
 value = _{ constant | number | keyword | string | special | plist | blist | symbol }
 
 root = _{ value* }
-
-arguments = { "[" ~ token* ~ "]" }
-
 special = { defn | fn_ | if_ | import | set | var }
 
-defn   = { "(" ~ "defn" ~ #name = token ~ #args = arguments ~ #body = value+ ~ ")" }
-fn_    = { "(" ~ "fn" ~ #args = arguments ~ #body = value+ ~ ")"}
+function_arguments = { "[" ~ token* ~ "]" }
+function_body = { value +}
+defn   = { "(" ~ "defn" ~ #name = token ~ function_arguments ~ function_body ~ ")" }
+fn_    = { "(" ~ "fn" ~ function_arguments ~ function_body ~ ")"}
+
 if_    = { "(" ~ "if" ~ #cond = value ~ #then = value ~ #else = value? ~ ")" }
 import = { "(" ~ "import" ~ #name = token ~ (":as" ~ #prefix = token)? ~ ")" }
 set    = { "(" ~ "set" ~ #name = token ~ value ~ ")" }

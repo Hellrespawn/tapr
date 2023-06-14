@@ -33,7 +33,7 @@ pub fn tail(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
     Ok(Value::List(list))
 }
 
-pub fn last(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
+pub fn peek(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
     let parameters =
         Parameter::anonymous(vec![ParameterType::List], false).into();
     let arguments = Arguments::new(&parameters, arguments)?;
@@ -43,8 +43,8 @@ pub fn last(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
     Ok(list.pop().unwrap_or_else(|| Value::Nil))
 }
 
-pub fn concat(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let parameters = concat_params();
+pub fn push(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
+    let parameters = push_params();
 
     let arguments = Arguments::new(&parameters, arguments)?;
 
@@ -126,7 +126,7 @@ pub fn reduce(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
     Ok(output)
 }
 
-pub fn concat_params() -> Parameters {
+pub fn push_params() -> Parameters {
     Parameters::new(vec![
         Parameter::anonymous(vec![ParameterType::List], false),
         Parameter::anonymous(vec![ParameterType::Any], true),

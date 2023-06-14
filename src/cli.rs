@@ -21,7 +21,7 @@ pub fn main() {
 }
 
 fn repl() -> Result<()> {
-    println!("Welcome to Tasp {}.", env!("CARGO_PKG_VERSION"));
+    println!("Welcome to Tapr {}.", env!("CARGO_PKG_VERSION"));
 
     let mut rl = Editor::<()>::new().unwrap();
 

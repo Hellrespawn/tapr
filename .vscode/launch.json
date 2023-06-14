@@ -11,11 +11,11 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=tasp",
-                    "--package=tasp"
+                    "--bin=tapr",
+                    "--package=tapr"
                 ],
                 "filter": {
-                    "name": "tasp",
+                    "name": "tapr",
                     "kind": "bin"
                 }
             },
@@ -29,11 +29,11 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=tasp",
-                    "--package=tasp"
+                    "--bin=tapr",
+                    "--package=tapr"
                 ],
                 "filter": {
-                    "name": "tasp",
+                    "name": "tapr",
                     "kind": "bin"
                 }
             },
@@ -45,13 +45,13 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'tasp'",
+            "name": "Debug unit tests in library 'tapr'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
                     "--lib",
-                    "--package=tasp"
+                    "--package=tapr"
                 ],
                 "filter": {
                     "name": "tfmt",

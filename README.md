@@ -1,6 +1,6 @@
-# Tasp
+# Tapr
 
-General-purpose LISP-style programming language.
+Tapr (tapper) is a general-purpose LISP-style programming language.
 
 ## Requirements
 
@@ -11,13 +11,13 @@ General-purpose LISP-style programming language.
 
 1. Ensure `cargo` and Cargo's `bin` folder are on your `PATH`.
 1. Clone the repository.
-1. Run `cargo install --path tasp`.
+1. Run `cargo install --path tapr`.
 
 ## Usage
 
-Running `tasp` without arguments starts the REPL. An empty line or Ctrl-C will exit.
+Running `tapr` without arguments starts the REPL. An empty line or Ctrl-C will exit.
 
-`tasp <filename>` will run the specified file.
+`tapr <filename>` will run the specified file.
 
 Use `(import stdlib)` to import the standard library.
 

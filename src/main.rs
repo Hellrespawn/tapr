@@ -1,3 +1,3 @@
 fn main() {
-    tasp::cli::main();
+    tapr::cli::main();
 }

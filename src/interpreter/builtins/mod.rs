@@ -7,6 +7,7 @@ use once_cell::sync::Lazy;
 mod arithmetic;
 mod boolean;
 mod debug;
+mod file;
 mod io;
 mod list;
 mod string;
@@ -18,6 +19,8 @@ static BUILTIN_ENVIRONMENT: Lazy<Environment> = Lazy::new(|| {
     let mut core_env = get_core_environment();
 
     let modules = vec![
+        ("debug", get_debug_environment()),
+        ("file", get_file_environment()),
         ("io", get_io_environment()),
         ("list", get_list_environment()),
         ("number", get_number_environment()),
@@ -45,8 +48,8 @@ pub fn get_builtin_environment() -> Environment {
 
 fn get_core_environment() -> Environment {
     let builtins: Vec<(&str, BuiltinFunction)> = vec![
-        ("_env", debug::env),
         ("+", arithmetic::add),
+        // ("+=", arithmetic::add_assign), // TODO Op Assign
         ("-", arithmetic::subtract),
         ("*", arithmetic::multiply),
         ("/", arithmetic::divide),
@@ -67,12 +70,22 @@ fn get_core_environment() -> Environment {
     add_functions_to_environment(builtins)
 }
 
+fn get_debug_environment() -> Environment {
+    let builtins: Vec<(&str, BuiltinFunction)> = vec![("env", debug::env)];
+
+    add_functions_to_environment(builtins)
+}
+
+fn get_file_environment() -> Environment {
+    let builtins: Vec<(&str, BuiltinFunction)> =
+        vec![("read", file::read), ("write", file::write)];
+
+    add_functions_to_environment(builtins)
+}
+
 fn get_io_environment() -> Environment {
-    let builtins: Vec<(&str, BuiltinFunction)> = vec![
-        ("read-file", io::read_file),
-        ("read", io::read),
-        ("eval", io::eval),
-    ];
+    let builtins: Vec<(&str, BuiltinFunction)> =
+        vec![("read", io::read), ("eval", io::eval)];
 
     add_functions_to_environment(builtins)
 }
@@ -82,8 +95,13 @@ fn get_list_environment() -> Environment {
         ("list", list::list),
         ("head", list::head),
         ("tail", list::tail),
-        ("last", list::last),
-        ("concat", list::concat),
+        ("pop", list::push),
+        ("peek", list::peek),
+        // ("pop", list::pop),  // TODO Pop end of list
+        // ("concat", list::concat),  // TODO Concatenate multiple lists
+        // ("insert", list::insert),  // TODO Insert at index
+        // ("remove", list::remove),  // TODO Remove at index
+        // ("slice", list::slice),    // TODO Return slice
         ("reduce", list::reduce),
         ("map", list::map),
         ("filter", list::filter),
@@ -110,6 +128,15 @@ fn get_string_environment() -> Environment {
         ("join", string::join),
         ("join-not-nil", string::join_not_nil),
         ("trim", string::trim),
+        // ("format", string::format),  // TODO? printf style formatting?
+        // ("lower", string::lower),  // TODO
+        // ("upper", string::upper),  // TODO
+        // ("starts-with", string::starts_with),  // TODO
+        // ("ends-with", string::ends_with),  // TODO
+        // ("repeat", string::repeat),  // TODO
+        // ("replace", string::replace),  // TODO
+        // ("slice", string::slice),  // TODO
+        // ("split", string::split),  // TODO
     ];
 
     add_functions_to_environment(builtins)

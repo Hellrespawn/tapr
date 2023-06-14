@@ -42,22 +42,6 @@ pub fn read(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
     Ok(Value::String(buffer))
 }
 
-pub fn read_file(
-    _intp: &mut Interpreter,
-    arguments: Vec<Value>,
-) -> Result<Value> {
-    let params =
-        Parameter::anonymous(vec![ParameterType::String], false).into();
-
-    let arguments = Arguments::new(&params, arguments)?;
-
-    let path = arguments.unwrap_string(0);
-
-    let string = std::fs::read_to_string(path)?;
-
-    Ok(Value::String(string))
-}
-
 pub fn eval(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
     let params =
         Parameter::anonymous(vec![ParameterType::String], false).into();

@@ -4,7 +4,7 @@ use crate::location::Location;
 use crate::parser::{Parser, Rule};
 use crate::visitor::Visitor;
 use crate::Result;
-use pest::iterators::Pair;
+use pest::iterators::{Pair, Pairs};
 use pest::Parser as PestParser;
 
 #[derive(Debug, Clone)]
@@ -207,19 +207,11 @@ impl Special {
             .as_str()
             .to_owned();
 
-        let fn_data = NodeData::Special(Box::new(Special::Fn {
-            parameters: inner
-                .next()
-                .expect("Rule::defn did not have arguments.")
-                .into_inner()
-                .map(|p| p.as_str().to_owned())
-                .collect(),
-            body: inner.map(Node::parse_value).collect(),
-        }));
+        let function = Self::function(inner);
 
         let fn_node = Node {
             location,
-            data: fn_data,
+            data: NodeData::Special(Box::new(function)),
         };
 
         Special::Var {
@@ -229,17 +221,9 @@ impl Special {
     }
 
     fn fn_(pair: Pair<Rule>) -> Special {
-        let mut inner = pair.into_inner();
+        let inner = pair.into_inner();
 
-        Special::Fn {
-            parameters: inner
-                .next()
-                .expect("Rule::defn did not have arguments.")
-                .into_inner()
-                .map(|p| p.as_str().to_owned())
-                .collect(),
-            body: inner.map(Node::parse_value).collect(),
-        }
+        Self::function(inner)
     }
 
     fn if_(pair: Pair<Rule>) -> Special {
@@ -297,6 +281,23 @@ impl Special {
             value: Node::parse_value(
                 inner.next().expect("Rule::var did not have value"),
             ),
+        }
+    }
+
+    fn function(mut pairs: Pairs<Rule>) -> Special {
+        Special::Fn {
+            parameters: pairs
+                .next()
+                .expect("function did not have arguments.")
+                .into_inner()
+                .map(|p| p.as_str().to_owned())
+                .collect(),
+            body: pairs
+                .next()
+                .expect("function did not have function body.")
+                .into_inner()
+                .map(Node::parse_value)
+                .collect(),
         }
     }
 }
