@@ -57,6 +57,16 @@ impl Environment {
         })
     }
 
+    pub fn get_mut(&mut self, key: &str) -> Option<&mut Value> {
+        self.map.get_mut(key).or_else(|| {
+            if let Some(environment) = &mut self.parent {
+                environment.get_mut(key)
+            } else {
+                None
+            }
+        })
+    }
+
     pub fn has(&self, key: &str) -> bool {
         self.get(key).is_some()
     }

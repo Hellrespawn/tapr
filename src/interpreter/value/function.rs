@@ -1,4 +1,5 @@
 use super::{Callable, Value};
+use crate::interpreter::environment::Environment;
 use crate::interpreter::parameters::Parameters;
 use crate::interpreter::{Arguments, Interpreter};
 use crate::parser::ast::Node;
@@ -30,9 +31,10 @@ impl Callable for Function {
     ) -> Result<Value> {
         let arguments = Arguments::new(&self.parameters, arguments)?;
 
-        intp.enter_scope();
+        let mut function_environment = Environment::new();
+        arguments.add_to_env(&mut function_environment)?;
 
-        arguments.add_to_env(&mut intp.environment)?;
+        intp.enter_scope_with(function_environment);
 
         let mut values = self
             .body
@@ -43,5 +45,9 @@ impl Callable for Function {
         intp.exit_scope();
 
         Ok(values.pop().unwrap_or(Value::Nil))
+    }
+
+    fn arity(&self) -> usize {
+        self.parameters.len()
     }
 }

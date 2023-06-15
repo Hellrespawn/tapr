@@ -24,10 +24,14 @@ impl<'a> Arguments<'a> {
         Ok(arguments)
     }
 
+    pub fn len(&self) -> usize {
+        self.arguments.len()
+    }
+
     pub fn add_to_env(self, env: &mut Environment) -> Result<()> {
         for (parameter, argument) in self.parameters.iter().zip(self.arguments)
         {
-            env.insert(parameter.name().unwrap().to_owned(), argument)?;
+            env.insert(parameter.name().to_owned(), argument)?;
         }
 
         Ok(())

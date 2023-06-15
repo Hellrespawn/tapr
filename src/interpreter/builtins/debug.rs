@@ -1,5 +1,5 @@
 use crate::interpreter::{
-    Arguments, Interpreter, Parameter, ParameterType, Parameters, Value,
+    Arguments, Interpreter, Parameter, Parameters, Value,
 };
 use crate::Result;
 
@@ -13,11 +13,10 @@ pub fn env(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn lsmod(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let parameters =
-        Parameter::anonymous(vec![ParameterType::Module], false).into();
+    let parameters = Parameter::new("module".to_owned()).module().into();
     let arguments = Arguments::new(&parameters, arguments)?;
 
-    let (name, environment) = arguments.unwrap_module(0);
+    let (_, environment) = arguments.unwrap_module(0);
 
     writeln!(intp.output, "{environment}")?;
 

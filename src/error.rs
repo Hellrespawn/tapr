@@ -110,6 +110,14 @@ pub enum ErrorKind {
     #[error("Only the last parameter of a function may be a rest parameter.")]
     NonLastParameterIsRest,
 
+    #[error(
+        "An optional parameter can't be followed by a required parameter."
+    )]
+    RequiredParamAfterOptional,
+
+    #[error("'{0}' is not a valid type.")]
+    InvalidParameterType(String),
+
     #[error("Invalid argument '{actual}', expected '{expected:?}'")]
     InvalidArgument {
         expected: Vec<ParameterType>,

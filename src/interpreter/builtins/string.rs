@@ -1,4 +1,4 @@
-use crate::interpreter::parameters::{Parameter, ParameterType, Parameters};
+use crate::interpreter::parameters::{Parameter, Parameters};
 use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::Result;
 
@@ -41,14 +41,7 @@ pub fn len(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn join(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let params = Parameters::new(vec![
-        Parameter::new(
-            "separator".to_owned(),
-            vec![ParameterType::String],
-            false,
-        ),
-        Parameter::anonymous(vec![ParameterType::String], true),
-    ])?;
+    let params = join_params();
 
     let arguments = Arguments::new(&params, arguments)?;
 
@@ -63,17 +56,7 @@ pub fn join_not_nil(
     _intp: &mut Interpreter,
     arguments: Vec<Value>,
 ) -> Result<Value> {
-    let params = Parameters::new(vec![
-        Parameter::new(
-            "separator".to_owned(),
-            vec![ParameterType::String],
-            false,
-        ),
-        Parameter::anonymous(
-            vec![ParameterType::String, ParameterType::Nil],
-            true,
-        ),
-    ])?;
+    let params = join_params();
 
     let arguments = Arguments::new(&params, arguments)?;
 
@@ -100,11 +83,7 @@ pub fn trim(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn unary_params() -> Parameters {
-    Parameters::new(vec![Parameter::anonymous(
-        vec![ParameterType::String],
-        false,
-    )])
-    .expect("unary to have valid params")
+    Parameter::new("string".to_owned()).string().into()
 }
 
 // pub fn arbitrary_params() -> Parameters {
@@ -114,3 +93,11 @@ pub fn unary_params() -> Parameters {
 //     ])
 //     .expect("arithmetic to have valid params")
 // }
+
+fn join_params() -> Parameters {
+    Parameters::new(vec![
+        Parameter::new("separator".to_owned()).string(),
+        Parameter::new("strings".to_owned()).string().rest(),
+    ])
+    .expect("join parameters to be valid.")
+}

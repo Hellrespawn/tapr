@@ -1,6 +1,7 @@
 mod arguments;
 mod builtins;
 mod environment;
+mod native;
 mod parameters;
 mod value;
 
@@ -149,7 +150,10 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
         body: &[Node],
     ) -> Result<Value> {
         let parameters = Parameters::new(
-            parameters.iter().map(|s| Parameter::any(s)).collect(),
+            parameters
+                .iter()
+                .map(|s| Parameter::new(s.clone()))
+                .collect(),
         )?;
 
         Ok(Value::Function(Function::new(parameters, body.to_vec())))

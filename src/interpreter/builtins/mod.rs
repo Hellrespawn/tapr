@@ -1,6 +1,6 @@
 use super::environment::Environment;
 use super::value::Builtin;
-use super::{Interpreter, Value};
+use super::{Interpreter, Parameters, Value};
 use crate::Result;
 use once_cell::sync::Lazy;
 
@@ -151,7 +151,7 @@ fn add_functions_to_environment(
     for (name, function) in functions {
         env.insert(
             name.to_owned(),
-            Value::Builtin(Builtin::new(name, function)),
+            Value::Builtin(Builtin::new(name, function, Parameters::none())),
         )
         .unwrap_or_else(|e| {
             panic!("Unable to add '{name}' to default environment:\n{e}")

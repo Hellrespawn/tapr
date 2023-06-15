@@ -1,4 +1,4 @@
-use crate::interpreter::parameters::{Parameter, ParameterType, Parameters};
+use crate::interpreter::parameters::{Parameter, Parameters};
 use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::Result;
 
@@ -48,7 +48,7 @@ pub fn lt(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn not(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let params = Parameter::anonymous(vec![ParameterType::Any], false).into();
+    let params = Parameter::new("operand".to_owned()).into();
 
     let arguments = Arguments::new(&params, arguments)?;
 
@@ -58,10 +58,9 @@ pub fn not(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn boolean_params() -> Parameters {
-    let param = Parameter::anonymous(vec![ParameterType::Any], false);
-
-    let remaining_params = Parameter::anonymous(vec![ParameterType::Any], true);
-
-    Parameters::new(vec![param, remaining_params])
-        .expect("arithmetic to have valid params")
+    Parameters::new(vec![
+        Parameter::new("operand".to_owned()),
+        Parameter::new("operands".to_owned()).rest(),
+    ])
+    .expect("boolean to have valid params")
 }

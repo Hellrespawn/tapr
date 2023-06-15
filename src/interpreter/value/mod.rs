@@ -140,4 +140,6 @@ pub trait Callable: std::fmt::Debug + std::fmt::Display {
         intp: &mut Interpreter,
         arguments: Vec<Value>,
     ) -> Result<Value>;
+
+    fn arity(&self) -> usize;
 }

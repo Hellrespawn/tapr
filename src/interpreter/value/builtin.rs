@@ -1,12 +1,13 @@
 use super::{Callable, Value};
 use crate::interpreter::builtins::BuiltinFunction;
-use crate::interpreter::Interpreter;
+use crate::interpreter::{Interpreter, Parameters};
 use crate::Result;
 
 #[derive(Clone)]
 pub struct Builtin {
     name: &'static str,
     function: BuiltinFunction,
+    parameters: Parameters,
 }
 
 impl std::fmt::Debug for Builtin {
@@ -22,8 +23,16 @@ impl std::fmt::Display for Builtin {
 }
 
 impl Builtin {
-    pub fn new(name: &'static str, function: BuiltinFunction) -> Self {
-        Self { name, function }
+    pub fn new(
+        name: &'static str,
+        function: BuiltinFunction,
+        parameters: Parameters,
+    ) -> Self {
+        Self {
+            name,
+            function,
+            parameters,
+        }
     }
 
     pub fn name(&self) -> &str {
@@ -38,5 +47,9 @@ impl Callable for Builtin {
         arguments: Vec<Value>,
     ) -> Result<Value> {
         (self.function)(intp, arguments)
+    }
+
+    fn arity(&self) -> usize {
+        self.parameters.len()
     }
 }

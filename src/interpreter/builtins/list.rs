@@ -1,4 +1,4 @@
-use crate::interpreter::parameters::{Parameter, ParameterType, Parameters};
+use crate::interpreter::parameters::{Parameter, Parameters};
 use crate::interpreter::value::Callable;
 use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::Result;
@@ -9,8 +9,8 @@ pub fn list(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn head(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let parameters =
-        Parameter::anonymous(vec![ParameterType::List], false).into();
+    let parameters = Parameter::new("list".to_owned()).list().into();
+
     let arguments = Arguments::new(&parameters, arguments)?;
 
     let list = arguments.unwrap_list(0);
@@ -19,8 +19,7 @@ pub fn head(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn tail(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let parameters =
-        Parameter::anonymous(vec![ParameterType::List], false).into();
+    let parameters = Parameter::new("list".to_owned()).list().into();
 
     let arguments = Arguments::new(&parameters, arguments)?;
 
@@ -34,8 +33,8 @@ pub fn tail(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn peek(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let parameters =
-        Parameter::anonymous(vec![ParameterType::List], false).into();
+    let parameters = Parameter::new("list".to_owned()).list().into();
+
     let arguments = Arguments::new(&parameters, arguments)?;
 
     let mut list = arguments.unwrap_list(0);
@@ -128,25 +127,25 @@ pub fn reduce(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 
 pub fn push_params() -> Parameters {
     Parameters::new(vec![
-        Parameter::anonymous(vec![ParameterType::List], false),
-        Parameter::anonymous(vec![ParameterType::Any], true),
+        Parameter::new("list".to_owned()).list(),
+        Parameter::new("element".to_owned()).rest(),
     ])
     .unwrap()
 }
 
 pub fn map_filter_params() -> Parameters {
     Parameters::new(vec![
-        Parameter::anonymous(vec![ParameterType::Function], false),
-        Parameter::anonymous(vec![ParameterType::List], false),
+        Parameter::new("function".to_owned()).function(),
+        Parameter::new("list".to_owned()).list(),
     ])
     .unwrap()
 }
 
 pub fn reduce_params() -> Parameters {
     Parameters::new(vec![
-        Parameter::anonymous(vec![ParameterType::Any], false),
-        Parameter::anonymous(vec![ParameterType::Function], false),
-        Parameter::anonymous(vec![ParameterType::List], false),
+        Parameter::new("initial".to_owned()),
+        Parameter::new("function".to_owned()).function(),
+        Parameter::new("list".to_owned()).list(),
     ])
     .unwrap()
 }
