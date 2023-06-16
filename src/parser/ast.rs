@@ -291,7 +291,7 @@ impl Special {
 
     fn function(mut pairs: Pairs<Rule>) -> Special {
         Special::Fn {
-            parameters: Self::parameters(
+            parameters: parse_parameters(
                 pairs
                     .next()
                     .expect("function did not have arguments.")
@@ -306,65 +306,58 @@ impl Special {
                 .collect(),
         }
     }
+}
 
-    fn parameters(mut pairs: Pairs<Rule>) -> Parameters {
-        let mut parameters = pairs
-            .next()
-            .unwrap()
-            .into_inner()
-            .map(|p| Self::parameter(p, false))
-            .collect::<Vec<_>>();
-
-        if let Some(pair) = pairs.next() {
-            parameters.extend(
-                pair.into_inner()
-                    .map(|p| Self::parameter(p, true))
-                    .collect::<Vec<_>>(),
-            );
-        }
-
-        if let Some(pair) = pairs.next() {
-            parameters.extend(
-                pair.into_inner()
-                    .map(|p| Self::parameter(p, true))
-                    .collect::<Vec<_>>(),
-            );
-        }
-
-        if let Some(pair) = pairs.next() {
-            parameters.push(
-                pair.into_inner()
-                    .map(|p| Self::parameter(p, false))
-                    .next()
-                    .unwrap()
-                    .rest(),
-            );
-        }
-
-        Parameters::new(parameters)
-            .expect("Grammar did not parse valid parameters for function.")
-    }
-
-    fn parameter(pair: Pair<Rule>, optional: bool) -> Parameter {
-        let mut inner = pair.into_inner();
-
-        let name = inner.next().unwrap().as_str().to_owned();
-        let ptype = inner.next().map(|p| p.as_str().to_owned());
-
-        Parameter::new(
-            name,
-            ptype
-                .into_iter()
-                .map(|p| match p.as_str() {
-                    "number" => ParameterType::Number,
-                    "string" => ParameterType::String,
-                    "list" => ParameterType::List,
-                    "module" => ParameterType::Module,
-                    _ => unreachable!(),
-                })
+pub fn parse_parameters(pairs: Pairs<Rule>) -> Parameters {
+    let parameters = pairs
+        .flat_map(|p| match p.as_rule() {
+            Rule::parameters => p
+                .into_inner()
+                .map(|p| parameter(p, false))
                 .collect::<Vec<_>>(),
-            optional,
-            false,
-        )
-    }
+            Rule::optional_parameters => optional_parameters(p),
+            Rule::rest_parameter => vec![rest_parameter(p)],
+            other => unreachable!("{:?}", other),
+        })
+        .collect();
+
+    Parameters::new(parameters)
+        .expect("Grammar did not parse valid parameters for function.")
+}
+
+fn parameter(pair: Pair<Rule>, optional: bool) -> Parameter {
+    let mut inner = pair.into_inner();
+
+    let name = inner.next().unwrap().as_str().to_owned();
+    let ptype = inner.next().map(|p| p.as_str().to_owned());
+
+    Parameter::new(
+        name,
+        ptype
+            .into_iter()
+            .map(|p| match p.as_str() {
+                "number" => ParameterType::Number,
+                "string" => ParameterType::String,
+                "list" => ParameterType::List,
+                "module" => ParameterType::Module,
+                _ => unreachable!(),
+            })
+            .collect::<Vec<_>>(),
+        optional,
+        false,
+    )
+}
+
+fn optional_parameters(pair: Pair<Rule>) -> Vec<Parameter> {
+    pair.into_inner()
+        .map(|p| parameter(p, true))
+        .collect::<Vec<_>>()
+}
+
+fn rest_parameter(pair: Pair<Rule>) -> Parameter {
+    pair.into_inner()
+        .map(|p| parameter(p, false))
+        .next()
+        .unwrap()
+        .rest()
 }

@@ -88,15 +88,11 @@ impl<'a> Arguments<'a> {
         list.clone()
     }
 
-    pub fn unwrap_module(&self, index: usize) -> (&str, &Environment) {
+    pub fn unwrap_module(&self, index: usize) -> &Environment {
         let argument = &self.arguments[index];
 
-        if let Value::Module {
-            prefix,
-            environment,
-        } = argument
-        {
-            (prefix, environment)
+        if let Value::Module(environment) = argument {
+            environment
         } else {
             panic!("Called unwrap_function on non-Value::Module")
         }
@@ -105,7 +101,7 @@ impl<'a> Arguments<'a> {
     pub fn unwrap_function(&self, index: usize) -> Value {
         let argument = &self.arguments[index];
 
-        if !matches!(argument, Value::Function(_) | Value::Builtin(_)) {
+        if !matches!(argument, Value::Function(_) | Value::Native(_)) {
             panic!("Called unwrap_function on non-Value::{{Builtin, Function}}")
         }
 

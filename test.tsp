@@ -1,1 +1,1 @@
-(defn test [a:string b c &optd e &f] a)
+(fn [n:number & m:number] n)

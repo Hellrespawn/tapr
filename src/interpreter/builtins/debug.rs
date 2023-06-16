@@ -15,7 +15,7 @@ pub fn lsmod(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
     let parameters = Parameter::empty("module".to_owned()).module().into();
     let arguments = Arguments::new(&parameters, arguments)?;
 
-    let (_, environment) = arguments.unwrap_module(0);
+    let environment = arguments.unwrap_module(0);
 
     writeln!(intp.output, "{environment}")?;
 

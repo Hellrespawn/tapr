@@ -31,14 +31,14 @@ parameter = ${ token ~ (":" ~ type)? }
 type = @{ "number" | "string" | "list" | "module" }
 
 parameters = { parameter* }
-optional_params = { "&opt" ~ parameter+ }
-rest_param = { "&" ~ parameter }
+optional_parameters = { "&opt" ~ parameter+ }
+rest_parameter = { "&" ~ parameter }
 
-function_parameters = { "[" ~ parameters ~ (optional_params)? ~ (rest_param)? ~ "]" }
+function_parameters = { parameters ~ (optional_parameters)? ~ (rest_parameter)? }
 
 function_body = { value +}
 defn   = { "(" ~ "defn" ~ #name = token ~ function_parameters ~ function_body ~ ")" }
-fn_    = { "(" ~ "fn" ~ function_parameters ~ function_body ~ ")"}
+fn_    = { "(" ~ "fn" ~ "[" ~ function_parameters ~ "]" ~ function_body ~ ")"}
 
 if_    = { "(" ~ "if" ~ #cond = value ~ #then = value ~ #else = value? ~ ")" }
 import = { "(" ~ "import" ~ #name = token ~ (":as" ~ #prefix = string)? ~ ")" }

@@ -29,13 +29,7 @@ static BUILTIN_ENVIRONMENT: Lazy<Environment> = Lazy::new(|| {
 
     for (name, environment) in modules {
         core_env
-            .insert(
-                name.to_owned(),
-                Value::Module {
-                    prefix: name.to_owned(),
-                    environment,
-                },
-            )
+            .insert(name.to_owned(), Value::Module(environment))
             .unwrap_or_else(|e| panic!("Unable to add module '{name}':\n{e}"));
     }
 

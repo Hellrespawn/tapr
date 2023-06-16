@@ -81,7 +81,11 @@ impl Parameter {
     }
 
     pub fn is_optional(&self) -> bool {
-        self.rest
+        self.optional
+    }
+
+    pub fn types(&self) -> &[ParameterType] {
+        &self.parameter_types
     }
 
     pub fn value_is_type(&self, value: &Value) -> Result<()> {

@@ -4,8 +4,11 @@ use crate::Result;
 mod parameter;
 mod parameter_type;
 
+use super::ast::parse_parameters;
+use super::{Parser, Rule};
 pub use parameter::Parameter;
 pub use parameter_type::ParameterType;
+use pest::Parser as PestParser;
 
 #[derive(Debug, Clone)]
 pub struct Parameters {
@@ -83,33 +86,12 @@ impl TryFrom<&str> for Parameters {
     type Error = Error;
 
     fn try_from(value: &str) -> Result<Self> {
-        let mut params = Vec::new();
-        let mut optional = false;
-        let mut rest = false;
+        let pairs = Parser::parse(Rule::function_parameters, value)?
+            .next()
+            .unwrap()
+            .into_inner();
 
-        for param in value.split_whitespace() {
-            if param.starts_with("&opt") {
-                optional = true;
-            } else if param.starts_with('&') {
-                rest = true;
-            } else if let Some((name, ptype)) = param.split_once(':') {
-                params.push(Parameter::new(
-                    name.to_owned(),
-                    vec![ptype.try_into()?],
-                    optional,
-                    rest,
-                ));
-            } else {
-                params.push(Parameter::new(
-                    param.to_owned(),
-                    vec![],
-                    optional,
-                    rest,
-                ));
-            }
-        }
-
-        Parameters::new(params)
+        Ok(parse_parameters(pairs))
     }
 }
 
@@ -118,7 +100,21 @@ impl std::fmt::Display for Parameters {
         let mut args = self
             .parameters
             .iter()
-            .map(|p| p.get_name().to_owned())
+            .map(|p| {
+                if p.types().is_empty() {
+                    p.get_name().to_owned()
+                } else {
+                    format!(
+                        "{}:{}",
+                        p.name(),
+                        p.types()
+                            .iter()
+                            .map(std::string::ToString::to_string)
+                            .collect::<Vec<_>>()
+                            .join("|")
+                    )
+                }
+            })
             .collect::<Vec<_>>();
 
         if let Some(first_optional_index) =
@@ -136,7 +132,7 @@ impl std::fmt::Display for Parameters {
             args.insert(args.len() - 1, "&".to_owned());
         }
 
-        writeln!(f, "[{}]", args.join(" "))
+        write!(f, "[{}]", args.join(" "))
     }
 }
 

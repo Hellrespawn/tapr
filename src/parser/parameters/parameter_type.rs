@@ -22,9 +22,7 @@ impl ParameterType {
             ParameterType::Module => {
                 matches!(value, Value::Module { .. })
             }
-            ParameterType::Function => {
-                matches!(value, Value::Function(_) | Value::Builtin(_))
-            }
+            ParameterType::Function => value.as_callable().is_some(),
             ParameterType::List => matches!(value, Value::List(_)),
             ParameterType::Number => matches!(value, Value::Number(_)),
             ParameterType::String => matches!(value, Value::String(_)),
@@ -60,5 +58,23 @@ impl TryFrom<&str> for ParameterType {
         };
 
         Ok(ptype)
+    }
+}
+
+impl std::fmt::Display for ParameterType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ParameterType::TypedList(_) | ParameterType::List => {
+                write!(f, "list")
+            }
+            ParameterType::Module => write!(f, "module"),
+            ParameterType::Function => write!(f, "function"),
+            ParameterType::Number => write!(f, "number"),
+            ParameterType::String => write!(f, "string"),
+            ParameterType::Boolean => write!(f, "bool"),
+            ParameterType::Symbol => write!(f, "symbol"),
+            ParameterType::Keyword => write!(f, "keyword"),
+            ParameterType::Nil => write!(f, "nil"),
+        }
     }
 }

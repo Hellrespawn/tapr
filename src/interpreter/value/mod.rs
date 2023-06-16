@@ -1,10 +1,9 @@
-mod builtin;
 mod function;
 
-pub use builtin::Builtin;
 pub use function::Function;
 
 use super::environment::Environment;
+use super::native::NativeFunction;
 use super::Interpreter;
 use crate::Result;
 use std::cmp::Ordering;
@@ -18,12 +17,9 @@ pub enum Value {
     Symbol(String),
     Keyword(String),
     List(Vec<Self>),
-    Builtin(Builtin),
+    Native(NativeFunction),
     Function(Function),
-    Module {
-        prefix: String,
-        environment: Environment,
-    },
+    Module(Environment),
 }
 
 impl Value {
@@ -41,8 +37,8 @@ impl Value {
 
     pub fn as_callable(&self) -> Option<&dyn Callable> {
         match self {
-            Value::Builtin(b) => Some(b),
             Value::Function(f) => Some(f),
+            Value::Native(n) => Some(n),
             _ => None,
         }
     }
@@ -58,6 +54,12 @@ impl Value {
 impl From<f64> for Value {
     fn from(value: f64) -> Self {
         Value::Number(value)
+    }
+}
+
+impl From<NativeFunction> for Value {
+    fn from(value: NativeFunction) -> Self {
+        Value::Native(value)
     }
 }
 
@@ -120,15 +122,12 @@ impl std::fmt::Display for Value {
                         .join(" ")
                 )
             }
-            Value::Builtin(builtin) => builtin.fmt(f),
+            Value::Native(native) => native.fmt(f),
             Value::Function(function) => {
                 write!(f, "<function ({} args)>", function.parameters.len())
             }
-            Value::Module {
-                prefix: name,
-                environment,
-            } => {
-                write!(f, "<module {} ({})>", name, environment.len())
+            Value::Module(environment) => {
+                write!(f, "<module ({})>", environment.len())
             }
         }
     }

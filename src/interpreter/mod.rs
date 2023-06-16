@@ -1,13 +1,12 @@
 mod arguments;
-mod builtins;
 mod environment;
 mod native;
 mod value;
 
 pub use arguments::Arguments;
+pub use native::NATIVE_ENVIRONMENT;
 pub use value::Value;
 
-use self::builtins::get_builtin_environment;
 use self::environment::Environment;
 use self::value::Function;
 use crate::error::{Error, ErrorKind};
@@ -28,7 +27,7 @@ pub struct Interpreter<'i> {
 
 impl<'i> Default for Interpreter<'i> {
     fn default() -> Self {
-        let environment = get_builtin_environment();
+        let environment = NATIVE_ENVIRONMENT.clone();
 
         Self {
             output: Box::new(std::io::stdout()),
@@ -201,10 +200,7 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
         if !prefix.is_empty() {
             let module_environment = self.exit_scope();
 
-            let value = Value::Module {
-                prefix: prefix.clone(),
-                environment: module_environment,
-            };
+            let value = Value::Module(module_environment);
 
             self.environment.set(prefix, value).expect(
                 "The module prefix should have already been initialized to Nil",
@@ -284,7 +280,7 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
         location: Location,
     ) -> Result<Value> {
         if let Some(module) = module {
-            let Value::Module { environment, .. } = self.get(module, location)? else {
+            let Value::Module(environment) = self.get(module, location)? else {
                 return Err(Error::new(location, ErrorKind::ModuleNotDefined(module.clone())));
             };
 
