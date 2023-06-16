@@ -1,9 +1,9 @@
-use crate::interpreter::parameters::Parameter;
 use crate::interpreter::{Arguments, Interpreter, Parameters, Value};
+use crate::parser::parameters::Parameter;
 use crate::Result;
 
 pub fn read(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let params = Parameter::new("path".to_owned()).string().into();
+    let params = Parameter::empty("path".to_owned()).string().into();
 
     let arguments = Arguments::new(&params, arguments)?;
 
@@ -16,8 +16,8 @@ pub fn read(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 
 pub fn write(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
     let params = Parameters::new(vec![
-        Parameter::new("path".to_owned()).string(),
-        Parameter::new("body".to_owned()).string(),
+        Parameter::empty("path".to_owned()).string(),
+        Parameter::empty("body".to_owned()).string(),
     ])?;
 
     let arguments = Arguments::new(&params, arguments)?;

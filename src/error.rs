@@ -1,5 +1,6 @@
-use crate::interpreter::{ParameterType, Value};
+use crate::interpreter::Value;
 use crate::location::Location;
+use crate::parser::parameters::ParameterType;
 use crate::parser::Rule;
 use thiserror::Error;
 

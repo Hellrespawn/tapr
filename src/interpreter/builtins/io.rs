@@ -1,10 +1,10 @@
 use crate::error::ErrorKind;
-use crate::interpreter::parameters::Parameter;
 use crate::interpreter::{Arguments, Interpreter, Parameters, Value};
+use crate::parser::parameters::Parameter;
 use crate::Result;
 
 pub fn print(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let params = Parameter::new("item".to_owned()).rest().into();
+    let params = Parameter::empty("item".to_owned()).rest().into();
 
     let arguments = Arguments::new(&params, arguments)?;
 
@@ -18,7 +18,7 @@ pub fn print(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn println(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let params = Parameter::new("item".to_owned()).rest().into();
+    let params = Parameter::empty("item".to_owned()).rest().into();
 
     let arguments = Arguments::new(&params, arguments)?;
 
@@ -43,7 +43,7 @@ pub fn read(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn eval(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let params = Parameter::new("string".to_owned()).string().into();
+    let params = Parameter::empty("string".to_owned()).string().into();
 
     let arguments = Arguments::new(&params, arguments)?;
 
@@ -58,7 +58,7 @@ pub fn parse_number(
     _intp: &mut Interpreter,
     arguments: Vec<Value>,
 ) -> Result<Value> {
-    let params = Parameter::new("string".to_owned()).string().into();
+    let params = Parameter::empty("string".to_owned()).string().into();
 
     let arguments = Arguments::new(&params, arguments)?;
 

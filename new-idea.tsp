@@ -28,3 +28,7 @@
 (string/join-not-nil "/"
    [directory (?? (tags :albumartist) (tags :artist)) (album_and_date tags) (filename tags)]))
 
+(defn function
+[required_string:string required_any &opt optional_number:number optional_any & rest_any]
+(println required_a required_b optional_c optional_d rest_e)
+)

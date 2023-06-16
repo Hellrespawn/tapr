@@ -1,5 +1,5 @@
-use crate::interpreter::parameters::{Parameter, Parameters};
 use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::parser::parameters::{Parameter, Parameters};
 use crate::Result;
 
 type BooleanOp = fn(&Value, &Value) -> bool;
@@ -48,7 +48,7 @@ pub fn lt(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn not(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let params = Parameter::new("operand".to_owned()).into();
+    let params = Parameter::empty("operand".to_owned()).into();
 
     let arguments = Arguments::new(&params, arguments)?;
 
@@ -59,8 +59,8 @@ pub fn not(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 
 pub fn boolean_params() -> Parameters {
     Parameters::new(vec![
-        Parameter::new("operand".to_owned()),
-        Parameter::new("operands".to_owned()).rest(),
+        Parameter::empty("operand".to_owned()),
+        Parameter::empty("operands".to_owned()).rest(),
     ])
     .expect("boolean to have valid params")
 }

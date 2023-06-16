@@ -1,6 +1,6 @@
-use crate::interpreter::parameters::{Parameter, Parameters};
 use crate::interpreter::value::Callable;
 use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::parser::parameters::{Parameter, Parameters};
 use crate::Result;
 
 #[allow(clippy::unnecessary_wraps)]
@@ -9,7 +9,7 @@ pub fn list(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn head(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let parameters = Parameter::new("list".to_owned()).list().into();
+    let parameters = Parameter::empty("list".to_owned()).list().into();
 
     let arguments = Arguments::new(&parameters, arguments)?;
 
@@ -19,7 +19,7 @@ pub fn head(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn tail(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let parameters = Parameter::new("list".to_owned()).list().into();
+    let parameters = Parameter::empty("list".to_owned()).list().into();
 
     let arguments = Arguments::new(&parameters, arguments)?;
 
@@ -33,7 +33,7 @@ pub fn tail(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn peek(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let parameters = Parameter::new("list".to_owned()).list().into();
+    let parameters = Parameter::empty("list".to_owned()).list().into();
 
     let arguments = Arguments::new(&parameters, arguments)?;
 
@@ -127,25 +127,25 @@ pub fn reduce(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 
 pub fn push_params() -> Parameters {
     Parameters::new(vec![
-        Parameter::new("list".to_owned()).list(),
-        Parameter::new("element".to_owned()).rest(),
+        Parameter::empty("list".to_owned()).list(),
+        Parameter::empty("element".to_owned()).rest(),
     ])
     .unwrap()
 }
 
 pub fn map_filter_params() -> Parameters {
     Parameters::new(vec![
-        Parameter::new("function".to_owned()).function(),
-        Parameter::new("list".to_owned()).list(),
+        Parameter::empty("function".to_owned()).function(),
+        Parameter::empty("list".to_owned()).list(),
     ])
     .unwrap()
 }
 
 pub fn reduce_params() -> Parameters {
     Parameters::new(vec![
-        Parameter::new("initial".to_owned()),
-        Parameter::new("function".to_owned()).function(),
-        Parameter::new("list".to_owned()).list(),
+        Parameter::empty("initial".to_owned()),
+        Parameter::empty("function".to_owned()).function(),
+        Parameter::empty("list".to_owned()).list(),
     ])
     .unwrap()
 }

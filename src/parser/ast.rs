@@ -1,11 +1,14 @@
 use crate::env::{DebugAst, DEBUG_AST, DEBUG_PARSER};
 use crate::graph::GraphVisitor;
 use crate::location::Location;
+use crate::parser::parameters::{Parameter, Parameters};
 use crate::parser::{Parser, Rule};
 use crate::visitor::Visitor;
 use crate::Result;
 use pest::iterators::{Pair, Pairs};
 use pest::Parser as PestParser;
+
+use super::parameters::ParameterType;
 
 #[derive(Debug, Clone)]
 pub struct Node {
@@ -153,7 +156,7 @@ impl Node {
 #[derive(Debug, Clone)]
 pub enum Special {
     Fn {
-        parameters: Vec<String>,
+        parameters: Parameters,
         body: Vec<Node>,
     },
     If {
@@ -249,7 +252,9 @@ impl Special {
             .as_str()
             .to_owned();
 
-        let prefix = inner.next().map(|p| p.as_str().to_owned());
+        let prefix = inner
+            .next()
+            .map(|p| p.into_inner().next().unwrap().as_str().to_owned());
 
         Special::Import { name, prefix }
     }
@@ -286,12 +291,13 @@ impl Special {
 
     fn function(mut pairs: Pairs<Rule>) -> Special {
         Special::Fn {
-            parameters: pairs
-                .next()
-                .expect("function did not have arguments.")
-                .into_inner()
-                .map(|p| p.as_str().to_owned())
-                .collect(),
+            parameters: Self::parameters(
+                pairs
+                    .next()
+                    .expect("function did not have arguments.")
+                    .into_inner(),
+            ),
+
             body: pairs
                 .next()
                 .expect("function did not have function body.")
@@ -299,5 +305,66 @@ impl Special {
                 .map(Node::parse_value)
                 .collect(),
         }
+    }
+
+    fn parameters(mut pairs: Pairs<Rule>) -> Parameters {
+        let mut parameters = pairs
+            .next()
+            .unwrap()
+            .into_inner()
+            .map(|p| Self::parameter(p, false))
+            .collect::<Vec<_>>();
+
+        if let Some(pair) = pairs.next() {
+            parameters.extend(
+                pair.into_inner()
+                    .map(|p| Self::parameter(p, true))
+                    .collect::<Vec<_>>(),
+            );
+        }
+
+        if let Some(pair) = pairs.next() {
+            parameters.extend(
+                pair.into_inner()
+                    .map(|p| Self::parameter(p, true))
+                    .collect::<Vec<_>>(),
+            );
+        }
+
+        if let Some(pair) = pairs.next() {
+            parameters.push(
+                pair.into_inner()
+                    .map(|p| Self::parameter(p, false))
+                    .next()
+                    .unwrap()
+                    .rest(),
+            );
+        }
+
+        Parameters::new(parameters)
+            .expect("Grammar did not parse valid parameters for function.")
+    }
+
+    fn parameter(pair: Pair<Rule>, optional: bool) -> Parameter {
+        let mut inner = pair.into_inner();
+
+        let name = inner.next().unwrap().as_str().to_owned();
+        let ptype = inner.next().map(|p| p.as_str().to_owned());
+
+        Parameter::new(
+            name,
+            ptype
+                .into_iter()
+                .map(|p| match p.as_str() {
+                    "number" => ParameterType::Number,
+                    "string" => ParameterType::String,
+                    "list" => ParameterType::List,
+                    "module" => ParameterType::Module,
+                    _ => unreachable!(),
+                })
+                .collect::<Vec<_>>(),
+            optional,
+            false,
+        )
     }
 }

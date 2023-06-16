@@ -1,6 +1,5 @@
-use crate::interpreter::{
-    Arguments, Interpreter, Parameter, Parameters, Value,
-};
+use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::parser::parameters::{Parameter, Parameters};
 use crate::Result;
 
 pub fn env(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
@@ -13,7 +12,7 @@ pub fn env(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn lsmod(intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
-    let parameters = Parameter::new("module".to_owned()).module().into();
+    let parameters = Parameter::empty("module".to_owned()).module().into();
     let arguments = Arguments::new(&parameters, arguments)?;
 
     let (_, environment) = arguments.unwrap_module(0);

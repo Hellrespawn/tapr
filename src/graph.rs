@@ -1,4 +1,5 @@
 use crate::parser::ast::{Node, NodeData, Special};
+use crate::parser::parameters::Parameters;
 use crate::visitor::Visitor;
 use std::process::Command;
 
@@ -230,9 +231,8 @@ impl Visitor<()> for GraphVisitor {
         self.accept_and_connect_many(parent_node, nodes);
     }
 
-    fn visit_fn(&mut self, parameters: &[String], body: &[Node]) {
-        let parent_node =
-            self.new_node(&format!("fn\n[{}]", parameters.join(", ")));
+    fn visit_fn(&mut self, parameters: &Parameters, body: &[Node]) {
+        let parent_node = self.new_node(&format!("fn\n[{parameters}]"));
 
         self.accept_and_connect_many_with_label(parent_node, body, "body");
     }

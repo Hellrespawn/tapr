@@ -1,8 +1,8 @@
 use super::{Callable, Value};
 use crate::interpreter::environment::Environment;
-use crate::interpreter::parameters::Parameters;
 use crate::interpreter::{Arguments, Interpreter};
 use crate::parser::ast::Node;
+use crate::parser::parameters::Parameters;
 use crate::Result;
 
 #[derive(Debug, Clone)]

@@ -1,5 +1,5 @@
-use crate::interpreter::parameters::{Parameter, Parameters};
 use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::parser::parameters::{Parameter, Parameters};
 use crate::Result;
 
 // type ArithmeticOp = fn(&str, &str) -> String;
@@ -83,7 +83,7 @@ pub fn trim(_intp: &mut Interpreter, arguments: Vec<Value>) -> Result<Value> {
 }
 
 pub fn unary_params() -> Parameters {
-    Parameter::new("string".to_owned()).string().into()
+    Parameter::empty("string".to_owned()).string().into()
 }
 
 // pub fn arbitrary_params() -> Parameters {
@@ -96,8 +96,8 @@ pub fn unary_params() -> Parameters {
 
 fn join_params() -> Parameters {
     Parameters::new(vec![
-        Parameter::new("separator".to_owned()).string(),
-        Parameter::new("strings".to_owned()).string().rest(),
+        Parameter::empty("separator".to_owned()).string(),
+        Parameter::empty("strings".to_owned()).string().rest(),
     ])
     .expect("join parameters to be valid.")
 }

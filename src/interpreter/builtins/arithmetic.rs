@@ -1,5 +1,5 @@
-use crate::interpreter::parameters::{Parameter, Parameters};
 use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::parser::parameters::{Parameter, Parameters};
 use crate::Result;
 
 type BinaryOp = fn(f64, f64) -> f64;
@@ -80,13 +80,13 @@ pub fn decrement(
 }
 
 pub fn unary_params() -> Parameters {
-    Parameter::new("operand".to_owned()).number().into()
+    Parameter::empty("operand".to_owned()).number().into()
 }
 
 pub fn arbitrary_params() -> Parameters {
     Parameters::new(vec![
-        Parameter::new("operand".to_owned()).number(),
-        Parameter::new("operands".to_owned()).number().rest(),
+        Parameter::empty("operand".to_owned()).number(),
+        Parameter::empty("operands".to_owned()).number().rest(),
     ])
     .expect("arithmetic to have valid params")
 }

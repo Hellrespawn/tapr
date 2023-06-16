@@ -1,7 +1,7 @@
 WHITESPACE = _{ " " | "\n" | "\t" | "\0" }
 COMMENT    = _{ "#" ~ (!("\n") ~ ANY)* }
 
-sym_chars = _{ ASCII_ALPHANUMERIC | "!" | "$" | "%" | "&" | "*" | "+" | "-" | "." | ":" | "<" | "?" | "=" | ">" | "@" | "^" | "_" }
+sym_chars = _{ ASCII_ALPHANUMERIC | "!" | "$" | "%" | "*" | "+" | "-" | "." | "<" | "?" | "=" | ">" | "@" | "^" | "_" }
 
 token    = @{ sym_chars+ }
 symbol   = ${ (token ~ "/")? ~ token+ }
@@ -27,13 +27,21 @@ value = _{ constant | number | keyword | string | special | plist | blist | symb
 root = _{ value* }
 special = { defn | fn_ | if_ | import | set | var }
 
-function_arguments = { "[" ~ token* ~ "]" }
+parameter = ${ token ~ (":" ~ type)? }
+type = @{ "number" | "string" | "list" | "module" }
+
+parameters = { parameter* }
+optional_params = { "&opt" ~ parameter+ }
+rest_param = { "&" ~ parameter }
+
+function_parameters = { "[" ~ parameters ~ (optional_params)? ~ (rest_param)? ~ "]" }
+
 function_body = { value +}
-defn   = { "(" ~ "defn" ~ #name = token ~ function_arguments ~ function_body ~ ")" }
-fn_    = { "(" ~ "fn" ~ function_arguments ~ function_body ~ ")"}
+defn   = { "(" ~ "defn" ~ #name = token ~ function_parameters ~ function_body ~ ")" }
+fn_    = { "(" ~ "fn" ~ function_parameters ~ function_body ~ ")"}
 
 if_    = { "(" ~ "if" ~ #cond = value ~ #then = value ~ #else = value? ~ ")" }
-import = { "(" ~ "import" ~ #name = token ~ (":as" ~ #prefix = token)? ~ ")" }
+import = { "(" ~ "import" ~ #name = token ~ (":as" ~ #prefix = string)? ~ ")" }
 set    = { "(" ~ "set" ~ #name = token ~ value ~ ")" }
 var    = { "(" ~ "var" ~ #name = token ~ value ~ ")" }
 

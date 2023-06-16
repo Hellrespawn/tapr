@@ -1,3 +1,1 @@
-(import stdlib :as std)
-
-(_env)
+(defn test [a:string b c &optd e &f] a)

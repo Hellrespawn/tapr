@@ -2,11 +2,9 @@ mod arguments;
 mod builtins;
 mod environment;
 mod native;
-mod parameters;
 mod value;
 
 pub use arguments::Arguments;
-pub use parameters::{Parameter, ParameterType, Parameters};
 pub use value::Value;
 
 use self::builtins::get_builtin_environment;
@@ -17,6 +15,7 @@ use crate::location::Location;
 use crate::parser::ast;
 use crate::parser::ast::Node;
 use crate::parser::ast::Special::If;
+use crate::parser::parameters::Parameters;
 use crate::visitor::Visitor;
 use crate::Result;
 use std::io::Write;
@@ -146,17 +145,13 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
 
     fn visit_fn(
         &mut self,
-        parameters: &[String],
+        parameters: &Parameters,
         body: &[Node],
     ) -> Result<Value> {
-        let parameters = Parameters::new(
-            parameters
-                .iter()
-                .map(|s| Parameter::new(s.clone()))
-                .collect(),
-        )?;
-
-        Ok(Value::Function(Function::new(parameters, body.to_vec())))
+        Ok(Value::Function(Function::new(
+            parameters.clone(),
+            body.to_vec(),
+        )))
     }
 
     fn visit_if(
