@@ -27,8 +27,8 @@ value = _{ constant | number | keyword | string | special | plist | blist | symb
 root = _{ value* }
 special = { defn | fn_ | if_ | import | set | var }
 
-parameter = ${ token ~ (":" ~ type)? }
-type = @{ "number" | "string" | "list" | "module" }
+parameter = ${ token ~ (":" ~ type ~ ("|" ~ type)* )? }
+type = @{ "bool" | "number" | "string" | "list" | "module" | "function" | "nil" }
 
 parameters = { parameter* }
 optional_parameters = { "&opt" ~ parameter+ }

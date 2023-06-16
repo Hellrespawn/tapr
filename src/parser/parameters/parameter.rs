@@ -1,7 +1,5 @@
 use super::parameter_type::ParameterType;
-use crate::error::ErrorKind;
 use crate::interpreter::Value;
-use crate::Result;
 
 #[derive(Debug, Clone, Default)]
 pub struct Parameter {
@@ -88,20 +86,11 @@ impl Parameter {
         &self.parameter_types
     }
 
-    pub fn value_is_type(&self, value: &Value) -> Result<()> {
-        if self.parameter_types.is_empty()
+    pub fn value_is_type(&self, value: &Value) -> bool {
+        self.parameter_types.is_empty()
             || self
                 .parameter_types
                 .iter()
                 .any(|pt| pt.value_is_type(value))
-        {
-            Ok(())
-        } else {
-            Err(ErrorKind::InvalidArgument {
-                expected: self.parameter_types.clone(),
-                actual: value.clone(),
-            }
-            .into())
-        }
     }
 }

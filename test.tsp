@@ -1,1 +1,1 @@
-(fn [n:number & m:number] n)
+(fn [arg:string|nil] arg)

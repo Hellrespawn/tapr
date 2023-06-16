@@ -1,22 +1,7 @@
+use super::{tuple_to_value, NativeFunctionTuple};
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::Result;
-
-use super::{tuple_to_value, NativeFunctionTuple};
-
-fn env(intp: &mut Interpreter, _arguments: &Arguments) -> Result<Value> {
-    writeln!(intp.output, "{}", intp.environment)?;
-
-    Ok(Value::Nil)
-}
-
-fn lsmod(intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
-    let environment = arguments.unwrap_module(0);
-
-    writeln!(intp.output, "{environment}")?;
-
-    Ok(Value::Nil)
-}
 
 pub fn get_debug_environment() -> Environment {
     let tuples: Vec<NativeFunctionTuple> =
@@ -31,4 +16,18 @@ pub fn get_debug_environment() -> Environment {
     }
 
     environment
+}
+
+fn env(intp: &mut Interpreter, _arguments: &Arguments) -> Result<Value> {
+    writeln!(intp.output, "{}", intp.environment)?;
+
+    Ok(Value::Nil)
+}
+
+fn lsmod(intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+    let environment = arguments.unwrap_module(0);
+
+    writeln!(intp.output, "{environment}")?;
+
+    Ok(Value::Nil)
 }

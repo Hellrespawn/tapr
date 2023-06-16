@@ -1,6 +1,7 @@
 use super::environment::Environment;
 use super::{Parameters, Value};
-use crate::error::ErrorKind;
+use crate::error::{Error, ErrorKind};
+use crate::parser::parameters::Parameter;
 use crate::Result;
 
 pub struct Arguments<'a> {
@@ -145,7 +146,9 @@ impl<'a> Arguments<'a> {
     fn check_types(&self) -> Result<()> {
         // Check pairs of params and args, length is already checked here.
         for (param, arg) in self.parameters.iter().zip(&self.arguments) {
-            param.value_is_type(arg)?;
+            if !param.value_is_type(arg) {
+                return Err(Self::create_argument_error(param, arg));
+            }
         }
 
         // If function has a rest parameter...
@@ -158,11 +161,23 @@ impl<'a> Arguments<'a> {
 
                 // Check the last param.
                 for arg in remaining_args {
-                    last_param.value_is_type(arg)?;
+                    if !last_param.value_is_type(arg) {
+                        return Err(Self::create_argument_error(
+                            last_param, arg,
+                        ));
+                    }
                 }
             }
         }
 
         Ok(())
+    }
+
+    fn create_argument_error(parameter: &Parameter, value: &Value) -> Error {
+        ErrorKind::InvalidArgument {
+            expected: parameter.types().to_vec(),
+            actual: value.clone(),
+        }
+        .into()
     }
 }

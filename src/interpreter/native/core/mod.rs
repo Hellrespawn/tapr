@@ -13,13 +13,13 @@ pub fn get_core_environment() -> Environment {
         ("%", arithmetic::modulus, "n:number m:number"),
         ("++", arithmetic::increment, "n:number"),
         ("--", arithmetic::decrement, "n:number"),
-        ("!", boolean::not, "b:boolean"),
-        (">", boolean::gt, "& b:boolean"),
-        (">=", boolean::gte, "& b:boolean"),
-        ("==", boolean::eq, "& b:boolean"),
-        ("<=", boolean::lte, "& b:boolean"),
-        ("<", boolean::lt, "& b:boolean"),
-        ("!=", boolean::ne, "& b:boolean"),
+        ("!", boolean::not, "b"),
+        (">", boolean::gt, "& b"),
+        (">=", boolean::gte, "& b"),
+        ("==", boolean::eq, "& b"),
+        ("<=", boolean::lte, "& b"),
+        ("<", boolean::lt, "& b"),
+        ("!=", boolean::ne, "& b"),
     ];
 
     let mut environment = Environment::new();

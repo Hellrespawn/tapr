@@ -329,23 +329,20 @@ fn parameter(pair: Pair<Rule>, optional: bool) -> Parameter {
     let mut inner = pair.into_inner();
 
     let name = inner.next().unwrap().as_str().to_owned();
-    let ptype = inner.next().map(|p| p.as_str().to_owned());
+    let ptypes = inner
+        .map(|p| match p.as_str() {
+            "bool" => ParameterType::Boolean,
+            "number" => ParameterType::Number,
+            "string" => ParameterType::String,
+            "list" => ParameterType::List,
+            "module" => ParameterType::Module,
+            "function" => ParameterType::Function,
+            "nil" => ParameterType::Nil,
+            other => unreachable!("{:?}", other),
+        })
+        .collect();
 
-    Parameter::new(
-        name,
-        ptype
-            .into_iter()
-            .map(|p| match p.as_str() {
-                "number" => ParameterType::Number,
-                "string" => ParameterType::String,
-                "list" => ParameterType::List,
-                "module" => ParameterType::Module,
-                _ => unreachable!(),
-            })
-            .collect::<Vec<_>>(),
-        optional,
-        false,
-    )
+    Parameter::new(name, ptypes, optional, false)
 }
 
 fn optional_parameters(pair: Pair<Rule>) -> Vec<Parameter> {

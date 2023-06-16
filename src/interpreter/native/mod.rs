@@ -6,6 +6,8 @@ use once_cell::sync::Lazy;
 
 mod core;
 mod debug;
+mod list;
+mod string;
 
 pub static NATIVE_ENVIRONMENT: Lazy<Environment> = Lazy::new(|| {
     let mut environment = core::get_core_environment();
@@ -16,6 +18,20 @@ pub static NATIVE_ENVIRONMENT: Lazy<Environment> = Lazy::new(|| {
             Value::Module(debug::get_debug_environment()),
         )
         .expect("Unable to add debug module to core environment.");
+
+    environment
+        .insert(
+            "list".to_owned(),
+            Value::Module(list::get_list_environment()),
+        )
+        .expect("Unable to add list module to core environment.");
+
+    environment
+        .insert(
+            "string".to_owned(),
+            Value::Module(string::get_string_environment()),
+        )
+        .expect("Unable to add string module to core environment.");
 
     environment
 });
