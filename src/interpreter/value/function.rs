@@ -34,7 +34,7 @@ impl Callable for Function {
         let mut function_environment = Environment::new();
         arguments.add_to_env(&mut function_environment)?;
 
-        intp.enter_scope_with(function_environment);
+        intp.push_environment(function_environment);
 
         let mut values = self
             .body
@@ -49,5 +49,9 @@ impl Callable for Function {
 
     fn arity(&self) -> usize {
         self.parameters.len()
+    }
+
+    fn parameters(&self) -> &Parameters {
+        &self.parameters
     }
 }

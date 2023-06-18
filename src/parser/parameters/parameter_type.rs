@@ -22,7 +22,7 @@ impl ParameterType {
             ParameterType::Module => {
                 matches!(value, Value::Module { .. })
             }
-            ParameterType::Function => value.as_callable().is_some(),
+            ParameterType::Function => matches!(value, Value::Callable(_)),
             ParameterType::List => matches!(value, Value::List(_)),
             ParameterType::Number => matches!(value, Value::Number(_)),
             ParameterType::String => matches!(value, Value::String(_)),

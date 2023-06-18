@@ -21,9 +21,14 @@ mod location;
 mod parser;
 mod visitor;
 
-type Result<T> = std::result::Result<T, error::Error>;
+pub type Result<T> = std::result::Result<T, error::Error>;
 
+pub use crate::Result as TaprResult;
 pub use cli::main;
 pub use error::Error as TaprError;
-pub use interpreter::{Interpreter, Value};
+pub use interpreter::{
+    Arguments, Callable, Environment, Interpreter, NativeFunction, Value,
+};
+pub use parser::ast::{Node, NodeData};
+pub use parser::parameters::{Parameter, ParameterType, Parameters};
 pub use visitor::Visitor;

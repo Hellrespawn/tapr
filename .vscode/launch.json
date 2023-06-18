@@ -25,7 +25,7 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug 'test.tsp'",
+            "name": "Debug 'test.tapr'",
             "cargo": {
                 "args": [
                     "build",
@@ -38,7 +38,7 @@
                 }
             },
             "args": [
-                "test.tsp"
+                "test.tapr"
             ],
             "cwd": "${workspaceFolder}"
         },

@@ -5,8 +5,9 @@ pub use function::Function;
 use super::environment::Environment;
 use super::native::NativeFunction;
 use super::Interpreter;
-use crate::Result;
+use crate::{Parameters, Result};
 use std::cmp::Ordering;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -17,8 +18,7 @@ pub enum Value {
     Symbol(String),
     Keyword(String),
     List(Vec<Self>),
-    Native(NativeFunction),
-    Function(Function),
+    Callable(Arc<dyn Callable>),
     Module(Environment),
 }
 
@@ -33,14 +33,6 @@ impl Value {
 
     pub fn is_falsy(&self) -> bool {
         !self.is_truthy()
-    }
-
-    pub fn as_callable(&self) -> Option<&dyn Callable> {
-        match self {
-            Value::Function(f) => Some(f),
-            Value::Native(n) => Some(n),
-            _ => None,
-        }
     }
 
     pub fn repl_repr(&self) -> String {
@@ -65,7 +57,7 @@ impl From<String> for Value {
 
 impl From<NativeFunction> for Value {
     fn from(value: NativeFunction) -> Self {
-        Value::Native(value)
+        Value::Callable(Arc::new(value))
     }
 }
 
@@ -134,10 +126,7 @@ impl std::fmt::Display for Value {
                         .join(" ")
                 )
             }
-            Value::Native(native) => native.fmt(f),
-            Value::Function(function) => {
-                write!(f, "<function ({} args)>", function.parameters.len())
-            }
+            Value::Callable(callable) => callable.fmt(f),
             Value::Module(environment) => {
                 write!(f, "<module ({})>", environment.len())
             }
@@ -145,7 +134,7 @@ impl std::fmt::Display for Value {
     }
 }
 
-pub trait Callable: std::fmt::Debug + std::fmt::Display {
+pub trait Callable: std::fmt::Debug + std::fmt::Display + Send + Sync {
     fn call(
         &self,
         intp: &mut Interpreter,
@@ -153,4 +142,6 @@ pub trait Callable: std::fmt::Debug + std::fmt::Display {
     ) -> Result<Value>;
 
     fn arity(&self) -> usize;
+
+    fn parameters(&self) -> &Parameters;
 }

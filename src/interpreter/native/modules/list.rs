@@ -56,11 +56,9 @@ fn push(_: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
 }
 
 fn reduce(intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
-    let function = arguments.unwrap_function(0);
+    let callable = arguments.unwrap_callable(0);
     let init = arguments.unwrap(1);
     let input = arguments.unwrap_list(2);
-
-    let callable = function.as_callable().expect("Checked by Arguments.");
 
     let mut output = init;
 
@@ -72,10 +70,8 @@ fn reduce(intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
 }
 
 fn filter(intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
-    let function = arguments.unwrap_function(0);
+    let callable = arguments.unwrap_callable(0);
     let values = arguments.unwrap_list(1);
-
-    let callable = function.as_callable().expect("Checked by Arguments.");
 
     let mut output = Vec::new();
 
@@ -91,10 +87,8 @@ fn filter(intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
 }
 
 fn map(intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
-    let function = arguments.unwrap_function(0);
+    let callable = arguments.unwrap_callable(0);
     let values = arguments.unwrap_list(1);
-
-    let callable = function.as_callable().expect("Checked by Arguments.");
 
     let output = values
         .into_iter()

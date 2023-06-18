@@ -75,4 +75,8 @@ impl Callable for NativeFunction {
     fn arity(&self) -> usize {
         self.parameters.len()
     }
+
+    fn parameters(&self) -> &Parameters {
+        &self.parameters
+    }
 }

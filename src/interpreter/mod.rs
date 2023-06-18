@@ -3,11 +3,11 @@ mod environment;
 mod native;
 mod value;
 
+pub use self::environment::Environment;
 pub use arguments::Arguments;
-pub use native::NATIVE_ENVIRONMENT;
-pub use value::Value;
+pub use native::NativeFunction;
+pub use value::{Callable, Value};
 
-use self::environment::Environment;
 use self::value::Function;
 use crate::error::{Error, ErrorKind};
 use crate::location::Location;
@@ -17,8 +17,10 @@ use crate::parser::ast::Special::If;
 use crate::parser::parameters::Parameters;
 use crate::visitor::Visitor;
 use crate::Result;
+use native::NATIVE_ENVIRONMENT;
 use std::io::Write;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 pub struct Interpreter<'i> {
     pub output: Box<dyn Write + 'i>,
@@ -50,6 +52,22 @@ impl<'i> Interpreter<'i> {
         node.accept(self)
     }
 
+    pub fn push_environment(&mut self, new_environment: Environment) {
+        let old_environment =
+            std::mem::replace(&mut self.environment, new_environment);
+
+        self.environment.set_parent(old_environment);
+    }
+
+    pub fn pop_environment(&mut self) -> Environment {
+        let parent_environment = self
+            .environment
+            .take_parent()
+            .expect("Scope to have parent.");
+
+        std::mem::replace(&mut self.environment, parent_environment)
+    }
+
     fn get(&self, name: &str, location: Location) -> Result<Value> {
         if let Some(value) = self.environment.get(name) {
             Ok(value.clone())
@@ -70,20 +88,8 @@ impl<'i> Interpreter<'i> {
         self.environment.set_parent(old_environment);
     }
 
-    fn enter_scope_with(&mut self, new_environment: Environment) {
-        let old_environment =
-            std::mem::replace(&mut self.environment, new_environment);
-
-        self.environment.set_parent(old_environment);
-    }
-
     fn exit_scope(&mut self) -> Environment {
-        let parent_environment = self
-            .environment
-            .take_parent()
-            .expect("Scope to have parent.");
-
-        std::mem::replace(&mut self.environment, parent_environment)
+        self.pop_environment()
     }
 
     fn add_location_to_error(mut error: Error, location: Location) -> Error {
@@ -147,10 +153,9 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
         parameters: &Parameters,
         body: &[Node],
     ) -> Result<Value> {
-        Ok(Value::Function(Function::new(
-            parameters.clone(),
-            body.to_vec(),
-        )))
+        let function = Function::new(parameters.clone(), body.to_vec());
+
+        Ok(Value::Callable(Arc::new(function)))
     }
 
     fn visit_if(
@@ -178,7 +183,7 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
             if path.extension().is_some() {
                 path
             } else {
-                path.with_extension("tsp")
+                path.with_extension("tapr")
             }
         };
 
@@ -257,7 +262,7 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
                 let node = &nodes[0];
                 let value = nodes[0].accept(self)?;
 
-                let Some(callable) = value.as_callable() else {
+                let Value::Callable(callable) = value else {
                     return Err(Error::new(node.location(), ErrorKind::NotCallable(value)))
                 };
 
@@ -284,7 +289,7 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
                 return Err(Error::new(location, ErrorKind::ModuleNotDefined(module.clone())));
             };
 
-            self.enter_scope_with(environment);
+            self.push_environment(environment);
 
             let value = self.get(value, location)?;
 

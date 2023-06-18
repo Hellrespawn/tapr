@@ -1,4 +1,5 @@
 use super::environment::Environment;
+use super::value::Callable;
 use super::{Parameters, Value};
 use crate::error::{Error, ErrorKind};
 use crate::parser::parameters::Parameter;
@@ -23,6 +24,10 @@ impl<'a> Arguments<'a> {
         arguments.check_types()?;
 
         Ok(arguments)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.arguments.is_empty()
     }
 
     pub fn len(&self) -> usize {
@@ -95,18 +100,28 @@ impl<'a> Arguments<'a> {
         if let Value::Module(environment) = argument {
             environment
         } else {
-            panic!("Called unwrap_function on non-Value::Module")
+            panic!("Called unwrap_module on non-Value::Module")
         }
     }
 
-    pub fn unwrap_function(&self, index: usize) -> Value {
+    pub fn unwrap_callable(&self, index: usize) -> &dyn Callable {
         let argument = &self.arguments[index];
 
-        if !matches!(argument, Value::Function(_) | Value::Native(_)) {
-            panic!("Called unwrap_function on non-Value::{{Builtin, Function}}")
+        if let Value::Callable(callable) = argument {
+            &**callable
+        } else {
+            panic!("Called unwrap_callable on non-Value::Callable")
         }
+    }
 
-        argument.clone()
+    pub fn unwrap_keyword(&self, index: usize) -> String {
+        let argument = &self.arguments[index];
+
+        let Value::Keyword(keyword) = argument else {
+            panic!("Called unwrap_keyword on non-Value::Keyword")
+        };
+
+        keyword.clone()
     }
 
     pub fn unwrap_number(&self, index: usize) -> f64 {

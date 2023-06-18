@@ -83,6 +83,10 @@ impl Environment {
         self.map.get(key).is_some()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.map.is_empty()
+    }
+
     pub fn len(&self) -> usize {
         self.map.len()
     }

@@ -35,36 +35,49 @@ impl Parameter {
         &self.name
     }
 
+    #[must_use]
     pub fn module(mut self) -> Self {
         self.parameter_types.push(ParameterType::Module);
         self
     }
 
+    #[must_use]
     pub fn function(mut self) -> Self {
         self.parameter_types.push(ParameterType::Function);
         self
     }
 
+    #[must_use]
     pub fn list(mut self) -> Self {
         self.parameter_types.push(ParameterType::List);
         self
     }
 
+    #[must_use]
+    pub fn keyword(mut self) -> Self {
+        self.parameter_types.push(ParameterType::Keyword);
+        self
+    }
+
+    #[must_use]
     pub fn number(mut self) -> Self {
         self.parameter_types.push(ParameterType::Number);
         self
     }
 
+    #[must_use]
     pub fn string(mut self) -> Self {
         self.parameter_types.push(ParameterType::String);
         self
     }
 
+    #[must_use]
     pub fn optional(mut self) -> Self {
         self.optional = true;
         self
     }
 
+    #[must_use]
     pub fn rest(mut self) -> Self {
         self.rest = true;
         self
