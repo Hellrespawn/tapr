@@ -1,21 +1,25 @@
-use super::{tuple_to_value, NativeFunctionTuple};
+use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::Result;
 
-pub fn get_debug_environment() -> Environment {
-    let tuples: Vec<NativeFunctionTuple> =
-        vec![("env", env, ""), ("lsmod", lsmod, "m:module")];
+pub struct Debug;
 
-    let mut environment = Environment::new();
+impl NativeModule for Debug {
+    fn environment(&self) -> Environment {
+        let tuples: Vec<NativeFunctionTuple> =
+            vec![("env", env, ""), ("lsmod", lsmod, "m:module")];
 
-    for tuple in tuples {
-        environment
-            .insert(tuple.0.to_owned(), tuple_to_value(tuple))
-            .expect("Unable to add core functions to environment.");
+        tuples_to_environment(tuples, self.name())
     }
 
-    environment
+    fn name(&self) -> &'static str {
+        "debug"
+    }
+
+    fn is_core_module(&self) -> bool {
+        false
+    }
 }
 
 fn env(intp: &mut Interpreter, _arguments: &Arguments) -> Result<Value> {

@@ -1,28 +1,32 @@
 #![allow(clippy::unnecessary_wraps)]
-use super::{tuple_to_value, NativeFunctionTuple};
+use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::Result;
 
-pub fn get_list_environment() -> Environment {
-    let tuples: Vec<NativeFunctionTuple> = vec![
-        ("head", head, "l:list"),
-        ("tail", tail, "l:list"),
-        ("push", push, "l:list"),
-        ("filter", filter, "f:function l:list"),
-        ("map", map, "f:function l:list"),
-        ("reduce", reduce, "f:function init l:list"),
-    ];
+pub struct List;
 
-    let mut environment = Environment::new();
+impl NativeModule for List {
+    fn environment(&self) -> Environment {
+        let tuples: Vec<NativeFunctionTuple> = vec![
+            ("head", head, "l:list"),
+            ("tail", tail, "l:list"),
+            ("push", push, "l:list"),
+            ("filter", filter, "f:function l:list"),
+            ("map", map, "f:function l:list"),
+            ("reduce", reduce, "f:function init l:list"),
+        ];
 
-    for tuple in tuples {
-        environment
-            .insert(tuple.0.to_owned(), tuple_to_value(tuple))
-            .expect("Unable to add core functions to environment.");
+        tuples_to_environment(tuples, self.name())
     }
 
-    environment
+    fn name(&self) -> &'static str {
+        "list"
+    }
+
+    fn is_core_module(&self) -> bool {
+        false
+    }
 }
 
 fn head(_: &mut Interpreter, arguments: &Arguments) -> Result<Value> {

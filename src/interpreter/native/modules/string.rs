@@ -1,30 +1,34 @@
 #![allow(clippy::unnecessary_wraps)]
-use super::{tuple_to_value, NativeFunctionTuple};
+use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::Result;
 
-pub fn get_string_environment() -> Environment {
-    let tuples: Vec<NativeFunctionTuple> = vec![
-        ("len", len, "s:string"),
-        ("join", join, "separator:string & s:string"),
-        (
-            "join-not-nil",
-            join_not_nil,
-            "separator:string & s:string|nil",
-        ),
-        ("trim", trim, "s:string"),
-    ];
+pub struct StringModule;
 
-    let mut environment = Environment::new();
+impl NativeModule for StringModule {
+    fn environment(&self) -> Environment {
+        let tuples: Vec<NativeFunctionTuple> = vec![
+            ("len", len, "s:string"),
+            ("join", join, "separator:string & s:string"),
+            (
+                "join-not-nil",
+                join_not_nil,
+                "separator:string & s:string|nil",
+            ),
+            ("trim", trim, "s:string"),
+        ];
 
-    for tuple in tuples {
-        environment
-            .insert(tuple.0.to_owned(), tuple_to_value(tuple))
-            .expect("Unable to add core functions to environment.");
+        tuples_to_environment(tuples, self.name())
     }
 
-    environment
+    fn name(&self) -> &'static str {
+        "string"
+    }
+
+    fn is_core_module(&self) -> bool {
+        false
+    }
 }
 
 type UnaryOp = fn(&str) -> String;

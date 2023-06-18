@@ -4,39 +4,29 @@ use super::{Arguments, Interpreter, Parameters, Value};
 use crate::Result;
 use once_cell::sync::Lazy;
 
-mod core;
-mod debug;
-mod list;
-mod string;
+mod modules;
 
 pub static NATIVE_ENVIRONMENT: Lazy<Environment> = Lazy::new(|| {
-    let mut environment = core::get_core_environment();
+    let mut environment = Environment::new();
 
-    environment
-        .insert(
-            "debug".to_owned(),
-            Value::Module(debug::get_debug_environment()),
-        )
-        .expect("Unable to add debug module to core environment.");
-
-    environment
-        .insert(
-            "list".to_owned(),
-            Value::Module(list::get_list_environment()),
-        )
-        .expect("Unable to add list module to core environment.");
-
-    environment
-        .insert(
-            "string".to_owned(),
-            Value::Module(string::get_string_environment()),
-        )
-        .expect("Unable to add string module to core environment.");
+    for module in modules::get_modules() {
+        if module.is_core_module() {
+            environment
+                .merge_values(module.environment())
+                .unwrap_or_else(|_| {
+                    panic!("Unable to merge core '{}' module.", module.name())
+                });
+        } else {
+            environment
+                .insert(module.name().to_owned(), module.environment().into())
+                .unwrap_or_else(|_| {
+                    panic!("Unable to insert '{}' module.", module.name())
+                });
+        }
+    }
 
     environment
 });
-
-pub type NativeFunctionTuple = (&'static str, NativeFunctionImpl, &'static str);
 
 pub type NativeFunctionImpl =
     fn(intp: &mut Interpreter, arguments: &Arguments) -> Result<Value>;
@@ -85,16 +75,4 @@ impl Callable for NativeFunction {
     fn arity(&self) -> usize {
         self.parameters.len()
     }
-}
-
-fn tuple_to_value(tuple: NativeFunctionTuple) -> Value {
-    NativeFunction::new(
-        tuple.0,
-        tuple.1,
-        tuple
-            .2
-            .try_into()
-            .expect("Native function should have valid parameters-string."),
-    )
-    .into()
 }

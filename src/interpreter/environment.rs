@@ -17,6 +17,14 @@ impl Environment {
         }
     }
 
+    pub fn merge_values(&mut self, other: Environment) -> Result<()> {
+        for (key, value) in other.map {
+            self.insert(key, value)?;
+        }
+
+        Ok(())
+    }
+
     pub fn set_parent(&mut self, environment: Environment) {
         self.parent.replace(Box::new(environment));
     }

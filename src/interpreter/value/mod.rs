@@ -57,9 +57,21 @@ impl From<f64> for Value {
     }
 }
 
+impl From<String> for Value {
+    fn from(value: String) -> Self {
+        Value::String(value)
+    }
+}
+
 impl From<NativeFunction> for Value {
     fn from(value: NativeFunction) -> Self {
         Value::Native(value)
+    }
+}
+
+impl From<Environment> for Value {
+    fn from(value: Environment) -> Self {
+        Value::Module(value)
     }
 }
 

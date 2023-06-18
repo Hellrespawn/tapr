@@ -1,6 +1,35 @@
 #![allow(clippy::unnecessary_wraps)]
+use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::Result;
+
+use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
+
+pub struct Boolean;
+
+impl NativeModule for Boolean {
+    fn environment(&self) -> Environment {
+        let tuples: Vec<NativeFunctionTuple> = vec![
+            ("!", not, "b"),
+            (">", gt, "& b"),
+            (">=", gte, "& b"),
+            ("==", eq, "& b"),
+            ("<=", lte, "& b"),
+            ("<", lt, "& b"),
+            ("!=", ne, "& b"),
+        ];
+
+        tuples_to_environment(tuples, self.name())
+    }
+
+    fn name(&self) -> &'static str {
+        "arithmetic"
+    }
+
+    fn is_core_module(&self) -> bool {
+        true
+    }
+}
 
 type BinaryOp = fn(Value, Value) -> bool;
 type UnaryOp = fn(Value) -> bool;

@@ -1,6 +1,34 @@
 #![allow(clippy::unnecessary_wraps)]
+use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
+use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::Result;
+
+pub struct Arithmetic;
+
+impl NativeModule for Arithmetic {
+    fn environment(&self) -> Environment {
+        let tuples: Vec<NativeFunctionTuple> = vec![
+            ("+", add, "n:number & m:number"),
+            ("-", subtract, "n:number & m:number"),
+            ("/", divide, "n:number & m:number"),
+            ("*", multiply, "n:number & m:number"),
+            ("%", modulus, "n:number m:number"),
+            ("++", increment, "n:number"),
+            ("--", decrement, "n:number"),
+        ];
+
+        tuples_to_environment(tuples, self.name())
+    }
+
+    fn name(&self) -> &'static str {
+        "arithmetic"
+    }
+
+    fn is_core_module(&self) -> bool {
+        true
+    }
+}
 
 type BinaryOp = fn(f64, f64) -> f64;
 type UnaryOp = fn(f64) -> f64;
