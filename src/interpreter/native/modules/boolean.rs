@@ -17,6 +17,9 @@ impl NativeModule for Boolean {
             ("<=", lte, "& b"),
             ("<", lt, "& b"),
             ("!=", ne, "& b"),
+            ("or", or, "& v"),
+            ("and", and, "& v"),
+            ("??", nil_coalesce, "& v"),
         ];
 
         tuples_to_environment(tuples, self.name())
@@ -48,15 +51,6 @@ fn variadic(op: BinaryOp, arguments: &Arguments) -> Result<Value> {
 
     Ok(Value::Boolean(acc))
 }
-
-// fn binary(op: BinaryOp, arguments: &Arguments) -> Result<Value> {
-//     let values = arguments.unwrap_from(0);
-
-//     let lhs = values[0].clone();
-//     let rhs = values[1].clone();
-
-//     Ok(Value::Boolean(op(lhs, rhs)))
-// }
 
 fn unary(op: UnaryOp, arguments: &Arguments) -> Result<Value> {
     let value = arguments.unwrap(0);
@@ -90,4 +84,46 @@ pub fn lt(_intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
 
 pub fn ne(_intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
     variadic(|lhs, rhs| lhs != rhs, arguments)
+}
+
+pub fn or(_intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+    let values = arguments.unwrap_from(0);
+    let last_index = values.len() - 1;
+
+    for (i, argument) in values.into_iter().enumerate() {
+        if argument.is_truthy() || i == last_index {
+            return Ok(argument);
+        }
+    }
+
+    unreachable!()
+}
+
+pub fn and(_intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+    let values = arguments.unwrap_from(0);
+    let last_index = values.len() - 1;
+
+    for (i, argument) in values.into_iter().enumerate() {
+        if argument.is_falsy() || i == last_index {
+            return Ok(argument);
+        }
+    }
+
+    unreachable!()
+}
+
+pub fn nil_coalesce(
+    _intp: &mut Interpreter,
+    arguments: &Arguments,
+) -> Result<Value> {
+    let values = arguments.unwrap_from(0);
+    let last_index = values.len() - 1;
+
+    for (i, argument) in values.into_iter().enumerate() {
+        if matches!(argument, Value::Nil) || i == last_index {
+            return Ok(argument);
+        }
+    }
+
+    unreachable!()
 }

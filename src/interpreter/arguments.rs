@@ -109,6 +109,16 @@ impl<'a> Arguments<'a> {
         argument.clone()
     }
 
+    pub fn unwrap_number(&self, index: usize) -> f64 {
+        let argument = &self.arguments[index];
+
+        let Value::Number(number) = argument else {
+            panic!("Called unwrap_number on non-Value::Number")
+        };
+
+        *number
+    }
+
     pub fn unwrap_numbers(&self) -> Vec<f64> {
         self.arguments
             .iter()

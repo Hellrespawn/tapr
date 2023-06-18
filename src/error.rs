@@ -144,4 +144,7 @@ pub enum ErrorKind {
 
     #[error("Unable to parse {0:?} as number")]
     ParseNumberError(String),
+
+    #[error("Unable to parse {0} as integer.")]
+    InvalidInteger(f64),
 }

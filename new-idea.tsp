@@ -3,7 +3,7 @@
 (if (tags :album)  # if <album>
    (if (tags :date)   # then if <date>
    (string/join-not-nil "" [   # then join date and albumsort and album
-      (date/year (tags :date))
+      (date (tags :date))
       (if (tags :albumsort)
             (string/join "" ["." (number/align 2 (tags :albumsort))]))
       " - "
