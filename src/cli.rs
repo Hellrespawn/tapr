@@ -4,6 +4,10 @@ use crate::Result;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
+// TODO More sophisticated command line handling.
+// TODO Save repl-history in a config dir
+// TODO Allow resetting of REPL history
+
 const HISTFILE: &str = "history.txt";
 
 pub fn main() {

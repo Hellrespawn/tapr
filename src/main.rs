@@ -1,3 +1,3 @@
 fn main() {
-    tapr::cli::main();
+    tapr::main();
 }

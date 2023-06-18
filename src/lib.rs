@@ -12,7 +12,7 @@ extern crate pest;
 #[macro_use]
 extern crate pest_derive;
 
-pub mod cli;
+mod cli;
 mod env;
 mod error;
 mod graph;
@@ -21,8 +21,9 @@ mod location;
 mod parser;
 mod visitor;
 
-pub type Result<T> = std::result::Result<T, error::Error>;
+type Result<T> = std::result::Result<T, error::Error>;
 
-// TODO More sophisticated command line handling.
-// TODO Save repl-history in a config dir
-// TODO Allow resetting of REPL history
+pub use cli::main;
+pub use error::Error as TaprError;
+pub use interpreter::{Interpreter, Value};
+pub use visitor::Visitor;
