@@ -37,7 +37,7 @@ rest_parameter = { "&" ~ parameter }
 function_parameters = { parameters ~ (optional_parameters)? ~ (rest_parameter)? }
 
 function_body = { value +}
-defn   = { "(" ~ "defn" ~ #name = token ~ function_parameters ~ function_body ~ ")" }
+defn   = { "(" ~ "defn" ~ #name = token ~ "[" ~ function_parameters ~ "]" ~ function_body ~ ")" }
 fn_    = { "(" ~ "fn" ~ "[" ~ function_parameters ~ "]" ~ function_body ~ ")"}
 
 if_    = { "(" ~ "if" ~ #cond = value ~ #then = value ~ #else = value? ~ ")" }

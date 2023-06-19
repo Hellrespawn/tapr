@@ -1,4 +1,6 @@
 #![allow(clippy::unnecessary_wraps)]
+#![allow(clippy::needless_pass_by_value)]
+
 use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
 use crate::error::ErrorKind;
 use crate::interpreter::environment::Environment;
@@ -27,7 +29,7 @@ impl NativeModule for Number {
     }
 }
 
-pub fn align(_intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+pub fn align(_intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     let f_width = arguments.unwrap_number(0);
     let n = arguments.unwrap_number(1);
 
@@ -40,10 +42,10 @@ pub fn align(_intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
         .approx()
         .map_err(|_| ErrorKind::InvalidInteger(f_width))?;
 
-    Ok(format!("{n:0width$}").into())
+    Ok(format!("{n:0>width$}").into())
 }
 
-pub fn parse(_intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+pub fn parse(_intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     let string = arguments.unwrap_string(0);
 
     let result: Result<f64> = string

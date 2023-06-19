@@ -1,4 +1,4 @@
-use super::{Callable, Value};
+use super::{Callable, CallableType, Value};
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter};
 use crate::parser::ast::Node;
@@ -27,10 +27,8 @@ impl Callable for Function {
     fn call(
         &self,
         intp: &mut Interpreter,
-        arguments: Vec<Value>,
+        arguments: Arguments,
     ) -> Result<Value> {
-        let arguments = Arguments::new(&self.parameters, arguments)?;
-
         let mut function_environment = Environment::new();
         arguments.add_to_env(&mut function_environment)?;
 
@@ -51,7 +49,11 @@ impl Callable for Function {
         self.parameters.len()
     }
 
-    fn parameters(&self) -> &Parameters {
-        &self.parameters
+    fn callable_type(&self) -> CallableType {
+        CallableType::Function
+    }
+
+    fn parameters(&self) -> Parameters {
+        self.parameters.clone()
     }
 }

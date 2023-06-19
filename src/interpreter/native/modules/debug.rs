@@ -1,3 +1,5 @@
+#![allow(clippy::needless_pass_by_value)]
+
 use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
@@ -22,13 +24,13 @@ impl NativeModule for Debug {
     }
 }
 
-fn env(intp: &mut Interpreter, _arguments: &Arguments) -> Result<Value> {
+fn env(intp: &mut Interpreter, _arguments: Arguments) -> Result<Value> {
     writeln!(intp.output, "{}", intp.environment)?;
 
     Ok(Value::Nil)
 }
 
-fn lsmod(intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+fn lsmod(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     let environment = arguments.unwrap_module(0);
 
     writeln!(intp.output, "{environment}")?;

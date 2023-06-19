@@ -1,4 +1,6 @@
 #![allow(clippy::unnecessary_wraps)]
+#![allow(clippy::needless_pass_by_value)]
+
 use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
@@ -22,7 +24,7 @@ impl NativeModule for Io {
     }
 }
 
-pub fn read(_: &mut Interpreter, _: &Arguments) -> Result<Value> {
+pub fn read(_: &mut Interpreter, _: Arguments) -> Result<Value> {
     let mut buffer = String::new();
 
     std::io::stdin().read_line(&mut buffer)?;

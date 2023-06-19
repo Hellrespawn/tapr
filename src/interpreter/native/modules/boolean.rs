@@ -1,4 +1,5 @@
 #![allow(clippy::unnecessary_wraps)]
+#![allow(clippy::needless_pass_by_value)]
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::Result;
@@ -37,7 +38,7 @@ impl NativeModule for Boolean {
 type BinaryOp = fn(Value, Value) -> bool;
 type UnaryOp = fn(Value) -> bool;
 
-fn variadic(op: BinaryOp, arguments: &Arguments) -> Result<Value> {
+fn variadic(op: BinaryOp, arguments: Arguments) -> Result<Value> {
     let values = arguments.unwrap_from(0);
 
     let mut acc = true;
@@ -52,41 +53,41 @@ fn variadic(op: BinaryOp, arguments: &Arguments) -> Result<Value> {
     Ok(Value::Boolean(acc))
 }
 
-fn unary(op: UnaryOp, arguments: &Arguments) -> Result<Value> {
+fn unary(op: UnaryOp, arguments: Arguments) -> Result<Value> {
     let value = arguments.unwrap(0);
 
     Ok(Value::Boolean(op(value)))
 }
 
-pub fn not(_intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+pub fn not(_intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     unary(|v| v.is_falsy(), arguments)
 }
 
-pub fn gt(_intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+pub fn gt(_intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     variadic(|lhs, rhs| lhs < rhs, arguments)
 }
 
-pub fn gte(_intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+pub fn gte(_intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     variadic(|lhs, rhs| lhs <= rhs, arguments)
 }
 
-pub fn eq(_intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+pub fn eq(_intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     variadic(|lhs, rhs| lhs == rhs, arguments)
 }
 
-pub fn lte(_intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+pub fn lte(_intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     variadic(|lhs, rhs| lhs >= rhs, arguments)
 }
 
-pub fn lt(_intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+pub fn lt(_intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     variadic(|lhs, rhs| lhs > rhs, arguments)
 }
 
-pub fn ne(_intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+pub fn ne(_intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     variadic(|lhs, rhs| lhs != rhs, arguments)
 }
 
-pub fn or(_intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+pub fn or(_intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     let values = arguments.unwrap_from(0);
     let last_index = values.len() - 1;
 
@@ -99,7 +100,7 @@ pub fn or(_intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
     unreachable!()
 }
 
-pub fn and(_intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+pub fn and(_intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     let values = arguments.unwrap_from(0);
     let last_index = values.len() - 1;
 
@@ -114,13 +115,13 @@ pub fn and(_intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
 
 pub fn nil_coalesce(
     _intp: &mut Interpreter,
-    arguments: &Arguments,
+    arguments: Arguments,
 ) -> Result<Value> {
     let values = arguments.unwrap_from(0);
     let last_index = values.len() - 1;
 
     for (i, argument) in values.into_iter().enumerate() {
-        if matches!(argument, Value::Nil) || i == last_index {
+        if !matches!(argument, Value::Nil) || i == last_index {
             return Ok(argument);
         }
     }

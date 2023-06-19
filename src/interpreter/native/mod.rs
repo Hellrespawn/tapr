@@ -1,12 +1,11 @@
 use super::environment::Environment;
-use super::value::Callable;
+use super::value::{Callable, CallableType};
 use super::{Arguments, Interpreter, Parameters, Value};
 use crate::Result;
-use once_cell::sync::Lazy;
 
 mod modules;
 
-pub static NATIVE_ENVIRONMENT: Lazy<Environment> = Lazy::new(|| {
+pub fn get_native_environment() -> Environment {
     let mut environment = Environment::new();
 
     for module in modules::get_modules() {
@@ -26,10 +25,10 @@ pub static NATIVE_ENVIRONMENT: Lazy<Environment> = Lazy::new(|| {
     }
 
     environment
-});
+}
 
 pub type NativeFunctionImpl =
-    fn(intp: &mut Interpreter, arguments: &Arguments) -> Result<Value>;
+    fn(intp: &mut Interpreter, arguments: Arguments) -> Result<Value>;
 
 #[derive(Debug, Clone)]
 pub struct NativeFunction {
@@ -43,7 +42,7 @@ impl NativeFunction {
         name: &'static str,
         function: fn(
             intp: &mut Interpreter,
-            arguments: &Arguments,
+            arguments: Arguments,
         ) -> Result<Value>,
         parameters: Parameters,
     ) -> Self {
@@ -65,18 +64,20 @@ impl Callable for NativeFunction {
     fn call(
         &self,
         intp: &mut Interpreter,
-        arguments: Vec<Value>,
+        arguments: Arguments,
     ) -> Result<Value> {
-        let arguments = Arguments::new(&self.parameters, arguments)?;
-
-        (self.function)(intp, &arguments)
+        (self.function)(intp, arguments)
     }
 
     fn arity(&self) -> usize {
         self.parameters.len()
     }
 
-    fn parameters(&self) -> &Parameters {
-        &self.parameters
+    fn callable_type(&self) -> CallableType {
+        CallableType::Native
+    }
+
+    fn parameters(&self) -> Parameters {
+        self.parameters.clone()
     }
 }

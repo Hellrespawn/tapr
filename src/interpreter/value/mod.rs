@@ -5,7 +5,7 @@ pub use function::Function;
 use super::environment::Environment;
 use super::native::NativeFunction;
 use super::Interpreter;
-use crate::{Parameters, Result};
+use crate::{Arguments, Parameters, Result};
 use std::cmp::Ordering;
 use std::sync::Arc;
 
@@ -43,9 +43,21 @@ impl Value {
     }
 }
 
+impl From<bool> for Value {
+    fn from(value: bool) -> Self {
+        Value::Boolean(value)
+    }
+}
+
 impl From<f64> for Value {
     fn from(value: f64) -> Self {
         Value::Number(value)
+    }
+}
+
+impl From<&str> for Value {
+    fn from(value: &str) -> Self {
+        Value::String(value.to_owned())
     }
 }
 
@@ -134,14 +146,46 @@ impl std::fmt::Display for Value {
     }
 }
 
-pub trait Callable: std::fmt::Debug + std::fmt::Display + Send + Sync {
+pub enum CallableType {
+    Native,
+    Function,
+}
+
+impl std::fmt::Display for CallableType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                CallableType::Native => "native fn",
+                CallableType::Function => "fn",
+            }
+        )
+    }
+}
+
+pub trait Callable: Send + Sync {
     fn call(
         &self,
         intp: &mut Interpreter,
-        arguments: Vec<Value>,
+        arguments: Arguments,
     ) -> Result<Value>;
 
     fn arity(&self) -> usize;
 
-    fn parameters(&self) -> &Parameters;
+    fn callable_type(&self) -> CallableType;
+
+    fn parameters(&self) -> Parameters;
+}
+
+impl std::fmt::Display for dyn Callable {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "<{}{}> ", self.callable_type(), self.parameters())
+    }
+}
+
+impl std::fmt::Debug for dyn Callable {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self}")
+    }
 }

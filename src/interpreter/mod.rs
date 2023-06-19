@@ -4,9 +4,10 @@ mod native;
 mod value;
 
 pub use self::environment::Environment;
+use self::native::get_native_environment;
 pub use arguments::Arguments;
-pub use native::NativeFunction;
-pub use value::{Callable, Value};
+pub use native::{NativeFunction, NativeFunctionImpl};
+pub use value::{Callable, CallableType, Value};
 
 use self::value::Function;
 use crate::error::{Error, ErrorKind};
@@ -17,7 +18,6 @@ use crate::parser::ast::Special::If;
 use crate::parser::parameters::Parameters;
 use crate::visitor::Visitor;
 use crate::Result;
-use native::NATIVE_ENVIRONMENT;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -29,7 +29,7 @@ pub struct Interpreter<'i> {
 
 impl<'i> Default for Interpreter<'i> {
     fn default() -> Self {
-        let environment = NATIVE_ENVIRONMENT.clone();
+        let environment = get_native_environment();
 
         Self {
             output: Box::new(std::io::stdout()),
@@ -266,10 +266,17 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
                     return Err(Error::new(node.location(), ErrorKind::NotCallable(value)))
                 };
 
-                let arguments = nodes[1..]
+                let arguments_vec = nodes[1..]
                     .iter()
                     .map(|n| n.accept(self))
                     .collect::<Result<Vec<_>>>()?;
+
+                let parameters = callable.parameters();
+
+                let arguments = Arguments::new(&parameters, arguments_vec)
+                    .map_err(|e| {
+                        Self::add_location_to_error(e, node.location())
+                    })?;
 
                 callable.call(self, arguments).map_err(|e| {
                     Self::add_location_to_error(e, node.location())

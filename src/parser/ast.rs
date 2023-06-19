@@ -37,6 +37,13 @@ pub enum NodeData {
 }
 
 impl Node {
+    pub fn mock(data: NodeData) -> Self {
+        Self {
+            location: Location::new(0, 0),
+            data,
+        }
+    }
+
     pub fn accept<T: std::fmt::Debug>(
         &self,
         visitor: &mut dyn Visitor<T>,
@@ -46,6 +53,10 @@ impl Node {
 
     pub fn data(&self) -> &NodeData {
         &self.data
+    }
+
+    pub fn data_mut(&mut self) -> &mut NodeData {
+        &mut self.data
     }
 
     pub fn location(&self) -> Location {

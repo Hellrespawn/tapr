@@ -1,4 +1,6 @@
 #![allow(clippy::unnecessary_wraps)]
+#![allow(clippy::needless_pass_by_value)]
+
 use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
@@ -29,13 +31,13 @@ impl NativeModule for List {
     }
 }
 
-fn head(_: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+fn head(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     let list = arguments.unwrap_list(0);
 
     Ok(list.into_iter().next().unwrap_or_else(|| Value::Nil))
 }
 
-fn tail(_: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+fn tail(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     let list = arguments
         .unwrap_list(0)
         .get(1..)
@@ -45,7 +47,7 @@ fn tail(_: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
     Ok(Value::List(list))
 }
 
-fn push(_: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+fn push(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     let list = arguments.unwrap_list(0);
 
     let values = arguments.arguments()[1..].to_owned();
@@ -55,7 +57,7 @@ fn push(_: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
     Ok(Value::List(output))
 }
 
-fn reduce(intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+fn reduce(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     let callable = arguments.unwrap_callable(0);
     let init = arguments.unwrap(1);
     let input = arguments.unwrap_list(2);
@@ -63,20 +65,28 @@ fn reduce(intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
     let mut output = init;
 
     for value in input {
-        output = callable.call(intp, vec![output, value])?;
+        output = callable.call(
+            intp,
+            Arguments::new(&callable.parameters(), vec![output, value])?,
+        )?;
     }
 
     Ok(output)
 }
 
-fn filter(intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+fn filter(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     let callable = arguments.unwrap_callable(0);
     let values = arguments.unwrap_list(1);
 
     let mut output = Vec::new();
 
     for value in values {
-        let is_truthy = callable.call(intp, vec![value.clone()])?.is_truthy();
+        let is_truthy = callable
+            .call(
+                intp,
+                Arguments::new(&callable.parameters(), vec![value.clone()])?,
+            )?
+            .is_truthy();
 
         if is_truthy {
             output.push(value);
@@ -86,13 +96,16 @@ fn filter(intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
     Ok(Value::List(output))
 }
 
-fn map(intp: &mut Interpreter, arguments: &Arguments) -> Result<Value> {
+fn map(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     let callable = arguments.unwrap_callable(0);
     let values = arguments.unwrap_list(1);
 
     let output = values
         .into_iter()
-        .map(|v| callable.call(intp, vec![v]))
+        .map(|v| {
+            callable
+                .call(intp, Arguments::new(&callable.parameters(), vec![v])?)
+        })
         .collect::<Result<Vec<_>>>()?;
 
     Ok(Value::List(output))
