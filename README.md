@@ -4,7 +4,7 @@ Tapr (tapper) is a general-purpose LISP-style programming language.
 
 ## Requirements
 
-- Rust (MSRV: 1.65)
+- Rust (MSRV: 1.70)
 - GraphViz (Optional, for visualizing Abstract Syntax Trees)
 
 ## Installation
