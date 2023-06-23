@@ -1,50 +1,47 @@
-WHITESPACE = _{ " " | "\n" | "\t" | "\0" }
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" | "\0" }
 COMMENT    = _{ "#" ~ (!("\n") ~ ANY)* }
 
-sym_chars = _{ ASCII_ALPHANUMERIC | "!" | "$" | "%" | "*" | "+" | "-" | "." | "<" | "?" | "=" | ">" | "@" | "^" | "_" }
+reader_macro = { "'" | ";" | "~" | "," | "|" }
 
-token    = @{ sym_chars+ }
-symbol   = ${ (token ~ "/")? ~ token+ }
-keyword  = ${ ":" ~ token }
-constant =  { "true" | "false" | "nil" }
+symbol_characters = _{ '0'..'9' | 'a'..'z' | 'A'..'Z' | '\x80'..'\xFF' | "!" | "$" | "%" | "&" | "*" | "+" | "-" | "." | "/" | ":" | "<" | "?" | "=" | ">" | "@" | "^" | "_" }
 
-string = ${ "\"" ~ inner ~ "\"" }
-inner  = @{ char* }
-char   =  {
-    !("\"" | "\\") ~ ANY
-  | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t" | "0")
-  | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+token  = @{ symbol_characters+ }
+hex    =  { '0'..'9' | 'a'..'f' | 'A'..'F' }
+escape = @{
+    "\\" ~ ("n" | "t" | "r" | "z" | "f" | "e" | "v" | "0" | "\"" | "\\" | ("x" ~ hex{2}) | ("u" ~ hex{4}) | ("U" ~ hex{6}))
 }
+
+symbol   =  { token }
+keyword  = @{ ":" ~ symbol_characters* }
+constant = @{ "true" | "false" | "nil" }
+
+bytes       = ${ "\"" ~ bytes_inner ~ "\"" }
+bytes_inner = @{ (escape | !"\"" ~ ANY)* }
+string      =  { bytes }
+buffer      = ${ "@" ~ bytes }
+
+long_bytes       = @{ PUSH("`"+) ~ long_bytes_inner ~ POP }
+long_bytes_inner = @{ (!PEEK ~ ANY)* }
+long_string      =  { long_bytes }
+long_buffer      = ${ "@" ~ long_bytes }
 
 number = @{
     "-"? ~ ("0" | ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*) ~ ("." ~ ASCII_DIGIT*)? ~ (^"e" ~ ("+" | "-")? ~ ASCII_DIGIT+)?
 }
-plist   = { "(" ~ root ~ ")" }
-blist   = { "[" ~ root ~ "]" }
 
-value = _{ constant | number | keyword | string | special | plist | blist | symbol }
+raw_value = _{ constant | number | keyword | string | buffer | long_string | long_buffer | p_array | b_array | p_tuple | b_tuple | struct | table | symbol }
 
-root = _{ value* }
-special = { defn | fn_ | if_ | import | set | var }
+value = ${ (reader_macro | WHITE_SPACE)* ~ raw_value ~ (WHITE_SPACE)* }
 
-parameter = ${ token ~ (":" ~ type ~ ("|" ~ type)* )? }
-type = @{ "bool" | "number" | "string" | "list" | "module" | "function" | "nil" }
+root  = _{ value* }
+root2 = _{ (value ~ value)* }
 
-parameters = { parameter* }
-optional_parameters = { "&opt" ~ parameter+ }
-rest_parameter = { "&" ~ parameter }
+p_tuple = { "(" ~ root ~ ")" }
+b_tuple = { "[" ~ root ~ "]" }
+struct  = { "{" ~ root2 ~ "}" }
 
-function_parameters = { parameters ~ (optional_parameters)? ~ (rest_parameter)? }
-
-function_body = { value +}
-defn   = { "(" ~ "defn" ~ #name = token ~ "[" ~ function_parameters ~ "]" ~ function_body ~ ")" }
-fn_    = { "(" ~ "fn" ~ "[" ~ function_parameters ~ "]" ~ function_body ~ ")"}
-
-if_    = { "(" ~ "if" ~ #cond = value ~ #then = value ~ #else = value? ~ ")" }
-import = { "(" ~ "import" ~ #name = token ~ (":as" ~ #prefix = string)? ~ ")" }
-set    = { "(" ~ "set" ~ #name = token ~ value ~ ")" }
-var    = { "(" ~ "var" ~ #name = token ~ value ~ ")" }
-
-// TODO? Separate `var` and `def`?
+p_array = ${ "@" ~ p_tuple }
+b_array = ${ "@" ~ b_tuple }
+table   = ${ "@" ~ struct }
 
 main = { SOI ~ root ~ EOI }
