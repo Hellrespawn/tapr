@@ -20,7 +20,7 @@ bytes_inner = @{ (escape | !"\"" ~ ANY)* }
 string      =  { bytes }
 buffer      = ${ "@" ~ bytes }
 
-long_bytes       = @{ PUSH("`"+) ~ long_bytes_inner ~ POP }
+long_bytes       = ${ PUSH("`"+) ~ long_bytes_inner ~ POP }
 long_bytes_inner = @{ (!PEEK ~ ANY)* }
 long_string      =  { long_bytes }
 long_buffer      = ${ "@" ~ long_bytes }
@@ -29,7 +29,7 @@ number = @{
     "-"? ~ ("0" | ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*) ~ ("." ~ ASCII_DIGIT*)? ~ (^"e" ~ ("+" | "-")? ~ ASCII_DIGIT+)?
 }
 
-raw_value = _{ constant | number | keyword | string | buffer | long_string | long_buffer | p_array | b_array | p_tuple | b_tuple | struct | table | symbol }
+raw_value = _{ constant | number | keyword | string | buffer | long_string | long_buffer | p_array | b_array | p_tuple | b_tuple | struct_ | table | symbol }
 
 value = ${ (reader_macro | WHITE_SPACE)* ~ raw_value ~ (WHITE_SPACE)* }
 
@@ -38,10 +38,10 @@ root2 = _{ (value ~ value)* }
 
 p_tuple = { "(" ~ root ~ ")" }
 b_tuple = { "[" ~ root ~ "]" }
-struct  = { "{" ~ root2 ~ "}" }
+struct_ = { "{" ~ root2 ~ "}" }
 
 p_array = ${ "@" ~ p_tuple }
 b_array = ${ "@" ~ b_tuple }
-table   = ${ "@" ~ struct }
+table   = ${ "@" ~ struct_ }
 
 main = { SOI ~ root ~ EOI }

@@ -1,6 +1,5 @@
-use crate::parser::ast::{Node, NodeData, Special};
-use crate::parser::parameters::Parameters;
-use crate::visitor::Visitor;
+use crate::parser::ast::Node;
+use crate::visitor::{visit_node_infallible, Visitor};
 use std::process::Command;
 
 pub(crate) struct GraphVisitor {
@@ -91,9 +90,9 @@ impl GraphVisitor {
         self.create_node(label, false)
     }
 
-    // fn hidden_node(&mut self) -> usize {
-    //     self.create_node("", true)
-    // }
+    fn hidden_node(&mut self) -> usize {
+        self.create_node("", true)
+    }
 
     fn node_connector(
         &mut self,
@@ -177,52 +176,7 @@ impl GraphVisitor {
 
 impl Visitor<()> for GraphVisitor {
     fn visit_node(&mut self, node: &Node) {
-        match node.data() {
-            NodeData::Main(nodes) => self.visit_main(nodes),
-            NodeData::Special(special) => match &**special {
-                Special::If {
-                    condition,
-                    then,
-                    else_branch,
-                } => self.visit_if(condition, then, else_branch.as_ref()),
-                Special::Fn { parameters, body } => {
-                    self.visit_fn(parameters, body);
-                }
-                Special::Set { name, value } => {
-                    self.visit_set(name, value, node.location());
-                }
-                Special::Var { name, value } => {
-                    self.visit_var(name, value, node.location());
-                }
-                Special::Import { name, prefix } => {
-                    self.visit_import(name, prefix.as_ref());
-                }
-            },
-            NodeData::List { literal, nodes } => {
-                self.visit_list(*literal, nodes);
-            }
-            NodeData::Symbol { module, value } => {
-                self.visit_symbol(module.as_ref(), value, node.location());
-            }
-            NodeData::Keyword(keyword) => {
-                self.new_node(&format!("keyword:\n{keyword}"));
-            }
-            NodeData::Number(number) => {
-                self.new_node(&format!("number:\n{number}"));
-            }
-            NodeData::String(string) => {
-                self.new_node(&format!("string:\n\\\"{string}\\\""));
-            }
-            NodeData::True => {
-                self.new_node("true");
-            }
-            NodeData::False => {
-                self.new_node("false");
-            }
-            NodeData::Nil => {
-                self.new_node("nil");
-            }
-        }
+        visit_node_infallible(self, node);
     }
 
     fn visit_main(&mut self, nodes: &[Node]) {
@@ -231,80 +185,87 @@ impl Visitor<()> for GraphVisitor {
         self.accept_and_connect_many(parent_node, nodes);
     }
 
-    fn visit_fn(&mut self, parameters: &Parameters, body: &[Node]) {
-        let parent_node = self.new_node(&format!("fn\n[{parameters}]"));
+    fn visit_table(&mut self, map: &std::collections::HashMap<Node, Node>) {
+        let parent_node = self.new_node("table");
 
-        self.accept_and_connect_many_with_label(parent_node, body, "body");
-    }
+        for (key, value) in map {
+            let pair_node = self.hidden_node();
 
-    fn visit_if(
-        &mut self,
-        condition: &Node,
-        then: &Node,
-        else_branch: Option<&Node>,
-    ) {
-        let parent_node = self.new_node("if");
+            self.connect_nodes(pair_node, parent_node);
 
-        self.accept_and_connect_with_label(parent_node, condition, "condition");
+            self.accept_and_connect_with_label(pair_node, key, "key");
 
-        self.accept_and_connect_with_label(parent_node, then, "then");
-
-        if let Some(else_branch) = else_branch {
-            self.accept_and_connect_with_label(
-                parent_node,
-                else_branch,
-                "else",
-            );
+            self.accept_and_connect_with_label(pair_node, value, "value");
         }
     }
 
-    fn visit_import(&mut self, name: &str, prefix: Option<&String>) {
-        self.new_node(&format!(
-            "import '{name}'\nas '{}'",
-            if let Some(prefix) = prefix { prefix } else { name }
-        ));
-    }
-
-    fn visit_set(
-        &mut self,
-        name: &str,
-        value: &Node,
-        _location: crate::location::Location,
-    ) {
-        let parent_node = self.new_node(&format!("set\n'{name}'"));
-
-        self.accept_and_connect(parent_node, value);
-    }
-
-    fn visit_var(
-        &mut self,
-        name: &str,
-        value: &Node,
-        _location: crate::location::Location,
-    ) {
-        let parent_node = self.new_node(&format!("var\n'{name}'"));
-
-        self.accept_and_connect(parent_node, value);
-    }
-
-    fn visit_list(&mut self, literal: bool, nodes: &[Node]) {
-        let parent_node = self.new_node(if literal { "list" } else { "form" });
+    fn visit_p_array(&mut self, nodes: &[Node]) {
+        let parent_node = self.new_node("p_array");
 
         self.accept_and_connect_many(parent_node, nodes);
     }
 
-    fn visit_symbol(
-        &mut self,
-        module: Option<&String>,
-        value: &str,
-        _location: crate::location::Location,
-    ) {
-        let symbol = if let Some(module) = module {
-            format!("{module}/{value}")
-        } else {
-            value.to_owned()
-        };
+    fn visit_b_array(&mut self, nodes: &[Node]) {
+        let parent_node = self.new_node("b_array");
 
-        self.new_node(&format!("symbol\n{symbol}"));
+        self.accept_and_connect_many(parent_node, nodes);
+    }
+
+    fn visit_struct(&mut self, map: &std::collections::HashMap<Node, Node>) {
+        let parent_node = self.new_node("struct");
+
+        for (key, value) in map {
+            let pair_node = self.hidden_node();
+
+            self.connect_nodes(parent_node, pair_node);
+
+            self.accept_and_connect_with_label(pair_node, key, "key");
+
+            self.accept_and_connect_with_label(pair_node, value, "value");
+        }
+    }
+
+    fn visit_p_tuple(&mut self, nodes: &[Node]) {
+        let parent_node = self.new_node("p_tuple");
+
+        self.accept_and_connect_many(parent_node, nodes);
+    }
+
+    fn visit_b_tuple(&mut self, nodes: &[Node]) {
+        let parent_node = self.new_node("b_tuple");
+
+        self.accept_and_connect_many(parent_node, nodes);
+    }
+
+    fn visit_number(&mut self, number: f64) {
+        self.new_node(&format!("{number}"));
+    }
+
+    fn visit_string(&mut self, string: &str) {
+        self.new_node(&format!("\\\"{string}\\\""));
+    }
+
+    fn visit_buffer(&mut self, buffer: &str) {
+        self.new_node(&format!("@\\\"{buffer}\\\""));
+    }
+
+    fn visit_symbol(&mut self, symbol: &str) {
+        self.new_node(symbol);
+    }
+
+    fn visit_keyword(&mut self, keyword: &str) {
+        self.new_node(&format!(":{keyword}"));
+    }
+
+    fn visit_true(&mut self) {
+        self.new_node("true");
+    }
+
+    fn visit_false(&mut self) {
+        self.new_node("false");
+    }
+
+    fn visit_nil(&mut self) {
+        self.new_node("nil");
     }
 }

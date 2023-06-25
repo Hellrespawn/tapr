@@ -2,7 +2,7 @@ use pest::iterators::Pair;
 
 use crate::parser::Rule;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 
 // TODO? Add file location to Location?
 pub struct Location(usize, usize);

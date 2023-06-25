@@ -86,12 +86,8 @@ impl TryFrom<&str> for Parameters {
     type Error = Error;
 
     fn try_from(value: &str) -> Result<Self> {
-        let pairs = Parser::parse(Rule::function_parameters, value)?
-            .next()
-            .unwrap()
-            .into_inner();
-
-        Ok(parse_parameters(pairs))
+        // FIXME implement this
+        Ok(Parameters { parameters: vec![] })
     }
 }
 
