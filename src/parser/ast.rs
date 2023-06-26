@@ -13,7 +13,6 @@ use pest::Parser as PestParser;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Node {
-    reader_macros: Vec<ReaderMacro>,
     location: Location,
     data: NodeData,
 }
@@ -95,7 +94,6 @@ impl std::hash::Hash for NodeData {
 impl Node {
     pub fn mock(data: NodeData) -> Self {
         Self {
-            reader_macros: vec![],
             location: Location::new(0, 0),
             data,
         }
@@ -173,6 +171,7 @@ impl Node {
                     panic!("Unable to parse '{}' as number", pair.as_str())
                 }))
             }
+            Rule::value => return Self::parse_value(pair),
             Rule::p_tuple => {
                 NodeData::PTuple(pair.into_inner().map(Node::parse).collect())
             }
@@ -202,11 +201,7 @@ impl Node {
             }
         };
 
-        Node {
-            reader_macros: vec![],
-            location,
-            data,
-        }
+        Node { location, data }
     }
 
     fn extract_string(pair: Pair<Rule>) -> String {
@@ -218,5 +213,34 @@ impl Node {
             .unwrap()
             .as_str()
             .to_owned()
+    }
+
+    fn parse_value(pair: Pair<Rule>) -> Node {
+        let location = Location::from_pair(&pair);
+
+        let mut pairs = pair.into_inner().collect::<Vec<_>>();
+
+        let pair = pairs
+            .pop()
+            .expect("Rule::value should always have a raw_value");
+
+        let mut node = Node::parse(pair);
+
+        for pair in pairs.iter().rev() {
+            let reader_macro = ReaderMacro::from_pair(pair);
+            let location = Location::from_pair(pair);
+
+            let data = NodeData::PTuple(vec![
+                Node {
+                    location,
+                    data: NodeData::Symbol(reader_macro.to_string()),
+                },
+                node,
+            ]);
+
+            node = Node { location, data }
+        }
+
+        node
     }
 }

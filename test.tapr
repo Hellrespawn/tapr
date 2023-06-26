@@ -1,1 +1,1 @@
-(defn test [a:string b:number &opt c:bool & d:rest] (string/repeat b a))
+;'(defn test [a:string b:number &opt c:bool & d:rest] (string/repeat b a))

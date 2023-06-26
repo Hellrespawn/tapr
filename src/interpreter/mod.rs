@@ -21,9 +21,17 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::sync::Arc;
 
+enum Quote {
+    False,
+    True,
+    Quasiquote,
+    Unquote,
+}
+
 pub struct Interpreter<'i> {
     pub output: Box<dyn Write + 'i>,
     environment: Environment,
+    quote: Quote,
 }
 
 impl<'i> Default for Interpreter<'i> {
@@ -33,6 +41,7 @@ impl<'i> Default for Interpreter<'i> {
         Self {
             output: Box::new(std::io::stdout()),
             environment,
+            quote: Quote::False,
         }
     }
 }
@@ -42,6 +51,7 @@ impl<'i> Interpreter<'i> {
         Self {
             output,
             environment,
+            quote: Quote::False,
         }
     }
 

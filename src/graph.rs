@@ -162,16 +162,16 @@ impl GraphVisitor {
         }
     }
 
-    fn accept_and_connect_many_with_label(
-        &mut self,
-        parent_node: usize,
-        to_visit: &[Node],
-        label: &str,
-    ) {
-        for node in to_visit {
-            self.accept_and_connect_with_label(parent_node, node, label);
-        }
-    }
+    // fn accept_and_connect_many_with_label(
+    //     &mut self,
+    //     parent_node: usize,
+    //     to_visit: &[Node],
+    //     label: &str,
+    // ) {
+    //     for node in to_visit {
+    //         self.accept_and_connect_with_label(parent_node, node, label);
+    //     }
+    // }
 }
 
 impl Visitor<()> for GraphVisitor {

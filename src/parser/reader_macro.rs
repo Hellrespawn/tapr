@@ -12,15 +12,10 @@ pub enum ReaderMacro {
 }
 
 impl ReaderMacro {
-    pub fn from_pairs(pairs: Vec<Pair<Rule>>) -> Vec<Self> {
-        pairs
-            .into_iter()
-            .map(|p| {
-                p.as_str().try_into().expect(
-                    "Pair<Rule> should always return valid reader macros.",
-                )
-            })
-            .collect()
+    pub fn from_pair(pair: &Pair<Rule>) -> Self {
+        pair.as_str()
+            .try_into()
+            .expect("Pair<Rule> should always return valid reader macros.")
     }
 }
 
@@ -42,5 +37,21 @@ impl TryFrom<&str> for ReaderMacro {
         };
 
         Ok(out)
+    }
+}
+
+impl std::fmt::Display for ReaderMacro {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                ReaderMacro::Quote => "quote",
+                ReaderMacro::Splice => "splice",
+                ReaderMacro::Quasiquote => "quasiquote",
+                ReaderMacro::Unquote => "unquote",
+                ReaderMacro::ShortFn => "short-fn",
+            }
+        )
     }
 }
