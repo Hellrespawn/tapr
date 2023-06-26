@@ -46,10 +46,15 @@ impl TryFrom<&str> for ParameterType {
 
     fn try_from(string: &str) -> Result<Self> {
         let ptype = match string {
-            "string" => Self::String,
-            "number" => Self::Number,
-            "list" => Self::List,
-            "bool" | "boolean" => Self::Boolean,
+            "bool" => ParameterType::Boolean,
+            "number" => ParameterType::Number,
+            "symbol" => ParameterType::Symbol,
+            "keyword" => ParameterType::Keyword,
+            "string" => ParameterType::String,
+            "list" => ParameterType::List,
+            "module" => ParameterType::Module,
+            "function" => ParameterType::Function,
+            "nil" => ParameterType::Nil,
             other => {
                 return Err(
                     ErrorKind::InvalidParameterType(other.to_owned()).into()

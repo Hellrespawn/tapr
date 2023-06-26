@@ -4,12 +4,11 @@ use super::reader_macro::ReaderMacro;
 use crate::env::{DebugAst, DEBUG_AST, DEBUG_PARSER};
 use crate::graph::GraphVisitor;
 use crate::location::Location;
-use crate::parser::parameters::Parameters;
 use crate::parser::{Parser, Rule};
 use crate::visitor::Visitor;
 use crate::Result;
 use itertools::Itertools;
-use pest::iterators::{Pair, Pairs};
+use pest::iterators::Pair;
 use pest::Parser as PestParser;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -174,7 +173,6 @@ impl Node {
                     panic!("Unable to parse '{}' as number", pair.as_str())
                 }))
             }
-            Rule::value => return Self::parse_value(pair),
             Rule::p_tuple => {
                 NodeData::PTuple(pair.into_inner().map(Node::parse).collect())
             }
@@ -211,25 +209,6 @@ impl Node {
         }
     }
 
-    fn parse_value(pair: Pair<Rule>) -> Node {
-        let location = Location::from_pair(&pair);
-
-        let mut pairs = pair.into_inner().collect::<Vec<_>>();
-
-        let pair = pairs
-            .pop()
-            .expect("Rule::value should always have a raw_value");
-
-        let reader_macros = ReaderMacro::from_pairs(pairs);
-
-        let mut node = Node::parse(pair);
-
-        node.reader_macros = reader_macros;
-        node.location = location;
-
-        node
-    }
-
     fn extract_string(pair: Pair<Rule>) -> String {
         pair.into_inner()
             .next()
@@ -241,55 +220,3 @@ impl Node {
             .to_owned()
     }
 }
-
-pub fn parse_parameters(pairs: Pairs<Rule>) -> Parameters {
-    todo!()
-    // let parameters = pairs
-    //     .flat_map(|p| match p.as_rule() {
-    //         Rule::parameters => p
-    //             .into_inner()
-    //             .map(|p| parameter(p, false))
-    //             .collect::<Vec<_>>(),
-    //         Rule::optional_parameters => optional_parameters(p),
-    //         Rule::rest_parameter => vec![rest_parameter(p)],
-    //         other => unreachable!("{:?}", other),
-    //     })
-    //     .collect();
-
-    // Parameters::new(parameters)
-    //     .expect("Grammar did not parse valid parameters for function.")
-}
-
-// fn parameter(pair: Pair<Rule>, optional: bool) -> Parameter {
-//     let mut inner = pair.into_inner();
-
-//     let name = inner.next().unwrap().as_str().to_owned();
-//     let ptypes = inner
-//         .map(|p| match p.as_str() {
-//             "bool" => ParameterType::Boolean,
-//             "number" => ParameterType::Number,
-//             "string" => ParameterType::String,
-//             "list" => ParameterType::List,
-//             "module" => ParameterType::Module,
-//             "function" => ParameterType::Function,
-//             "nil" => ParameterType::Nil,
-//             other => unreachable!("{:?}", other),
-//         })
-//         .collect();
-
-//     Parameter::new(name, ptypes, optional, false)
-// }
-
-// fn optional_parameters(pair: Pair<Rule>) -> Vec<Parameter> {
-//     pair.into_inner()
-//         .map(|p| parameter(p, true))
-//         .collect::<Vec<_>>()
-// }
-
-// fn rest_parameter(pair: Pair<Rule>) -> Parameter {
-//     pair.into_inner()
-//         .map(|p| parameter(p, false))
-//         .next()
-//         .unwrap()
-//         .rest()
-// }

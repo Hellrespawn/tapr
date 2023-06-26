@@ -1,8 +1,7 @@
 use crate::error::Error;
 use crate::location::Location;
 use crate::parser::ast::Node;
-use crate::NodeData;
-use crate::Result;
+use crate::{NodeData, Result};
 use std::collections::HashMap;
 
 pub trait Visitor<T: std::fmt::Debug> {

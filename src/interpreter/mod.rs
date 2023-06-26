@@ -15,7 +15,7 @@ use crate::location::Location;
 use crate::parser::ast;
 use crate::parser::ast::Node;
 use crate::parser::parameters::Parameters;
-use crate::visitor::Visitor;
+use crate::visitor::{visit_node_fallible, Visitor};
 use crate::Result;
 use std::io::Write;
 use std::path::PathBuf;
@@ -325,11 +325,16 @@ impl<'i> Interpreter<'i> {
 
 impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
     fn visit_node(&mut self, node: &Node) -> Result<Value> {
-        todo!()
+        visit_node_fallible(self, node)
     }
 
     fn visit_main(&mut self, nodes: &[Node]) -> Result<Value> {
-        todo!()
+        let mut values = nodes
+            .iter()
+            .map(|n| n.accept(self))
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(values.pop().unwrap_or(Value::Nil))
     }
 
     fn visit_table(

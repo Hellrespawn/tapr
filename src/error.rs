@@ -98,7 +98,6 @@ pub enum ErrorKind {
     #[error("Undefined reader macro: '{0}'")]
     InvalidReaderMacro(String),
 
-
     // Interpreter
     #[error("Undefined module '{0}'")]
     ModuleNotDefined(String),

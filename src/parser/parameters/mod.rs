@@ -4,11 +4,8 @@ use crate::Result;
 mod parameter;
 mod parameter_type;
 
-use super::ast::parse_parameters;
-use super::{Parser, Rule};
 pub use parameter::Parameter;
 pub use parameter_type::ParameterType;
-use pest::Parser as PestParser;
 
 #[derive(Debug, Clone)]
 pub struct Parameters {
@@ -86,8 +83,39 @@ impl TryFrom<&str> for Parameters {
     type Error = Error;
 
     fn try_from(value: &str) -> Result<Self> {
-        // FIXME implement this
-        Ok(Parameters { parameters: vec![] })
+        let value = if value.starts_with('[') && value.ends_with(']') {
+            &value[1..value.len() - 2]
+        } else {
+            value
+        };
+
+        let mut optional = false;
+        let mut rest = false;
+
+        let params = value
+            .split_whitespace()
+            .filter_map(|s| match s {
+                "&opt" => {
+                    optional = true;
+                    None
+                }
+                "&" => {
+                    rest = true;
+                    None
+                }
+                symbol => Some(symbol.try_into().map(|p: Parameter| {
+                    let p = if optional { p.optional() } else { p };
+
+                    if rest {
+                        p.rest()
+                    } else {
+                        p
+                    }
+                })),
+            })
+            .collect::<Result<Vec<Parameter>>>()?;
+
+        Parameters::new(params)
     }
 }
 

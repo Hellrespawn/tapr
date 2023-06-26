@@ -1,5 +1,7 @@
 use super::parameter_type::ParameterType;
+use crate::error::Error;
 use crate::interpreter::Value;
+use crate::Result;
 
 #[derive(Debug, Clone, Default)]
 pub struct Parameter {
@@ -7,6 +9,29 @@ pub struct Parameter {
     parameter_types: Vec<ParameterType>,
     optional: bool,
     rest: bool,
+}
+
+impl TryFrom<&str> for Parameter {
+    type Error = Error;
+
+    fn try_from(value: &str) -> Result<Self> {
+        let (name, ptype) = if let Some((name, ptype)) = value.split_once(':') {
+            (name, Some(ptype))
+        } else {
+            (value, None)
+        };
+
+        let ptypes = ptype.map_or_else(
+            || Ok(Vec::new()),
+            |s| {
+                s.split('|')
+                    .map(std::convert::TryInto::try_into)
+                    .collect::<Result<Vec<ParameterType>>>()
+            },
+        )?;
+
+        Ok(Parameter::new(name.to_owned(), ptypes, false, false))
+    }
 }
 
 impl Parameter {

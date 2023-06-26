@@ -1,7 +1,7 @@
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" | "\0" }
 COMMENT    = _{ "#" ~ (!("\n") ~ ANY)* }
 
-reader_macro = { "'" | ";" | "~" | "," | "|" }
+// reader_macro = { "'" | ";" | "~" | "," | "|" }
 
 symbol_characters = _{ '0'..'9' | 'a'..'z' | 'A'..'Z' | '\x80'..'\xFF' | "!" | "$" | "%" | "&" | "*" | "+" | "-" | "." | "/" | ":" | "<" | "?" | "=" | ">" | "@" | "^" | "_" }
 
@@ -29,9 +29,9 @@ number = @{
     "-"? ~ ("0" | ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*) ~ ("." ~ ASCII_DIGIT*)? ~ (^"e" ~ ("+" | "-")? ~ ASCII_DIGIT+)?
 }
 
-raw_value = _{ constant | number | keyword | string | buffer | long_string | long_buffer | p_array | b_array | p_tuple | b_tuple | struct_ | table | symbol }
+value = _{ constant | number | keyword | string | buffer | long_string | long_buffer | p_array | b_array | p_tuple | b_tuple | struct_ | table | symbol }
 
-value = ${ (reader_macro | WHITE_SPACE)* ~ raw_value ~ (WHITE_SPACE)* }
+// value = ${ (reader_macro | WHITE_SPACE)* ~ raw_value ~ (WHITE_SPACE)* }
 
 root  = _{ value* }
 root2 = _{ (value ~ value)* }
