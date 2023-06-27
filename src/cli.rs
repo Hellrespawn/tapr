@@ -1,6 +1,6 @@
 use crate::error::ErrorKind;
-use crate::interpreter::{Interpreter, Value};
-use crate::Result;
+use crate::interpreter::Interpreter;
+use crate::{Node, Result};
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
@@ -66,7 +66,7 @@ fn eval_line(
             rl.add_history_entry(&line);
 
             match run_code(&line, intp, &format!("repl_{line_no}")) {
-                Ok(value) => println!("{}", value.repl_repr()),
+                Ok(node) => println!("{node}"),
                 Err(error) => eprintln!("{error}"),
             }
 
@@ -88,6 +88,6 @@ fn run_file(filename: &str) -> Result<()> {
     Ok(())
 }
 
-fn run_code(source: &str, intp: &mut Interpreter, name: &str) -> Result<Value> {
+fn run_code(source: &str, intp: &mut Interpreter, name: &str) -> Result<Node> {
     intp.interpret(source, name)
 }

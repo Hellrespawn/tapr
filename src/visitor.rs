@@ -1,6 +1,6 @@
 use crate::error::Error;
 use crate::location::Location;
-use crate::parser::ast::Node;
+use crate::Node;
 use crate::{NodeData, Result};
 use std::collections::HashMap;
 

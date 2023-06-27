@@ -1,4 +1,4 @@
-use crate::parser::ast::Node;
+use crate::Node;
 use crate::visitor::{visit_node_infallible, Visitor};
 use std::process::Command;
 

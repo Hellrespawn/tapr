@@ -20,16 +20,18 @@ mod interpreter;
 mod location;
 mod parser;
 mod visitor;
+mod node;
 
 pub type Result<T> = std::result::Result<T, error::Error>;
 
 pub use crate::Result as TaprResult;
 pub use cli::main;
 pub use error::{Error as TaprError, ErrorKind as TaprErrorKind};
-pub use interpreter::{
-    Arguments, Callable, CallableType, Environment, Interpreter,
-    NativeFunction, NativeFunctionImpl, Value,
-};
-pub use parser::ast::{Node, NodeData};
+// pub use interpreter::{
+//     Arguments, Callable, CallableType, Environment, Interpreter,
+//     NativeFunction, NativeFunctionImpl, Value,
+// };
+pub use interpreter::Interpreter;
+pub use node::{Node, NodeData};
 pub use parser::parameters::{Parameter, ParameterType, Parameters};
 pub use visitor::Visitor;

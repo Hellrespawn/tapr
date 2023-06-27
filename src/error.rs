@@ -1,4 +1,4 @@
-use crate::interpreter::Value;
+use crate::Node;
 use crate::location::Location;
 use crate::parser::parameters::ParameterType;
 use crate::parser::Rule;
@@ -109,7 +109,7 @@ pub enum ErrorKind {
     SymbolDefined(String),
 
     #[error("Value '{0}' is not callable.")]
-    NotCallable(Value),
+    NotCallable(Node),
 
     // Parameters
     #[error("Only the last parameter of a function may be a rest parameter.")]
@@ -126,7 +126,7 @@ pub enum ErrorKind {
     #[error("Invalid argument '{actual}', expected '{expected:?}'")]
     InvalidArgument {
         expected: Vec<ParameterType>,
-        actual: Value,
+        actual: Node,
     },
 
     #[error("Expect {expected} args, got {actual}.")]
@@ -142,8 +142,8 @@ pub enum ErrorKind {
     #[error("Unable to {op} {lhs} and {rhs}")]
     InvalidBinOp {
         op: &'static str,
-        lhs: Value,
-        rhs: Value,
+        lhs: Node,
+        rhs: Node,
     },
 
     #[error("Unable to parse {0:?} as number")]

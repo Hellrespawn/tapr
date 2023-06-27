@@ -1,6 +1,5 @@
 use crate::error::{Error, ErrorKind};
-use crate::interpreter::Value;
-use crate::Result;
+use crate::{Result, Node};
 
 #[derive(Debug, Clone)]
 pub enum ParameterType {
@@ -17,27 +16,28 @@ pub enum ParameterType {
 }
 
 impl ParameterType {
-    pub fn value_is_type(&self, value: &Value) -> bool {
-        match self {
-            ParameterType::Module => {
-                matches!(value, Value::Module { .. })
-            }
-            ParameterType::Function => matches!(value, Value::Callable(_)),
-            ParameterType::List => matches!(value, Value::List(_)),
-            ParameterType::Number => matches!(value, Value::Number(_)),
-            ParameterType::String => matches!(value, Value::String(_)),
-            ParameterType::Boolean => matches!(value, Value::Boolean(_)),
-            ParameterType::Symbol => matches!(value, Value::Symbol(_)),
-            ParameterType::Keyword => matches!(value, Value::Keyword(_)),
-            ParameterType::Nil => matches!(value, Value::Nil),
-            ParameterType::TypedList(ptype) => {
-                if let Value::List(values) = value {
-                    values.iter().all(|v| ptype.value_is_type(v))
-                } else {
-                    false
-                }
-            }
-        }
+    pub fn node_is_type(&self, node: &Node) -> bool {
+        todo!()
+        // match self {
+        //     ParameterType::Module => {
+        //         matches!(node, Value::Module { .. })
+        //     }
+        //     ParameterType::Function => matches!(node, Value::Callable(_)),
+        //     ParameterType::List => matches!(node, Value::List(_)),
+        //     ParameterType::Number => matches!(node, Value::Number(_)),
+        //     ParameterType::String => matches!(node, Value::String(_)),
+        //     ParameterType::Boolean => matches!(node, Value::Boolean(_)),
+        //     ParameterType::Symbol => matches!(node, Value::Symbol(_)),
+        //     ParameterType::Keyword => matches!(node, Value::Keyword(_)),
+        //     ParameterType::Nil => matches!(node, Value::Nil),
+        //     ParameterType::TypedList(ptype) => {
+        //         if let Value::List(values) = node {
+        //             values.iter().all(|v| ptype.value_is_type(v))
+        //         } else {
+        //             false
+        //         }
+        //     }
+        // }
     }
 }
 

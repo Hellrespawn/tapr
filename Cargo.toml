@@ -8,6 +8,7 @@ version = "0.1.0"
 
 [dependencies]
 conv = "0.3"
+delegate = "0.9"
 itertools = "0.11"
 once_cell = "1"
 pest = "2.6"
