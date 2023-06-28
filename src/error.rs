@@ -1,7 +1,7 @@
-use crate::Node;
 use crate::location::Location;
 use crate::parser::parameters::ParameterType;
 use crate::parser::Rule;
+use crate::Node;
 use thiserror::Error;
 
 #[derive(Debug)]

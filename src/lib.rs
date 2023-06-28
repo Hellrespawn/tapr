@@ -18,9 +18,9 @@ mod error;
 mod graph;
 mod interpreter;
 mod location;
+mod node;
 mod parser;
 mod visitor;
-mod node;
 
 pub type Result<T> = std::result::Result<T, error::Error>;
 

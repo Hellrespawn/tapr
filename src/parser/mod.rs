@@ -1,12 +1,11 @@
 use self::reader_macro::ReaderMacro;
-use crate::{
-    env::{DebugAst, DEBUG_AST, DEBUG_PARSER},
-    graph::GraphVisitor,
-    location::Location,
-    Node, NodeData, Result,
-};
+use crate::env::{DebugAst, DEBUG_AST, DEBUG_PARSER};
+use crate::graph::GraphVisitor;
+use crate::location::Location;
+use crate::{Node, NodeData, Result};
 use itertools::Itertools;
-use pest::{iterators::Pair, Parser as PestParser};
+use pest::iterators::Pair;
+use pest::Parser as PestParser;
 
 pub mod parameters;
 pub mod reader_macro;

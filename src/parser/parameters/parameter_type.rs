@@ -1,5 +1,5 @@
 use crate::error::{Error, ErrorKind};
-use crate::{Result, Node};
+use crate::{Node, Result};
 
 #[derive(Debug, Clone)]
 pub enum ParameterType {

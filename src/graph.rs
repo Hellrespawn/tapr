@@ -1,5 +1,5 @@
-use crate::Node;
-use crate::visitor::{visit_node_infallible, Visitor};
+use crate::visitor::Visitor;
+use crate::{Node, NodeData};
 use std::process::Command;
 
 pub(crate) struct GraphVisitor {
@@ -172,12 +172,6 @@ impl GraphVisitor {
     //         self.accept_and_connect_with_label(parent_node, node, label);
     //     }
     // }
-}
-
-impl Visitor<()> for GraphVisitor {
-    fn visit_node(&mut self, node: &Node) {
-        visit_node_infallible(self, node);
-    }
 
     fn visit_main(&mut self, nodes: &[Node]) {
         let parent_node = self.new_node("main");
@@ -267,5 +261,28 @@ impl Visitor<()> for GraphVisitor {
 
     fn visit_nil(&mut self) {
         self.new_node("nil");
+    }
+}
+
+impl Visitor<()> for GraphVisitor {
+    fn visit_node(&mut self, node: &Node) {
+        match node.data() {
+            NodeData::Main(nodes) => self.visit_main(nodes),
+            NodeData::Table(map) => self.visit_table(map),
+            NodeData::PArray(nodes) => self.visit_p_array(nodes),
+            NodeData::BArray(nodes) => self.visit_b_array(nodes),
+            NodeData::Struct(map) => self.visit_struct(map),
+            NodeData::PTuple(nodes) => self.visit_p_tuple(nodes),
+            NodeData::BTuple(nodes) => self.visit_b_tuple(nodes),
+            NodeData::Number(number) => self.visit_number(*number),
+            NodeData::String(string) => self.visit_string(string),
+            NodeData::Buffer(buffer) => self.visit_buffer(buffer),
+            NodeData::Symbol(symbol) => self.visit_symbol(symbol),
+            NodeData::Keyword(keyword) => self.visit_keyword(keyword),
+            NodeData::True => self.visit_true(),
+            NodeData::False => self.visit_false(),
+            NodeData::Nil => self.visit_nil(),
+            _ => unreachable!(),
+        }
     }
 }

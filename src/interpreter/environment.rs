@@ -10,23 +10,24 @@ struct Value {
 }
 
 impl Value {
+    delegate! {
+        to self.node {
+            #[inline]
+            fn to_string(&self) -> String;
+        }
+    }
+
     fn def(node: Node) -> Self {
         Value {
             mutable: false,
             node,
         }
     }
+
     fn var(node: Node) -> Self {
         Value {
             mutable: true,
             node,
-        }
-    }
-
-    delegate! {
-        to self.node {
-            #[inline]
-            fn to_string(&self) -> String;
         }
     }
 }
