@@ -105,5 +105,8 @@ fn split(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
         .map(|s| Value::String(s.to_owned()))
         .collect::<Vec<_>>();
 
-    Ok(Value::List(values))
+    Ok(Value::List {
+        mutable: false,
+        list: values,
+    })
 }

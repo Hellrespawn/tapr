@@ -44,7 +44,7 @@ fn tuples_to_environment(
 
     for tuple in tuples {
         environment
-            .insert(tuple.0.to_owned(), tuple_to_value(tuple))
+            .def(tuple.0.to_owned(), tuple_to_value(tuple))
             .unwrap_or_else(|_| {
                 panic!("Unable to add {name} functions to environment.")
             });

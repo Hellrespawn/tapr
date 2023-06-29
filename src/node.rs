@@ -1,10 +1,6 @@
-use self::callable::Callable;
 use crate::location::Location;
 use crate::visitor::Visitor;
 use std::collections::HashMap;
-use std::sync::Arc;
-
-pub mod callable;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Node {
@@ -48,14 +44,6 @@ impl Node {
     pub fn location(&self) -> Location {
         self.location
     }
-
-    pub fn as_callable(&self) -> Option<&dyn Callable> {
-        if let NodeData::Callable(callable) = self.data() {
-            Some(&**callable)
-        } else {
-            None
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -75,8 +63,6 @@ pub enum NodeData {
     True,
     False,
     Nil,
-    // Internal
-    Callable(Arc<dyn Callable>),
 }
 
 impl std::fmt::Display for NodeData {
@@ -97,7 +83,6 @@ impl std::fmt::Display for NodeData {
             Self::True => write!(f, "true"),
             Self::False => write!(f, "false"),
             Self::Nil => write!(f, "nil"),
-            Self::Callable(callable) => write!(f, "{callable}"),
         }
     }
 }
@@ -136,7 +121,6 @@ impl std::hash::Hash for NodeData {
             Self::True => state.write_u8(13),
             Self::False => state.write_u8(14),
             Self::Nil => state.write_u8(15),
-            Self::Callable(_) => state.write_u8(16),
         }
 
         match self {

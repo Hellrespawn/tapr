@@ -1,7 +1,7 @@
 use super::environment::Environment;
 use super::value::{Callable, CallableType};
-use super::{Arguments, Interpreter, Parameters, Value};
-use crate::Result;
+use super::{Arguments, Interpreter, Value};
+use crate::{Parameters, Result};
 
 mod modules;
 
@@ -17,7 +17,7 @@ pub fn get_native_environment() -> Environment {
                 });
         } else {
             environment
-                .insert(module.name().to_owned(), module.environment().into())
+                .def(module.name().to_owned(), module.environment().into())
                 .unwrap_or_else(|_| {
                     panic!("Unable to insert '{}' module.", module.name())
                 });
@@ -60,7 +60,7 @@ impl std::fmt::Display for NativeFunction {
     }
 }
 
-impl Callable for NativeFunction {
+impl Callable<Result<Value>> for NativeFunction {
     fn call(
         &self,
         intp: &mut Interpreter,

@@ -1,8 +1,8 @@
 use super::{Callable, CallableType, Value};
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter};
-use crate::parser::ast::Node;
 use crate::parser::parameters::Parameters;
+use crate::Node;
 use crate::Result;
 
 #[derive(Debug, Clone)]
@@ -23,7 +23,7 @@ impl std::fmt::Display for Function {
     }
 }
 
-impl Callable for Function {
+impl Callable<Result<Value>> for Function {
     fn call(
         &self,
         intp: &mut Interpreter,
@@ -40,7 +40,7 @@ impl Callable for Function {
             .map(|n| n.accept(intp))
             .collect::<Result<Vec<_>>>()?;
 
-        intp.exit_scope();
+        intp.pop_environment();
 
         Ok(values.pop().unwrap_or(Value::Nil))
     }

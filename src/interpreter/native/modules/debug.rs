@@ -25,7 +25,7 @@ impl NativeModule for Debug {
 }
 
 fn env(intp: &mut Interpreter, _arguments: Arguments) -> Result<Value> {
-    writeln!(intp.output, "{}", intp.environment)?;
+    println!("{}", intp.environment);
 
     Ok(Value::Nil)
 }
@@ -33,7 +33,7 @@ fn env(intp: &mut Interpreter, _arguments: Arguments) -> Result<Value> {
 fn lsmod(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     let environment = arguments.unwrap_module(0);
 
-    writeln!(intp.output, "{environment}")?;
+    println!("{environment}");
 
     Ok(Value::Nil)
 }

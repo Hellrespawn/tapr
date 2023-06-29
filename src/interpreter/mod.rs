@@ -1,12 +1,18 @@
+use self::value::{Callable, CallableType};
 use crate::error::{Error, ErrorKind};
 use crate::location::Location;
-use crate::node::callable::{Callable, CallableType};
 use crate::parser::parse_string;
 use crate::{Node, NodeData, Result, Visitor};
+use arguments::Arguments;
 use environment::Environment;
 use std::collections::HashMap;
 
+pub use value::Value;
+
+mod arguments;
 mod environment;
+mod native;
+mod value;
 
 #[derive(Debug, Default)]
 pub struct Interpreter {
@@ -14,10 +20,32 @@ pub struct Interpreter {
 }
 
 impl Interpreter {
-    pub fn interpret(&mut self, source: &str, name: &str) -> Result<Node> {
+    pub fn new() -> Self {
+        Self {
+            environment: Environment::new(),
+        }
+    }
+
+    pub fn interpret(&mut self, source: &str, name: &str) -> Result<Value> {
         let node = parse_string(source, name)?;
 
         node.accept(self)
+    }
+
+    pub fn push_environment(&mut self, new_environment: Environment) {
+        let old_environment =
+            std::mem::replace(&mut self.environment, new_environment);
+
+        self.environment.set_parent(old_environment);
+    }
+
+    pub fn pop_environment(&mut self) -> Environment {
+        let parent_environment = self
+            .environment
+            .take_parent()
+            .expect("Scope to have parent.");
+
+        std::mem::replace(&mut self.environment, parent_environment)
     }
 
     fn add_location_to_error(mut error: Error, location: Location) -> Error {
@@ -29,7 +57,7 @@ impl Interpreter {
         &mut self,
         key: &Node,
         value: &Node,
-    ) -> Result<(Node, Node)> {
+    ) -> Result<(Value, Value)> {
         Ok((key.accept(self)?, value.accept(self)?))
     }
 
@@ -37,13 +65,13 @@ impl Interpreter {
         &mut self,
         location: Location,
         nodes: &[Node],
-    ) -> Result<Node> {
+    ) -> Result<Value> {
         Ok(nodes
             .iter()
             .map(|n| n.accept(self))
             .collect::<Result<Vec<_>>>()?
             .pop()
-            .unwrap_or(Node::new(location, NodeData::Nil)))
+            .unwrap_or(Value::Nil))
     }
 
     fn visit_map(
@@ -51,20 +79,11 @@ impl Interpreter {
         location: Location,
         map: &HashMap<Node, Node>,
         mutable: bool,
-    ) -> Result<Node> {
+    ) -> Result<Value> {
         map.iter()
             .map(|(k, v)| self.visit_key_value(k, v))
             .collect::<Result<HashMap<_, _>>>()
-            .map(|map| {
-                Node::new(
-                    location,
-                    if mutable {
-                        NodeData::Table(map)
-                    } else {
-                        NodeData::Struct(map)
-                    },
-                )
-            })
+            .map(|map| Value::Map { mutable, map })
     }
 
     fn visit_list(
@@ -73,59 +92,64 @@ impl Interpreter {
         nodes: &[Node],
         mutable: bool,
         bracket: bool,
-    ) -> Result<Node> {
+    ) -> Result<Value> {
         let visited_nodes = nodes
             .iter()
             .map(|n| n.accept(self))
             .collect::<Result<Vec<_>>>()?;
 
-        let data = match (mutable, bracket) {
-            (true, true) => NodeData::BArray(visited_nodes),
-            (true, false) => NodeData::PArray(visited_nodes),
-            (false, true) => NodeData::BTuple(visited_nodes),
-            (false, false) => {
-                unreachable!("Function calls should be handled separately.")
-            }
+        if !mutable && !bracket {
+            unreachable!("Function calls should be handled separately.")
+        }
+
+        let value = Value::List {
+            mutable,
+            list: visited_nodes,
         };
 
-        Ok(Node::new(location, data))
+        Ok(value)
     }
 
     fn visit_call(
         &mut self,
         location: Location,
         nodes: &[Node],
-    ) -> Result<Node> {
+    ) -> Result<Value> {
         if nodes.is_empty() {
-            return Ok(Node::new(location, NodeData::Nil));
+            return Ok(Value::Nil);
         }
 
         let first_node = nodes[0].accept(self)?;
 
-        match first_node.as_callable() {
-            Some(callable) => match callable.callable_type() {
-                CallableType::Native | CallableType::Function => {
-                    self.visit_function(location, callable, &nodes[1..])
-                }
-                CallableType::Macro => {
-                    self.visit_macro(location, callable, &nodes[1..])
-                }
-                CallableType::SpecialForm => todo!(),
-            },
-            None => todo!("Throw error"),
-        }
+        todo!("Handle Function Call")
+
+        // if let Value::Callable(callable) = first_node {
+        //     match callable.callable_type() {
+        //         CallableType::Native | CallableType::Function => {
+        //             self.visit_function(location, &*callable, &nodes[1..])
+        //         }
+        //         CallableType::Macro => {
+        //             self.visit_macro(location, &*callable, &nodes[1..])
+        //         }
+        //         CallableType::SpecialForm => todo!(),
+        //     }
+        // } else {
+        //     todo!("Throw error")
+        // }
     }
 
     fn visit_function(
         &mut self,
         location: Location,
-        callable: &dyn Callable,
+        callable: &dyn Callable<Result<Value>>,
         arguments: &[Node],
-    ) -> Result<Node> {
+    ) -> Result<Value> {
         let arguments = arguments
             .iter()
             .map(|n| n.accept(self))
             .collect::<Result<Vec<_>>>()?;
+
+        let arguments = Arguments::new(&callable.parameters(), arguments)?;
 
         callable
             .call(self, arguments)
@@ -135,23 +159,24 @@ impl Interpreter {
     fn visit_macro(
         &mut self,
         location: Location,
-        callable: &dyn Callable,
+        callable: &dyn Callable<Result<Node>>,
         arguments: &[Node],
     ) -> Result<Node> {
-        let node = callable
-            .call(self, arguments.to_owned())
-            .map_err(|e| Self::add_location_to_error(e, location))?;
+        todo!("Implement macro");
+        // let node = callable
+        //     .call(self, arguments.to_owned())
+        //     .map_err(|e| Self::add_location_to_error(e, location))?;
 
-        node.accept(self)
+        // node.accept(self)
     }
 
     fn visit_symbol(
         &mut self,
         location: Location,
         symbol: &str,
-    ) -> Result<Node> {
-        if let Some(node) = self.environment.get(symbol) {
-            Ok(node.clone())
+    ) -> Result<Value> {
+        if let Some(value) = self.environment.get(symbol) {
+            Ok(value.clone())
         } else {
             Err(Error::new(
                 location,
@@ -161,8 +186,8 @@ impl Interpreter {
     }
 }
 
-impl Visitor<Result<Node>> for Interpreter {
-    fn visit_node(&mut self, node: &Node) -> Result<Node> {
+impl Visitor<Result<Value>> for Interpreter {
+    fn visit_node(&mut self, node: &Node) -> Result<Value> {
         let location = node.location();
 
         match node.data() {
@@ -180,9 +205,9 @@ impl Visitor<Result<Node>> for Interpreter {
                 self.visit_list(location, nodes, false, true)
             }
             NodeData::Symbol(symbol) => self.visit_symbol(location, symbol),
-            NodeData::Number(_)
-            | NodeData::String(_)
-            | NodeData::Buffer(_)
+            NodeData::Number(number) => Ok(Value::Number(*number)),
+            NodeData::String(string) => Ok(Value::String(string.clone())),
+            NodeData::Buffer(_)
             | NodeData::Keyword(_)
             | NodeData::True
             | NodeData::False

@@ -1,3 +1,4 @@
+use crate::interpreter::Value;
 use crate::location::Location;
 use crate::parser::parameters::ParameterType;
 use crate::parser::Rule;
@@ -126,7 +127,7 @@ pub enum ErrorKind {
     #[error("Invalid argument '{actual}', expected '{expected:?}'")]
     InvalidArgument {
         expected: Vec<ParameterType>,
-        actual: Node,
+        actual: Value,
     },
 
     #[error("Expect {expected} args, got {actual}.")]

@@ -1,9 +1,10 @@
 use crate::error::{Error, ErrorKind};
-use crate::{Node, Result};
+use crate::interpreter::Value;
+use crate::Result;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum ParameterType {
-    TypedList(Box<ParameterType>),
+    Map,
     List,
     Module,
     Function,
@@ -16,28 +17,23 @@ pub enum ParameterType {
 }
 
 impl ParameterType {
-    pub fn node_is_type(&self, node: &Node) -> bool {
-        todo!()
-        // match self {
-        //     ParameterType::Module => {
-        //         matches!(node, Value::Module { .. })
-        //     }
-        //     ParameterType::Function => matches!(node, Value::Callable(_)),
-        //     ParameterType::List => matches!(node, Value::List(_)),
-        //     ParameterType::Number => matches!(node, Value::Number(_)),
-        //     ParameterType::String => matches!(node, Value::String(_)),
-        //     ParameterType::Boolean => matches!(node, Value::Boolean(_)),
-        //     ParameterType::Symbol => matches!(node, Value::Symbol(_)),
-        //     ParameterType::Keyword => matches!(node, Value::Keyword(_)),
-        //     ParameterType::Nil => matches!(node, Value::Nil),
-        //     ParameterType::TypedList(ptype) => {
-        //         if let Value::List(values) = node {
-        //             values.iter().all(|v| ptype.value_is_type(v))
-        //         } else {
-        //             false
-        //         }
-        //     }
-        // }
+    pub fn value_is_type(&self, value: &Value) -> bool {
+        match self {
+            ParameterType::Module => {
+                matches!(value, Value::Module { .. })
+            }
+            ParameterType::Function => matches!(value, Value::Function(_)),
+            ParameterType::List => matches!(value, Value::List { .. }),
+            ParameterType::Number => matches!(value, Value::Number(_)),
+            ParameterType::String => matches!(value, Value::String(_)),
+            ParameterType::Boolean => matches!(value, Value::Boolean(_)),
+            ParameterType::Symbol => matches!(value, Value::Symbol(_)),
+            ParameterType::Keyword => matches!(value, Value::Keyword(_)),
+            ParameterType::Nil => matches!(value, Value::Nil),
+            ParameterType::Map => {
+                matches!(value, Value::Map { .. })
+            }
+        }
     }
 }
 
@@ -69,7 +65,7 @@ impl TryFrom<&str> for ParameterType {
 impl std::fmt::Display for ParameterType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ParameterType::TypedList(_) | ParameterType::List => {
+            ParameterType::List => {
                 write!(f, "list")
             }
             ParameterType::Module => write!(f, "module"),
@@ -80,6 +76,7 @@ impl std::fmt::Display for ParameterType {
             ParameterType::Symbol => write!(f, "symbol"),
             ParameterType::Keyword => write!(f, "keyword"),
             ParameterType::Nil => write!(f, "nil"),
+            ParameterType::Map => write!(f, "map"),
         }
     }
 }

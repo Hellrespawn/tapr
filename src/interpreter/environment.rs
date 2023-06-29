@@ -1,40 +1,41 @@
+use super::Value;
 use crate::error::ErrorKind;
-use crate::{Node, Result};
+use crate::{Result};
 use delegate::delegate;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
-struct Value {
+struct ValueWrapper {
     mutable: bool,
-    node: Node,
+    value: Value,
 }
 
-impl Value {
+impl ValueWrapper {
     delegate! {
-        to self.node {
+        to self.value {
             #[inline]
             fn to_string(&self) -> String;
         }
     }
 
-    fn def(node: Node) -> Self {
-        Value {
+    fn def(value: Value) -> Self {
+        ValueWrapper {
             mutable: false,
-            node,
+            value,
         }
     }
 
-    fn var(node: Node) -> Self {
-        Value {
+    fn var(value: Value) -> Self {
+        ValueWrapper {
             mutable: true,
-            node,
+            value,
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct Environment {
-    map: HashMap<String, Value>,
+    map: HashMap<String, ValueWrapper>,
     parent: Option<Box<Environment>>,
 }
 
@@ -64,15 +65,15 @@ impl Environment {
         env.map(|e| *e)
     }
 
-    pub fn def(&mut self, key: String, node: Node) -> Result<()> {
-        self.insert(key, Value::def(node))
+    pub fn def(&mut self, key: String, value: Value) -> Result<()> {
+        self.insert(key, ValueWrapper::def(value))
     }
 
-    pub fn var(&mut self, key: String, node: Node) -> Result<()> {
-        self.insert(key, Value::var(node))
+    pub fn var(&mut self, key: String, value: Value) -> Result<()> {
+        self.insert(key, ValueWrapper::var(value))
     }
 
-    fn insert(&mut self, key: String, value: Value) -> Result<()> {
+    fn insert(&mut self, key: String, value: ValueWrapper) -> Result<()> {
         if !value.mutable && self.has_in_scope(&key) {
             Err(ErrorKind::SymbolDefined(key).into())
         } else {
@@ -81,8 +82,8 @@ impl Environment {
         }
     }
 
-    pub fn get(&self, key: &str) -> Option<&Node> {
-        self.map.get(key).map(|v| &v.node).or_else(|| {
+    pub fn get(&self, key: &str) -> Option<&Value> {
+        self.map.get(key).map(|v| &v.value).or_else(|| {
             if let Some(environment) = &self.parent {
                 environment.get(key)
             } else {
@@ -91,8 +92,8 @@ impl Environment {
         })
     }
 
-    pub fn get_mut(&mut self, key: &str) -> Option<&mut Node> {
-        self.map.get_mut(key).map(|v| &mut v.node).or_else(|| {
+    pub fn get_mut(&mut self, key: &str) -> Option<&mut Value> {
+        self.map.get_mut(key).map(|v| &mut v.value).or_else(|| {
             if let Some(environment) = &mut self.parent {
                 environment.get_mut(key)
             } else {
@@ -117,7 +118,7 @@ impl Environment {
         self.map.len()
     }
 
-    pub fn format_table(mut values: Vec<(&str, &Node)>) -> String {
+    pub fn format_table(mut values: Vec<(&str, &Value)>) -> String {
         values.sort_by(|(l, _), (r, _)| l.cmp(r));
 
         let key_width = values
@@ -174,7 +175,7 @@ impl std::fmt::Display for Environment {
         let values = self
             .map
             .iter()
-            .map(|(k, v)| (k.as_str(), &v.node))
+            .map(|(k, v)| (k.as_str(), &v.value))
             .collect::<Vec<_>>();
 
         writeln!(f, "{}", Self::format_table(values))

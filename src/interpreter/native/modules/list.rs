@@ -44,7 +44,10 @@ fn tail(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
         .map(Vec::from)
         .unwrap_or_default();
 
-    Ok(Value::List(list))
+    Ok(Value::List {
+        mutable: false,
+        list,
+    })
 }
 
 fn push(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
@@ -54,20 +57,23 @@ fn push(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
 
     let output = [list, values].into_iter().flatten().collect();
 
-    Ok(Value::List(output))
+    Ok(Value::List {
+        mutable: false,
+        list: output,
+    })
 }
 
 fn reduce(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
-    let callable = arguments.unwrap_callable(0);
+    let function = arguments.unwrap_function(0);
     let init = arguments.unwrap(1);
     let input = arguments.unwrap_list(2);
 
     let mut output = init;
 
     for value in input {
-        output = callable.call(
+        output = function.call(
             intp,
-            Arguments::new(&callable.parameters(), vec![output, value])?,
+            Arguments::new(&function.parameters(), vec![output, value])?,
         )?;
     }
 
@@ -75,16 +81,16 @@ fn reduce(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
 }
 
 fn filter(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
-    let callable = arguments.unwrap_callable(0);
+    let function = arguments.unwrap_function(0);
     let values = arguments.unwrap_list(1);
 
     let mut output = Vec::new();
 
     for value in values {
-        let is_truthy = callable
+        let is_truthy = function
             .call(
                 intp,
-                Arguments::new(&callable.parameters(), vec![value.clone()])?,
+                Arguments::new(&function.parameters(), vec![value.clone()])?,
             )?
             .is_truthy();
 
@@ -93,20 +99,26 @@ fn filter(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
         }
     }
 
-    Ok(Value::List(output))
+    Ok(Value::List {
+        mutable: false,
+        list: output,
+    })
 }
 
 fn map(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
-    let callable = arguments.unwrap_callable(0);
+    let function = arguments.unwrap_function(0);
     let values = arguments.unwrap_list(1);
 
     let output = values
         .into_iter()
         .map(|v| {
-            callable
-                .call(intp, Arguments::new(&callable.parameters(), vec![v])?)
+            function
+                .call(intp, Arguments::new(&function.parameters(), vec![v])?)
         })
         .collect::<Result<Vec<_>>>()?;
 
-    Ok(Value::List(output))
+    Ok(Value::List {
+        mutable: false,
+        list: output,
+    })
 }

@@ -30,17 +30,17 @@ impl NativeModule for Core {
 
 fn println(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     for argument in arguments.arguments() {
-        write!(intp.output, "{argument}")?;
+        print!("{argument}");
     }
 
-    writeln!(intp.output)?;
+    println!();
 
     Ok(Value::Nil)
 }
 
 fn print(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     for argument in arguments.arguments() {
-        write!(intp.output, "{argument}")?;
+        print!("{argument}");
     }
 
     Ok(Value::Nil)
