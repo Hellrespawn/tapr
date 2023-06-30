@@ -105,23 +105,7 @@ impl std::hash::Hash for NodeData {
     where
         H: std::hash::Hasher,
     {
-        match self {
-            Self::Main(_) => state.write_u8(1),
-            Self::Table(_) => state.write_u8(2),
-            Self::PArray(_) => state.write_u8(3),
-            Self::BArray(_) => state.write_u8(4),
-            Self::Struct(_) => state.write_u8(5),
-            Self::PTuple(_) => state.write_u8(6),
-            Self::BTuple(_) => state.write_u8(7),
-            Self::Number(_) => state.write_u8(8),
-            Self::String(_) => state.write_u8(9),
-            Self::Buffer(_) => state.write_u8(10),
-            Self::Symbol(_) => state.write_u8(11),
-            Self::Keyword(_) => state.write_u8(12),
-            Self::True => state.write_u8(13),
-            Self::False => state.write_u8(14),
-            Self::Nil => state.write_u8(15),
-        }
+        core::mem::discriminant(self).hash(state);
 
         match self {
             Self::Main(nodes)

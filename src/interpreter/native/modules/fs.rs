@@ -27,13 +27,16 @@ impl NativeModule for Fs {
     }
 }
 
-fn read_to_string(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
+fn read_to_string(
+    _: &mut Interpreter,
+    arguments: Arguments<Value>,
+) -> Result<Value> {
     let path = arguments.unwrap_string(0);
 
     Ok(std::fs::read_to_string(path)?.into())
 }
 
-fn write(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
+fn write(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
     let path = arguments.unwrap_string(0);
     let body = arguments.unwrap_string(1);
 

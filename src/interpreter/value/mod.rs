@@ -1,20 +1,20 @@
+mod callable;
 mod function;
 
+pub use callable::{Callable, CallableType};
 pub use function::Function;
 
-use super::arguments::Arguments;
 use super::environment::Environment;
 use super::native::NativeFunction;
-use super::Interpreter;
-use crate::{Node, Parameters, Result};
+use crate::Node;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub enum Value {
-    Function(Arc<dyn Callable<Result<Value>>>),
-    Macro(Arc<dyn Callable<Result<Node>>>),
+    Function(Arc<dyn Callable<Value>>),
+    Macro(Arc<dyn Callable<Node>>),
     Module(Environment),
     Map {
         mutable: bool,
@@ -114,6 +114,38 @@ impl PartialEq for Value {
     }
 }
 
+impl Eq for Value {}
+
+impl std::hash::Hash for Value {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        core::mem::discriminant(self).hash(state);
+
+        match self {
+            Value::Function(_) => unreachable!("Unable to hash callable"),
+            Value::Macro(_) => unreachable!("Unable to hash macro"),
+            Value::Module(env) => env.hash(state),
+            Value::Map { mutable, map } => {
+                mutable.hash(state);
+                map.iter().collect::<Vec<_>>().hash(state);
+            }
+            Value::List { mutable, list } => {
+                mutable.hash(state);
+                list.hash(state);
+            }
+            Value::Number(number) => number.to_bits().hash(state),
+            Value::String { mutable, string } => {
+                mutable.hash(state);
+                string.hash(state);
+            }
+            Value::Symbol(string) | Value::Keyword(string) => {
+                string.hash(state);
+            }
+            Value::Boolean(bool) => bool.hash(state),
+            Value::Nil => (),
+        }
+    }
+}
+
 impl PartialOrd for Value {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         #[allow(clippy::match_same_arms)]
@@ -176,49 +208,5 @@ impl std::fmt::Display for Value {
             Self::Boolean(bool) => write!(f, "{bool}"),
             Self::Nil => write!(f, "nil"),
         }
-    }
-}
-
-pub enum CallableType {
-    Native,
-    Function,
-    Macro,
-    SpecialForm,
-}
-
-impl std::fmt::Display for CallableType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                CallableType::Native => "native fn",
-                CallableType::Function => "fn",
-                CallableType::Macro => "macro",
-                CallableType::SpecialForm => "special form",
-            }
-        )
-    }
-}
-
-pub trait Callable<T>: Send + Sync {
-    fn call(&self, intp: &mut Interpreter, arguments: Arguments) -> T;
-
-    fn arity(&self) -> usize;
-
-    fn callable_type(&self) -> CallableType;
-
-    fn parameters(&self) -> Parameters;
-}
-
-impl<T> std::fmt::Display for dyn Callable<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "<{}{}> ", self.callable_type(), self.parameters())
-    }
-}
-
-impl<T> std::fmt::Debug for dyn Callable<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self}")
     }
 }

@@ -28,7 +28,10 @@ impl NativeModule for Core {
     }
 }
 
-fn println(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
+fn println(
+    _intp: &mut Interpreter,
+    arguments: Arguments<Value>,
+) -> Result<Value> {
     for argument in arguments.arguments() {
         print!("{argument}");
     }
@@ -38,7 +41,10 @@ fn println(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     Ok(Value::Nil)
 }
 
-fn print(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
+fn print(
+    _intp: &mut Interpreter,
+    arguments: Arguments<Value>,
+) -> Result<Value> {
     for argument in arguments.arguments() {
         print!("{argument}");
     }
@@ -46,7 +52,7 @@ fn print(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     Ok(Value::Nil)
 }
 
-fn is_nil(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
+fn is_nil(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
     let argument = arguments.unwrap(0);
 
     Ok(matches!(argument, Value::Nil).into())

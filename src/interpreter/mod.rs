@@ -1,28 +1,48 @@
-use self::value::{Callable, CallableType};
+use self::native::get_default_environment;
 use crate::error::{Error, ErrorKind};
 use crate::location::Location;
 use crate::parser::parse_string;
-use crate::{Node, NodeData, Result, Visitor};
-use arguments::Arguments;
-use environment::Environment;
+use crate::{Node, NodeData, ParameterType, Result, Visitor};
 use std::collections::HashMap;
-
-pub use value::Value;
 
 mod arguments;
 mod environment;
 mod native;
 mod value;
 
-#[derive(Debug, Default)]
+pub use arguments::Arguments;
+pub use environment::Environment;
+pub use native::{NativeFunction, NativeFunctionImpl};
+pub use value::{Callable, CallableType, Value};
+
+#[derive(Debug, Copy, Clone)]
+enum IntpMode {
+    Default,
+    Quote,
+    Quasiquote,
+    Unquote,
+}
+
+#[derive(Debug)]
 pub struct Interpreter {
     environment: Environment,
+    mode: IntpMode,
+}
+
+impl Default for Interpreter {
+    fn default() -> Self {
+        Self {
+            environment: get_default_environment(),
+            mode: IntpMode::Default,
+        }
+    }
 }
 
 impl Interpreter {
     pub fn new() -> Self {
         Self {
             environment: Environment::new(),
+            mode: IntpMode::Default,
         }
     }
 
@@ -69,7 +89,8 @@ impl Interpreter {
         Ok(nodes
             .iter()
             .map(|n| n.accept(self))
-            .collect::<Result<Vec<_>>>()?
+            .collect::<Result<Vec<_>>>()
+            .map_err(|e| Self::add_location_to_error(e, location))?
             .pop()
             .unwrap_or(Value::Nil))
     }
@@ -84,6 +105,7 @@ impl Interpreter {
             .map(|(k, v)| self.visit_key_value(k, v))
             .collect::<Result<HashMap<_, _>>>()
             .map(|map| Value::Map { mutable, map })
+            .map_err(|e| Self::add_location_to_error(e, location))
     }
 
     fn visit_list(
@@ -96,7 +118,8 @@ impl Interpreter {
         let visited_nodes = nodes
             .iter()
             .map(|n| n.accept(self))
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<Result<Vec<_>>>()
+            .map_err(|e| Self::add_location_to_error(e, location))?;
 
         if !mutable && !bracket {
             unreachable!("Function calls should be handled separately.")
@@ -119,29 +142,32 @@ impl Interpreter {
             return Ok(Value::Nil);
         }
 
+        if let NodeData::Symbol(symbol) = nodes[0].data() {
+            if symbol.is_special_form() {
+                return self.visit_special_form(location, symbol, &nodes[1..]);
+            }
+        }
+
         let first_node = nodes[0].accept(self)?;
 
-        todo!("Handle Function Call")
+        match first_node {
+            Value::Function(callable) => {
+                self.visit_function(location, &*callable, &nodes[1..])
+            }
+            Value::Macro(callable) => {
+                let node =
+                    self.visit_macro(location, &*callable, &nodes[1..])?;
 
-        // if let Value::Callable(callable) = first_node {
-        //     match callable.callable_type() {
-        //         CallableType::Native | CallableType::Function => {
-        //             self.visit_function(location, &*callable, &nodes[1..])
-        //         }
-        //         CallableType::Macro => {
-        //             self.visit_macro(location, &*callable, &nodes[1..])
-        //         }
-        //         CallableType::SpecialForm => todo!(),
-        //     }
-        // } else {
-        //     todo!("Throw error")
-        // }
+                node.accept(self)
+            }
+            _ => todo!("Throw error"),
+        }
     }
 
     fn visit_function(
         &mut self,
         location: Location,
-        callable: &dyn Callable<Result<Value>>,
+        callable: &dyn Callable<Value>,
         arguments: &[Node],
     ) -> Result<Value> {
         let arguments = arguments
@@ -149,7 +175,8 @@ impl Interpreter {
             .map(|n| n.accept(self))
             .collect::<Result<Vec<_>>>()?;
 
-        let arguments = Arguments::new(&callable.parameters(), arguments)?;
+        let parameters = callable.parameters();
+        let arguments = Arguments::from_values(&parameters, arguments)?;
 
         callable
             .call(self, arguments)
@@ -159,7 +186,7 @@ impl Interpreter {
     fn visit_macro(
         &mut self,
         location: Location,
-        callable: &dyn Callable<Result<Node>>,
+        callable: &dyn Callable<Node>,
         arguments: &[Node],
     ) -> Result<Node> {
         todo!("Implement macro");
@@ -168,6 +195,58 @@ impl Interpreter {
         //     .map_err(|e| Self::add_location_to_error(e, location))?;
 
         // node.accept(self)
+    }
+
+    fn visit_special_form(
+        &mut self,
+        location: Location,
+        symbol: &str,
+        arguments: &[Node],
+    ) -> Result<Value> {
+        let result = match symbol {
+            "def" => self.visit_def(arguments),
+            "var" => self.visit_var(arguments),
+            "fn" => todo!(),
+            "do" => todo!(),
+            "quote" => todo!(),
+            "if" => todo!(),
+            "splice" => todo!(),
+            "while" => todo!(),
+            "break" => todo!(),
+            "set" => todo!(),
+            "quasiquote" => todo!(),
+            "unquote" => todo!(),
+            "upscope" => todo!(),
+            _ => unreachable!(),
+        };
+
+        result.map_err(|e| Self::add_location_to_error(e, location))
+    }
+
+    fn visit_def(&mut self, arguments: &[Node]) -> Result<Value> {
+        let parameters = "k:symbol v".try_into().unwrap();
+
+        let arguments = Arguments::from_nodes(&parameters, arguments.to_vec())?;
+
+        let key = arguments.unwrap_symbol(0);
+        let value = arguments.unwrap(1).accept(self)?;
+
+        self.environment.def(key.clone(), value)?;
+
+        Ok(Value::Symbol(key))
+    }
+
+    fn visit_var(&mut self, arguments: &[Node]) -> Result<Value> {
+        let parameters = "k:symbol v".try_into().unwrap();
+
+        let arguments = Arguments::from_nodes(&parameters, arguments.to_vec())?;
+
+        let key = arguments.unwrap_symbol(0);
+        let value = arguments.unwrap(1).accept(self)?;
+
+        self.environment.var(key.clone(), value)?;
+
+        Ok(Value::Symbol(key))
     }
 
     fn visit_symbol(
@@ -217,5 +296,30 @@ impl Visitor<Result<Value>> for Interpreter {
             NodeData::Nil => Ok(Value::Nil),
         }
         .map_err(|e| Self::add_location_to_error(e, location))
+    }
+}
+
+trait IsSpecialForm {
+    fn is_special_form(&self) -> bool;
+}
+
+impl IsSpecialForm for String {
+    fn is_special_form(&self) -> bool {
+        matches!(
+            self.as_str(),
+            "def"
+                | "var"
+                | "fn"
+                | "do"
+                | "quote"
+                | "if"
+                | "splice"
+                | "while"
+                | "break"
+                | "set"
+                | "quasiquote"
+                | "unquote"
+                | "upscope"
+        )
     }
 }

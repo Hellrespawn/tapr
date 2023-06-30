@@ -1,6 +1,6 @@
 use crate::error::{Error, ErrorKind};
 use crate::interpreter::Value;
-use crate::Result;
+use crate::{Node, NodeData, Result};
 
 #[derive(Debug, Clone, Copy)]
 pub enum ParameterType {
@@ -22,6 +22,9 @@ impl ParameterType {
             ParameterType::Module => {
                 matches!(value, Value::Module { .. })
             }
+            ParameterType::Map => {
+                matches!(value, Value::Map { .. })
+            }
             ParameterType::Function => matches!(value, Value::Function(_)),
             ParameterType::List => matches!(value, Value::List { .. }),
             ParameterType::Number => matches!(value, Value::Number(_)),
@@ -30,9 +33,32 @@ impl ParameterType {
             ParameterType::Symbol => matches!(value, Value::Symbol(_)),
             ParameterType::Keyword => matches!(value, Value::Keyword(_)),
             ParameterType::Nil => matches!(value, Value::Nil),
+        }
+    }
+
+    pub fn node_is_type(&self, node: &Node) -> bool {
+        let data = node.data();
+
+        match self {
+            ParameterType::Module => false,
             ParameterType::Map => {
-                matches!(value, Value::Map { .. })
+                matches!(data, NodeData::Struct(_) | NodeData::Table(_))
             }
+            ParameterType::Function => matches!(data, NodeData::PTuple(_)),
+            ParameterType::List => matches!(
+                data,
+                NodeData::BTuple(_) | NodeData::PArray(_) | NodeData::BArray(_)
+            ),
+            ParameterType::Number => matches!(data, NodeData::Number(_)),
+            ParameterType::String => {
+                matches!(data, NodeData::String(_) | NodeData::Buffer(_))
+            }
+            ParameterType::Symbol => matches!(data, NodeData::Symbol(_)),
+            ParameterType::Keyword => matches!(data, NodeData::Keyword(_)),
+            ParameterType::Boolean => {
+                matches!(data, NodeData::True | NodeData::False)
+            }
+            ParameterType::Nil => matches!(data, NodeData::Nil),
         }
     }
 }

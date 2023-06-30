@@ -33,20 +33,20 @@ impl NativeModule for StringModule {
 
 type UnaryOp = fn(&str) -> String;
 
-fn unary(op: UnaryOp, arguments: Arguments) -> Result<Value> {
+fn unary(op: UnaryOp, arguments: Arguments<Value>) -> Result<Value> {
     let string = arguments.unwrap_string(0);
 
     Ok(Value::string(op(&string)))
 }
 
-fn len(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
+fn len(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
     let string = arguments.unwrap_string(0);
 
     #[allow(clippy::cast_precision_loss)]
     Ok(Value::Number(string.len() as f64))
 }
 
-fn join(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
+fn join(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
     let separator = arguments.unwrap_string(0);
     let values = arguments.unwrap_list(1);
 
@@ -56,7 +56,7 @@ fn join(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
             if let Value::String { string, .. } = value {
                 Ok(string)
             } else {
-                Err(ErrorKind::InvalidArgument {
+                Err(ErrorKind::InvalidValueArgument {
                     expected: vec![ParameterType::String],
                     actual: value,
                 }
@@ -68,7 +68,10 @@ fn join(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     Ok(Value::string(strings.join(&separator)))
 }
 
-fn join_not_nil(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
+fn join_not_nil(
+    _: &mut Interpreter,
+    arguments: Arguments<Value>,
+) -> Result<Value> {
     let separator = arguments.unwrap_string(0);
     let values = arguments.unwrap_list(1);
 
@@ -77,7 +80,7 @@ fn join_not_nil(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
         .filter_map(|value| match value {
             Value::String { string, .. } => Some(Ok(string)),
             Value::Nil => None,
-            other => Some(Err(ErrorKind::InvalidArgument {
+            other => Some(Err(ErrorKind::InvalidValueArgument {
                 expected: vec![ParameterType::String],
                 actual: other,
             }
@@ -92,11 +95,11 @@ fn join_not_nil(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     }
 }
 
-fn trim(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
+fn trim(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
     unary(|s| s.trim().to_owned(), arguments)
 }
 
-fn split(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
+fn split(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
     let separator = arguments.unwrap_string(0);
     let string = arguments.unwrap_string(1);
 

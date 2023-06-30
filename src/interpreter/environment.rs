@@ -1,23 +1,15 @@
 use super::Value;
 use crate::error::ErrorKind;
-use crate::{Result};
-use delegate::delegate;
+use crate::Result;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash)]
 struct ValueWrapper {
     mutable: bool,
     value: Value,
 }
 
 impl ValueWrapper {
-    delegate! {
-        to self.value {
-            #[inline]
-            fn to_string(&self) -> String;
-        }
-    }
-
     fn def(value: Value) -> Self {
         ValueWrapper {
             mutable: false,
@@ -179,5 +171,12 @@ impl std::fmt::Display for Environment {
             .collect::<Vec<_>>();
 
         writeln!(f, "{}", Self::format_table(values))
+    }
+}
+
+impl std::hash::Hash for Environment {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.map.iter().collect::<Vec<_>>().hash(state);
+        self.parent.hash(state);
     }
 }

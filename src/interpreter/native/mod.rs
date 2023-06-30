@@ -5,7 +5,7 @@ use crate::{Parameters, Result};
 
 mod modules;
 
-pub fn get_native_environment() -> Environment {
+pub fn get_default_environment() -> Environment {
     let mut environment = Environment::new();
 
     for module in modules::get_modules() {
@@ -28,7 +28,7 @@ pub fn get_native_environment() -> Environment {
 }
 
 pub type NativeFunctionImpl =
-    fn(intp: &mut Interpreter, arguments: Arguments) -> Result<Value>;
+    fn(intp: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value>;
 
 #[derive(Debug, Clone)]
 pub struct NativeFunction {
@@ -42,7 +42,7 @@ impl NativeFunction {
         name: &'static str,
         function: fn(
             intp: &mut Interpreter,
-            arguments: Arguments,
+            arguments: Arguments<Value>,
         ) -> Result<Value>,
         parameters: Parameters,
     ) -> Self {
@@ -60,11 +60,11 @@ impl std::fmt::Display for NativeFunction {
     }
 }
 
-impl Callable<Result<Value>> for NativeFunction {
+impl Callable<Value> for NativeFunction {
     fn call(
         &self,
         intp: &mut Interpreter,
-        arguments: Arguments,
+        arguments: Arguments<Value>,
     ) -> Result<Value> {
         (self.function)(intp, arguments)
     }

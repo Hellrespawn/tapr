@@ -2,8 +2,7 @@ use super::{Callable, CallableType, Value};
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter};
 use crate::parser::parameters::Parameters;
-use crate::Node;
-use crate::Result;
+use crate::{Node, Result};
 
 #[derive(Debug, Clone)]
 pub struct Function {
@@ -23,11 +22,11 @@ impl std::fmt::Display for Function {
     }
 }
 
-impl Callable<Result<Value>> for Function {
+impl Callable<Value> for Function {
     fn call(
         &self,
         intp: &mut Interpreter,
-        arguments: Arguments,
+        arguments: Arguments<Value>,
     ) -> Result<Value> {
         let mut function_environment = Environment::new();
         arguments.add_to_env(&mut function_environment)?;

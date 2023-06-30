@@ -31,13 +31,13 @@ impl NativeModule for List {
     }
 }
 
-fn head(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
+fn head(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
     let list = arguments.unwrap_list(0);
 
     Ok(list.into_iter().next().unwrap_or_else(|| Value::Nil))
 }
 
-fn tail(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
+fn tail(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
     let list = arguments
         .unwrap_list(0)
         .get(1..)
@@ -50,7 +50,7 @@ fn tail(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     })
 }
 
-fn push(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
+fn push(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
     let list = arguments.unwrap_list(0);
 
     let values = arguments.arguments()[1..].to_owned();
@@ -63,7 +63,10 @@ fn push(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     })
 }
 
-fn reduce(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
+fn reduce(
+    intp: &mut Interpreter,
+    arguments: Arguments<Value>,
+) -> Result<Value> {
     let function = arguments.unwrap_function(0);
     let init = arguments.unwrap(1);
     let input = arguments.unwrap_list(2);
@@ -73,14 +76,20 @@ fn reduce(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     for value in input {
         output = function.call(
             intp,
-            Arguments::new(&function.parameters(), vec![output, value])?,
+            Arguments::from_values(
+                &function.parameters(),
+                vec![output, value],
+            )?,
         )?;
     }
 
     Ok(output)
 }
 
-fn filter(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
+fn filter(
+    intp: &mut Interpreter,
+    arguments: Arguments<Value>,
+) -> Result<Value> {
     let function = arguments.unwrap_function(0);
     let values = arguments.unwrap_list(1);
 
@@ -90,7 +99,10 @@ fn filter(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
         let is_truthy = function
             .call(
                 intp,
-                Arguments::new(&function.parameters(), vec![value.clone()])?,
+                Arguments::from_values(
+                    &function.parameters(),
+                    vec![value.clone()],
+                )?,
             )?
             .is_truthy();
 
@@ -105,15 +117,17 @@ fn filter(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     })
 }
 
-fn map(intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
+fn map(intp: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
     let function = arguments.unwrap_function(0);
     let values = arguments.unwrap_list(1);
 
     let output = values
         .into_iter()
         .map(|v| {
-            function
-                .call(intp, Arguments::new(&function.parameters(), vec![v])?)
+            function.call(
+                intp,
+                Arguments::from_values(&function.parameters(), vec![v])?,
+            )
         })
         .collect::<Result<Vec<_>>>()?;
 

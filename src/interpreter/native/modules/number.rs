@@ -29,7 +29,10 @@ impl NativeModule for Number {
     }
 }
 
-pub fn align(_intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
+pub fn align(
+    _intp: &mut Interpreter,
+    arguments: Arguments<Value>,
+) -> Result<Value> {
     let f_width = arguments.unwrap_number(0);
     let n = arguments.unwrap_number(1);
 
@@ -45,7 +48,10 @@ pub fn align(_intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     Ok(format!("{n:0>width$}").into())
 }
 
-pub fn parse(_intp: &mut Interpreter, arguments: Arguments) -> Result<Value> {
+pub fn parse(
+    _intp: &mut Interpreter,
+    arguments: Arguments<Value>,
+) -> Result<Value> {
     let string = arguments.unwrap_string(0);
 
     let result: Result<f64> = string

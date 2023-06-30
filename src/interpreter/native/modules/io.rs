@@ -24,7 +24,7 @@ impl NativeModule for Io {
     }
 }
 
-pub fn read(_: &mut Interpreter, _: Arguments) -> Result<Value> {
+pub fn read(_: &mut Interpreter, _: Arguments<Value>) -> Result<Value> {
     let mut buffer = String::new();
 
     std::io::stdin().read_line(&mut buffer)?;

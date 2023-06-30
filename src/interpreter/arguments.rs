@@ -3,15 +3,62 @@ use super::value::Callable;
 use super::Value;
 use crate::error::{Error, ErrorKind};
 use crate::parser::parameters::Parameter;
-use crate::{Parameters, Result};
+use crate::{Node, NodeData, Parameters, Result};
 
-pub struct Arguments<'a> {
+pub struct Arguments<'a, T> {
     parameters: &'a Parameters,
-    arguments: Vec<Value>,
+    arguments: Vec<T>,
 }
 
-impl<'a> Arguments<'a> {
-    pub fn new(
+impl<'a, T: Clone> Arguments<'a, T> {
+    pub fn is_empty(&self) -> bool {
+        self.arguments.is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+        self.arguments.len()
+    }
+
+    pub fn arguments(&self) -> &[T] {
+        &self.arguments
+    }
+
+    pub fn unwrap(&self, index: usize) -> T {
+        self.arguments
+            .get(index)
+            .cloned()
+            .expect("Called unwrap on invalid index.")
+    }
+
+    pub fn unwrap_from(&self, index: usize) -> Vec<T> {
+        self.arguments[index..].to_vec()
+    }
+
+    fn check_length(&self) -> Result<()> {
+        if self.parameters.has_rest_param() {
+            if self.parameters.len() > self.arguments.len() {
+                Err(ErrorKind::WrongAmountOfMinArgs {
+                    expected: self.parameters.len(),
+                    actual: self.arguments.len(),
+                }
+                .into())
+            } else {
+                Ok(())
+            }
+        } else if self.parameters.len() != self.arguments.len() {
+            Err(ErrorKind::WrongAmountOfFixedArgs {
+                expected: self.parameters.len(),
+                actual: self.arguments.len(),
+            }
+            .into())
+        } else {
+            Ok(())
+        }
+    }
+}
+
+impl<'a> Arguments<'a, Value> {
+    pub fn from_values(
         parameters: &'a Parameters,
         arguments: Vec<Value>,
     ) -> Result<Self> {
@@ -26,14 +73,6 @@ impl<'a> Arguments<'a> {
         Ok(arguments)
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.arguments.is_empty()
-    }
-
-    pub fn len(&self) -> usize {
-        self.arguments.len()
-    }
-
     pub fn add_to_env(self, env: &mut Environment) -> Result<()> {
         for (parameter, argument) in self.parameters.iter().zip(self.arguments)
         {
@@ -43,19 +82,34 @@ impl<'a> Arguments<'a> {
         Ok(())
     }
 
-    pub fn arguments(&self) -> &[Value] {
-        &self.arguments
-    }
+    fn check_types(&self) -> Result<()> {
+        // Check pairs of params and args, length is already checked here.
+        for (param, arg) in self.parameters.iter().zip(&self.arguments) {
+            if !param.value_is_type(arg) {
+                return Err(Self::create_argument_error(param, arg));
+            }
+        }
 
-    pub fn unwrap(&self, index: usize) -> Value {
-        self.arguments
-            .get(index)
-            .cloned()
-            .expect("Called unwrap on invalid index.")
-    }
+        // If function has a rest parameter...
+        if self.parameters.has_rest_param() {
+            let remaining_args = self.arguments.get(self.parameters.len()..);
 
-    pub fn unwrap_from(&self, index: usize) -> Vec<Value> {
-        self.arguments[index..].to_vec()
+            // and there are more args...
+            if let Some(remaining_args) = remaining_args {
+                let last_param = self.parameters.last().expect("Parameters should have a Parameter if has_rest_param is true.");
+
+                // Check the last param.
+                for arg in remaining_args {
+                    if !last_param.value_is_type(arg) {
+                        return Err(Self::create_argument_error(
+                            last_param, arg,
+                        ));
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 
     pub fn unwrap_string(&self, index: usize) -> String {
@@ -104,10 +158,7 @@ impl<'a> Arguments<'a> {
         }
     }
 
-    pub fn unwrap_function(
-        &self,
-        index: usize,
-    ) -> &dyn Callable<Result<Value>> {
+    pub fn unwrap_function(&self, index: usize) -> &dyn Callable<Value> {
         let argument = &self.arguments[index];
 
         if let Value::Function(callable) = argument {
@@ -149,32 +200,45 @@ impl<'a> Arguments<'a> {
             .collect()
     }
 
-    fn check_length(&self) -> Result<()> {
-        if self.parameters.has_rest_param() {
-            if self.parameters.len() > self.arguments.len() {
-                Err(ErrorKind::WrongAmountOfMinArgs {
-                    expected: self.parameters.len(),
-                    actual: self.arguments.len(),
-                }
-                .into())
-            } else {
-                Ok(())
-            }
-        } else if self.parameters.len() != self.arguments.len() {
-            Err(ErrorKind::WrongAmountOfFixedArgs {
-                expected: self.parameters.len(),
-                actual: self.arguments.len(),
-            }
-            .into())
-        } else {
-            Ok(())
+    fn create_argument_error(parameter: &Parameter, value: &Value) -> Error {
+        ErrorKind::InvalidValueArgument {
+            expected: parameter.types().to_vec(),
+            actual: value.clone(),
         }
+        .into()
+    }
+}
+
+impl<'a> Arguments<'a, Node> {
+    pub fn from_nodes(
+        parameters: &'a Parameters,
+        arguments: Vec<Node>,
+    ) -> Result<Self> {
+        let arguments = Self {
+            parameters,
+            arguments,
+        };
+
+        arguments.check_length()?;
+        arguments.check_types()?;
+
+        Ok(arguments)
+    }
+
+    pub fn unwrap_symbol(&self, index: usize) -> String {
+        let node = &self.arguments[index];
+
+        let NodeData::Symbol(symbol) = node.data() else {
+            panic!("Called unwrap_keyword on non-Value::Keyword")
+        };
+
+        symbol.clone()
     }
 
     fn check_types(&self) -> Result<()> {
         // Check pairs of params and args, length is already checked here.
         for (param, arg) in self.parameters.iter().zip(&self.arguments) {
-            if !param.value_is_type(arg) {
+            if !param.node_is_type(arg) {
                 return Err(Self::create_argument_error(param, arg));
             }
         }
@@ -189,7 +253,7 @@ impl<'a> Arguments<'a> {
 
                 // Check the last param.
                 for arg in remaining_args {
-                    if !last_param.value_is_type(arg) {
+                    if !last_param.node_is_type(arg) {
                         return Err(Self::create_argument_error(
                             last_param, arg,
                         ));
@@ -201,10 +265,10 @@ impl<'a> Arguments<'a> {
         Ok(())
     }
 
-    fn create_argument_error(parameter: &Parameter, value: &Value) -> Error {
-        ErrorKind::InvalidArgument {
+    fn create_argument_error(parameter: &Parameter, node: &Node) -> Error {
+        ErrorKind::InvalidNodeArgument {
             expected: parameter.types().to_vec(),
-            actual: value.clone(),
+            actual: node.clone(),
         }
         .into()
     }

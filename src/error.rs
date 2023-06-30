@@ -125,9 +125,15 @@ pub enum ErrorKind {
     InvalidParameterType(String),
 
     #[error("Invalid argument '{actual}', expected '{expected:?}'")]
-    InvalidArgument {
+    InvalidValueArgument {
         expected: Vec<ParameterType>,
         actual: Value,
+    },
+
+    #[error("Invalid argument '{actual}', expected '{expected:?}'")]
+    InvalidNodeArgument {
+        expected: Vec<ParameterType>,
+        actual: Node,
     },
 
     #[error("Expect {expected} args, got {actual}.")]
