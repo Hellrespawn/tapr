@@ -1,9 +1,11 @@
 use self::native::get_default_environment;
+use self::value::Function;
 use crate::error::{Error, ErrorKind};
 use crate::location::Location;
 use crate::parser::parse_string;
 use crate::{Node, NodeData, ParameterType, Result, Visitor};
 use std::collections::HashMap;
+use std::sync::Arc;
 
 mod arguments;
 mod environment;
@@ -206,10 +208,10 @@ impl Interpreter {
         let result = match symbol {
             "def" => self.visit_def(arguments),
             "var" => self.visit_var(arguments),
-            "fn" => todo!(),
+            "fn" => self.visit_fn(arguments),
             "do" => todo!(),
             "quote" => todo!(),
-            "if" => todo!(),
+            "if" => self.visit_if(arguments),
             "splice" => todo!(),
             "while" => todo!(),
             "break" => todo!(),
@@ -247,6 +249,35 @@ impl Interpreter {
         self.environment.var(key.clone(), value)?;
 
         Ok(Value::Symbol(key))
+    }
+
+    #[allow(clippy::unused_self)]
+    fn visit_fn(&mut self, arguments: &[Node]) -> Result<Value> {
+        let parameters = "l:list & body".try_into().unwrap();
+
+        let arguments = Arguments::from_nodes(&parameters, arguments.to_vec())?;
+
+        let function = Function::new(
+            arguments.parse_parameters(0)?,
+            arguments.unwrap_from(1),
+        );
+
+        Ok(Value::Function(Arc::new(function)))
+    }
+
+    #[allow(clippy::unused_self)]
+    fn visit_if(&mut self, arguments: &[Node]) -> Result<Value> {
+        let parameters = "condition then &opt else".try_into().unwrap();
+
+        let arguments = Arguments::from_nodes(&parameters, arguments.to_vec())?;
+
+        if arguments.unwrap(0).accept(self)?.is_truthy() {
+            arguments.unwrap(1).accept(self)
+        } else if let Some(node) = arguments.get(2) {
+            node.accept(self)
+        } else {
+            Ok(Value::Nil)
+        }
     }
 
     fn visit_symbol(

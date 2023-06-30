@@ -45,12 +45,19 @@ impl Parameters {
             .map_or(false, Parameter::is_rest_param)
     }
 
+    pub fn has_rest_or_optional_param(&self) -> bool {
+        // If a `Parameters` object has a rest param, it's always the last one.
+        self.has_rest_param()
+            || self.parameters.iter().any(Parameter::is_optional)
+    }
+
     pub fn is_empty(&self) -> bool {
         self.parameters.is_empty()
     }
 
     pub fn len(&self) -> usize {
         self.parameters.len()
+            - self.parameters.iter().filter(|p| p.is_optional()).count()
     }
 
     pub fn iter(&self) -> std::slice::Iter<Parameter> {

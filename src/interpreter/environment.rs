@@ -66,7 +66,9 @@ impl Environment {
     }
 
     fn insert(&mut self, key: String, value: ValueWrapper) -> Result<()> {
-        if !value.mutable && self.has_in_scope(&key) {
+        let exists = self.map.get(&key).map_or(false, |w| !w.mutable);
+
+        if exists {
             Err(ErrorKind::SymbolDefined(key).into())
         } else {
             self.map.insert(key, value);
@@ -75,13 +77,23 @@ impl Environment {
     }
 
     pub fn get(&self, key: &str) -> Option<&Value> {
-        self.map.get(key).map(|v| &v.value).or_else(|| {
+        let (key, remainder) = key.split_once('/').unwrap_or((key, ""));
+
+        let value = self.map.get(key).map(|v| &v.value).or_else(|| {
             if let Some(environment) = &self.parent {
                 environment.get(key)
             } else {
                 None
             }
-        })
+        });
+
+        if remainder.is_empty() {
+            value
+        } else if let Some(Value::Module(module)) = value {
+            module.get(remainder)
+        } else {
+            None
+        }
     }
 
     pub fn get_mut(&mut self, key: &str) -> Option<&mut Value> {

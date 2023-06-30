@@ -3,7 +3,7 @@ use super::value::Callable;
 use super::Value;
 use crate::error::{Error, ErrorKind};
 use crate::parser::parameters::Parameter;
-use crate::{Node, NodeData, Parameters, Result};
+use crate::{Node, NodeData, ParameterType, Parameters, Result};
 
 pub struct Arguments<'a, T> {
     parameters: &'a Parameters,
@@ -23,11 +23,12 @@ impl<'a, T: Clone> Arguments<'a, T> {
         &self.arguments
     }
 
+    pub fn get(&self, index: usize) -> Option<T> {
+        self.arguments.get(index).cloned()
+    }
+
     pub fn unwrap(&self, index: usize) -> T {
-        self.arguments
-            .get(index)
-            .cloned()
-            .expect("Called unwrap on invalid index.")
+        self.get(index).expect("Called unwrap on invalid index.")
     }
 
     pub fn unwrap_from(&self, index: usize) -> Vec<T> {
@@ -35,7 +36,7 @@ impl<'a, T: Clone> Arguments<'a, T> {
     }
 
     fn check_length(&self) -> Result<()> {
-        if self.parameters.has_rest_param() {
+        if self.parameters.has_rest_or_optional_param() {
             if self.parameters.len() > self.arguments.len() {
                 Err(ErrorKind::WrongAmountOfMinArgs {
                     expected: self.parameters.len(),
@@ -233,6 +234,34 @@ impl<'a> Arguments<'a, Node> {
         };
 
         symbol.clone()
+    }
+
+    pub fn parse_parameters(&self, index: usize) -> Result<Parameters> {
+        let node = &self.arguments[index];
+
+        let NodeData::BTuple(nodes) = node.data() else {
+            panic!("Called unwrap_keyword on non-Value::Keyword")
+        };
+
+        let string = nodes
+            .iter()
+            .map(|n| {
+                if let NodeData::Symbol(symbol) = n.data() {
+                    Ok(symbol.clone())
+                } else {
+                    Err(ErrorKind::InvalidNodeArgument {
+                        expected: vec![ParameterType::Symbol],
+                        actual: n.clone(),
+                    }
+                    .into())
+                }
+            })
+            .collect::<Result<Vec<_>>>()?
+            .join(" ");
+
+        let parameters = string.as_str().try_into()?;
+
+        Ok(parameters)
     }
 
     fn check_types(&self) -> Result<()> {
