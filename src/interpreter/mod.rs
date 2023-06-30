@@ -206,13 +206,15 @@ impl Visitor<Result<Value>> for Interpreter {
             }
             NodeData::Symbol(symbol) => self.visit_symbol(location, symbol),
             NodeData::Number(number) => Ok(Value::Number(*number)),
-            NodeData::String(string) => Ok(Value::String(string.clone())),
-            NodeData::Buffer(_)
-            | NodeData::Keyword(_)
-            | NodeData::True
-            | NodeData::False
-            | NodeData::Nil => Ok(node.clone()),
-            _ => unreachable!(),
+            NodeData::String(string) => Ok(Value::string(string.clone())),
+            NodeData::Buffer(string) => Ok(Value::String {
+                mutable: true,
+                string: string.clone(),
+            }),
+            NodeData::Keyword(keyword) => Ok(Value::Keyword(keyword.clone())),
+            NodeData::True => Ok(Value::Boolean(true)),
+            NodeData::False => Ok(Value::Boolean(false)),
+            NodeData::Nil => Ok(Value::Nil),
         }
         .map_err(|e| Self::add_location_to_error(e, location))
     }

@@ -36,7 +36,7 @@ type UnaryOp = fn(&str) -> String;
 fn unary(op: UnaryOp, arguments: Arguments) -> Result<Value> {
     let string = arguments.unwrap_string(0);
 
-    Ok(Value::String(op(&string)))
+    Ok(Value::string(op(&string)))
 }
 
 fn len(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
@@ -53,8 +53,8 @@ fn join(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     let strings = values
         .into_iter()
         .map(|value| {
-            if let Value::String(s) = value {
-                Ok(s)
+            if let Value::String { string, .. } = value {
+                Ok(string)
             } else {
                 Err(ErrorKind::InvalidArgument {
                     expected: vec![ParameterType::String],
@@ -65,7 +65,7 @@ fn join(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
         })
         .collect::<Result<Vec<_>>>()?;
 
-    Ok(Value::String(strings.join(&separator)))
+    Ok(Value::string(strings.join(&separator)))
 }
 
 fn join_not_nil(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
@@ -75,7 +75,7 @@ fn join_not_nil(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     let strings = values
         .into_iter()
         .filter_map(|value| match value {
-            Value::String(s) => Some(Ok(s)),
+            Value::String { string, .. } => Some(Ok(string)),
             Value::Nil => None,
             other => Some(Err(ErrorKind::InvalidArgument {
                 expected: vec![ParameterType::String],
@@ -88,7 +88,7 @@ fn join_not_nil(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
     if strings.is_empty() {
         Ok(Value::Nil)
     } else {
-        Ok(Value::String(strings.join(&separator)))
+        Ok(Value::string(strings.join(&separator)))
     }
 }
 
@@ -102,7 +102,7 @@ fn split(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
 
     let values = string
         .split(&separator)
-        .map(|s| Value::String(s.to_owned()))
+        .map(|s| Value::string(s.to_owned()))
         .collect::<Vec<_>>();
 
     Ok(Value::List {

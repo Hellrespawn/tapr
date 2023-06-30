@@ -61,7 +61,7 @@ impl<'a> Arguments<'a> {
     pub fn unwrap_string(&self, index: usize) -> String {
         let argument = &self.arguments[index];
 
-        let Value::String(string) = argument else {
+        let Value::String{ string, .. } = argument else {
             panic!("Called unwrap_string on non-Value::String")
         };
 
@@ -76,7 +76,7 @@ impl<'a> Arguments<'a> {
         self.arguments[start_index..]
             .iter()
             .map(|v| {
-                let Value::String(string) = v else {
+                let Value::String{ string, .. } = v else {
                 panic!("Called unwrap_strings on non-Value::String")
             };
                 string.clone()

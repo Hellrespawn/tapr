@@ -36,6 +36,13 @@ pub enum Value {
 }
 
 impl Value {
+    pub fn string(string: String) -> Self {
+        Self::String {
+            mutable: false,
+            string,
+        }
+    }
+
     pub fn is_truthy(&self) -> bool {
         match self {
             Value::Nil => false,
@@ -55,6 +62,12 @@ impl Value {
             }
             other => other.to_string(),
         }
+    }
+}
+
+impl From<String> for Value {
+    fn from(value: String) -> Self {
+        Value::string(value)
     }
 }
 
@@ -91,7 +104,10 @@ impl PartialEq for Value {
             (Value::Number(left), Value::Number(right)) => {
                 (*left - *right).abs() < f64::EPSILON
             }
-            (Value::String(left), Value::String(right)) => left == right,
+            (
+                Value::String { string: lhs, .. },
+                Value::String { string: rhs, .. },
+            ) => lhs == rhs,
             (Value::Symbol(left), Value::Symbol(right)) => left == right,
             _ => false,
         }
@@ -109,9 +125,10 @@ impl PartialOrd for Value {
             (Value::Number(left), Value::Number(right)) => {
                 left.partial_cmp(right)
             }
-            (Value::String(left), Value::String(right)) => {
-                left.partial_cmp(right)
-            }
+            (
+                Value::String { string: lhs, .. },
+                Value::String { string: rhs, .. },
+            ) => lhs.partial_cmp(rhs),
             (Value::Symbol(left), Value::Symbol(right)) => {
                 left.partial_cmp(right)
             }
@@ -151,8 +168,9 @@ impl std::fmt::Display for Value {
                 )
             }
             Self::Number(number) => write!(f, "{number}"),
-            Self::String(string) => write!(f, "\"{string}\""),
-            Self::Buffer(string) => write!(f, "@\"{string}\""),
+            Self::String { mutable, string } => {
+                write!(f, "{}\"{string}\"", if *mutable { "@" } else { "" })
+            }
             Self::Symbol(symbol) => write!(f, "{symbol}"),
             Self::Keyword(keyword) => write!(f, ":{keyword}"),
             Self::Boolean(bool) => write!(f, "{bool}"),

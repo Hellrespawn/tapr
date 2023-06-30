@@ -25,7 +25,7 @@ impl ParameterType {
             ParameterType::Function => matches!(value, Value::Function(_)),
             ParameterType::List => matches!(value, Value::List { .. }),
             ParameterType::Number => matches!(value, Value::Number(_)),
-            ParameterType::String => matches!(value, Value::String(_)),
+            ParameterType::String => matches!(value, Value::String { .. }),
             ParameterType::Boolean => matches!(value, Value::Boolean(_)),
             ParameterType::Symbol => matches!(value, Value::Symbol(_)),
             ParameterType::Keyword => matches!(value, Value::Keyword(_)),
