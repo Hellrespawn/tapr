@@ -18,7 +18,7 @@ impl Function {
 
 impl std::fmt::Display for Function {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "<function ({})>", self.parameters.len())
+        write!(f, "<function ({})>", self.parameters.amount())
     }
 }
 
@@ -42,10 +42,6 @@ impl Callable<Value> for Function {
         intp.pop_environment();
 
         Ok(values.pop().unwrap_or(Value::Nil))
-    }
-
-    fn arity(&self) -> usize {
-        self.parameters.len()
     }
 
     fn callable_type(&self) -> CallableType {

@@ -30,9 +30,10 @@ impl TryFrom<&str> for ReaderMacro {
             "," => ReaderMacro::Unquote,
             "|" => ReaderMacro::ShortFn,
             _ => {
-                return Err(
-                    ErrorKind::InvalidReaderMacro(value.to_owned()).into()
-                )
+                return Err(ErrorKind::Message(format!(
+                    "Invalid reader macro '{value}'."
+                ))
+                .into())
             }
         };
 

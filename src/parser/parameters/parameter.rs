@@ -56,10 +56,6 @@ impl Parameter {
         }
     }
 
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
     #[must_use]
     pub fn module(mut self) -> Self {
         self.parameter_types.push(ParameterType::Module);

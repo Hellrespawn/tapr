@@ -282,7 +282,6 @@ impl Visitor<()> for GraphVisitor {
             NodeData::True => self.visit_true(),
             NodeData::False => self.visit_false(),
             NodeData::Nil => self.visit_nil(),
-            _ => unreachable!(),
         }
     }
 }

@@ -3,7 +3,7 @@ use self::value::Function;
 use crate::error::{Error, ErrorKind};
 use crate::location::Location;
 use crate::parser::parse_string;
-use crate::{Node, NodeData, ParameterType, Result, Visitor};
+use crate::{Node, NodeData, Result, Visitor};
 use std::collections::HashMap;
 use std::sync::Arc;
 

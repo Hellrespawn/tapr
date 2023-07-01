@@ -73,6 +73,9 @@ impl From<ErrorKind> for Error {
 
 #[derive(Debug, Error)]
 pub enum ErrorKind {
+    #[error("{0}")]
+    Message(String),
+
     // CLI
     #[error("Usage: {} [FILENAME]", env!("CARGO_PKG_NAME"))]
     UsageError,
@@ -95,34 +98,11 @@ pub enum ErrorKind {
         source: rustyline::error::ReadlineError,
     },
 
-    // Parser
-    #[error("Undefined reader macro: '{0}'")]
-    InvalidReaderMacro(String),
-
-    // Interpreter
-    #[error("Undefined module '{0}'")]
-    ModuleNotDefined(String),
-
     #[error("Undefined symbol '{0}'")]
     SymbolNotDefined(String),
 
     #[error("Already defined symbol '{0}'")]
     SymbolDefined(String),
-
-    #[error("Value '{0}' is not callable.")]
-    NotCallable(Node),
-
-    // Parameters
-    #[error("Only the last parameter of a function may be a rest parameter.")]
-    NonLastParameterIsRest,
-
-    #[error(
-        "An optional parameter can't be followed by a required parameter."
-    )]
-    RequiredParamAfterOptional,
-
-    #[error("'{0}' is not a valid type.")]
-    InvalidParameterType(String),
 
     #[error("Invalid argument '{actual}', expected '{expected:?}'")]
     InvalidValueArgument {
@@ -135,12 +115,6 @@ pub enum ErrorKind {
         expected: Vec<ParameterType>,
         actual: Node,
     },
-
-    #[error("Expect {expected} args, got {actual}.")]
-    WrongAmountOfFixedArgs { expected: usize, actual: usize },
-
-    #[error("Expect at least {expected} args, got {actual}.")]
-    WrongAmountOfMinArgs { expected: usize, actual: usize },
 
     // Functions
     #[error("Called `tail` on empty list.")]

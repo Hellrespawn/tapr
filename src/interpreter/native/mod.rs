@@ -69,10 +69,6 @@ impl Callable<Value> for NativeFunction {
         (self.function)(intp, arguments)
     }
 
-    fn arity(&self) -> usize {
-        self.parameters.len()
-    }
-
     fn callable_type(&self) -> CallableType {
         CallableType::Native
     }

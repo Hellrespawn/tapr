@@ -2,7 +2,7 @@ use super::environment::Environment;
 use super::value::Callable;
 use super::Value;
 use crate::error::{Error, ErrorKind};
-use crate::parser::parameters::Parameter;
+use crate::parser::parameters::{Parameter, ParameterAmount};
 use crate::{Node, NodeData, ParameterType, Parameters, Result};
 
 pub struct Arguments<'a, T> {
@@ -35,26 +35,45 @@ impl<'a, T: Clone> Arguments<'a, T> {
         self.arguments[index..].to_vec()
     }
 
-    fn check_length(&self) -> Result<()> {
-        if self.parameters.has_rest_or_optional_param() {
-            if self.parameters.len() > self.arguments.len() {
-                Err(ErrorKind::WrongAmountOfMinArgs {
-                    expected: self.parameters.len(),
-                    actual: self.arguments.len(),
+    fn check_amount(&self) -> Result<()> {
+        let len = self.len();
+
+        match self.parameters.amount() {
+            ParameterAmount::None => {
+                if len > 0 {
+                    return Err(ErrorKind::Message(format!(
+                        "Expected 0 parameters, found {len}."
+                    ))
+                    .into());
                 }
-                .into())
-            } else {
-                Ok(())
             }
-        } else if self.parameters.len() != self.arguments.len() {
-            Err(ErrorKind::WrongAmountOfFixedArgs {
-                expected: self.parameters.len(),
-                actual: self.arguments.len(),
+            ParameterAmount::Fixed(amount) => {
+                if len != amount {
+                    return Err(ErrorKind::Message(format!(
+                        "Expected {amount} parameters, found {len}.",
+                    ))
+                    .into());
+                }
             }
-            .into())
-        } else {
-            Ok(())
+            ParameterAmount::Optional(min, max) => {
+                if len < min || len > max {
+                    return Err(ErrorKind::Message(format!(
+                        "Expected {min}-{max} parameters, found {len}.",
+                    ))
+                    .into());
+                }
+            }
+            ParameterAmount::Rest(min) => {
+                if len < min {
+                    return Err(ErrorKind::Message(format!(
+                        "Expected at least {min} parameters, found {len}.",
+                    ))
+                    .into());
+                }
+            }
         }
+
+        Ok(())
     }
 }
 
@@ -68,7 +87,7 @@ impl<'a> Arguments<'a, Value> {
             arguments,
         };
 
-        arguments.check_length()?;
+        arguments.check_amount()?;
         arguments.check_types()?;
 
         Ok(arguments)
@@ -77,7 +96,7 @@ impl<'a> Arguments<'a, Value> {
     pub fn add_to_env(self, env: &mut Environment) -> Result<()> {
         for (parameter, argument) in self.parameters.iter().zip(self.arguments)
         {
-            env.def(parameter.name().to_owned(), argument)?;
+            env.def(parameter.get_name().to_owned(), argument)?;
         }
 
         Ok(())
@@ -93,7 +112,7 @@ impl<'a> Arguments<'a, Value> {
 
         // If function has a rest parameter...
         if self.parameters.has_rest_param() {
-            let remaining_args = self.arguments.get(self.parameters.len()..);
+            let remaining_args = self.arguments.get(self.len()..);
 
             // and there are more args...
             if let Some(remaining_args) = remaining_args {
@@ -220,7 +239,7 @@ impl<'a> Arguments<'a, Node> {
             arguments,
         };
 
-        arguments.check_length()?;
+        arguments.check_amount()?;
         arguments.check_types()?;
 
         Ok(arguments)
@@ -274,7 +293,7 @@ impl<'a> Arguments<'a, Node> {
 
         // If function has a rest parameter...
         if self.parameters.has_rest_param() {
-            let remaining_args = self.arguments.get(self.parameters.len()..);
+            let remaining_args = self.arguments.get(self.len()..);
 
             // and there are more args...
             if let Some(remaining_args) = remaining_args {

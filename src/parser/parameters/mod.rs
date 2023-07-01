@@ -7,6 +7,25 @@ mod parameter_type;
 pub use parameter::Parameter;
 pub use parameter_type::ParameterType;
 
+#[derive(Debug, Copy, Clone)]
+pub enum ParameterAmount {
+    None,
+    Fixed(usize),
+    Optional(usize, usize),
+    Rest(usize),
+}
+
+impl std::fmt::Display for ParameterAmount {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ParameterAmount::None => write!(f, "0"),
+            ParameterAmount::Fixed(amount) => write!(f, "{amount}"),
+            ParameterAmount::Optional(min, max) => write!(f, "{min}-{max}"),
+            ParameterAmount::Rest(min) => write!(f, "{min}+"),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Parameters {
     pub parameters: Vec<Parameter>,
@@ -22,11 +41,18 @@ impl From<Parameter> for Parameters {
 impl Parameters {
     pub fn new(parameters: Vec<Parameter>) -> Result<Self> {
         if Self::rest_param_is_not_last_param(&parameters) {
-            return Err(ErrorKind::NonLastParameterIsRest.into());
+            return Err(ErrorKind::Message(
+                "Only the last parameters can be a rest parameter.".to_owned(),
+            )
+            .into());
         }
 
         if Self::has_required_param_after_optional(&parameters) {
-            return Err(ErrorKind::RequiredParamAfterOptional.into());
+            return Err(ErrorKind::Message(
+                "Required parameter can't follow optional parameter."
+                    .to_owned(),
+            )
+            .into());
         }
 
         Ok(Self { parameters })
@@ -52,12 +78,23 @@ impl Parameters {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.parameters.is_empty()
+        matches!(self.amount(), ParameterAmount::None)
     }
 
-    pub fn len(&self) -> usize {
-        self.parameters.len()
-            - self.parameters.iter().filter(|p| p.is_optional()).count()
+    pub fn amount(&self) -> ParameterAmount {
+        let max_params = self.parameters.len();
+        let min_params = max_params
+            - self.parameters.iter().filter(|p| p.is_optional()).count();
+
+        if max_params == 0 {
+            return ParameterAmount::None;
+        }
+
+        match (self.has_rest_param(), max_params == min_params) {
+            (true, _) => ParameterAmount::Rest(min_params),
+            (false, true) => ParameterAmount::Fixed(max_params),
+            (false, false) => ParameterAmount::Optional(min_params, max_params),
+        }
     }
 
     pub fn iter(&self) -> std::slice::Iter<Parameter> {
@@ -137,7 +174,7 @@ impl std::fmt::Display for Parameters {
                 } else {
                     format!(
                         "{}:{}",
-                        p.name(),
+                        p.get_name(),
                         p.types()
                             .iter()
                             .map(std::string::ToString::to_string)

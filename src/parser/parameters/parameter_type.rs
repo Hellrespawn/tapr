@@ -77,10 +77,11 @@ impl TryFrom<&str> for ParameterType {
             "module" => ParameterType::Module,
             "function" => ParameterType::Function,
             "nil" => ParameterType::Nil,
-            other => {
-                return Err(
-                    ErrorKind::InvalidParameterType(other.to_owned()).into()
-                )
+            _ => {
+                return Err(ErrorKind::Message(format!(
+                    "Invalid parameter type: '{string}'"
+                ))
+                .into())
             }
         };
 

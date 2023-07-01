@@ -29,8 +29,6 @@ pub trait Callable<T>: Send + Sync {
         arguments: Arguments<T>,
     ) -> Result<T>;
 
-    fn arity(&self) -> usize;
-
     fn callable_type(&self) -> CallableType;
 
     fn parameters(&self) -> Parameters;
