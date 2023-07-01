@@ -41,7 +41,7 @@ impl Callable<Value> for Function {
 
         intp.pop_environment();
 
-        Ok(values.pop().unwrap_or(Value::Nil))
+        Ok(values.pop().unwrap_or(Value::nil()))
     }
 
     fn callable_type(&self) -> CallableType {

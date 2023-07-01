@@ -27,7 +27,7 @@ impl NativeModule for Debug {
 fn env(intp: &mut Interpreter, _arguments: Arguments<Value>) -> Result<Value> {
     println!("{}", intp.environment);
 
-    Ok(Value::Nil)
+    Ok(Value::nil())
 }
 
 fn lsmod(
@@ -38,5 +38,5 @@ fn lsmod(
 
     println!("{environment}");
 
-    Ok(Value::Nil)
+    Ok(Value::nil())
 }

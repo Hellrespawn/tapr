@@ -23,16 +23,38 @@ impl ParameterType {
                 matches!(value, Value::Module { .. })
             }
             ParameterType::Map => {
-                matches!(value, Value::Map { .. })
+                matches!(
+                    value,
+                    Value::Node(NodeData::Struct(_) | NodeData::Table(_))
+                )
             }
             ParameterType::Function => matches!(value, Value::Function(_)),
-            ParameterType::List => matches!(value, Value::List { .. }),
-            ParameterType::Number => matches!(value, Value::Number(_)),
-            ParameterType::String => matches!(value, Value::String { .. }),
-            ParameterType::Boolean => matches!(value, Value::Boolean(_)),
-            ParameterType::Symbol => matches!(value, Value::Symbol(_)),
-            ParameterType::Keyword => matches!(value, Value::Keyword(_)),
-            ParameterType::Nil => matches!(value, Value::Nil),
+            ParameterType::List => matches!(
+                value,
+                Value::Node(
+                    NodeData::PArray(_)
+                        | NodeData::BArray(_)
+                        | NodeData::BTuple(_)
+                        | NodeData::PTuple(_)
+                )
+            ),
+            ParameterType::Number => {
+                matches!(value, Value::Node(NodeData::Number(_)))
+            }
+            ParameterType::String => matches!(
+                value,
+                Value::Node(NodeData::String(_) | NodeData::Buffer(_))
+            ),
+            ParameterType::Boolean => {
+                matches!(value, Value::Node(NodeData::True | NodeData::False))
+            }
+            ParameterType::Symbol => {
+                matches!(value, Value::Node(NodeData::Symbol(_)))
+            }
+            ParameterType::Keyword => {
+                matches!(value, Value::Node(NodeData::Keyword(_)))
+            }
+            ParameterType::Nil => matches!(value, Value::Node(NodeData::Nil)),
         }
     }
 

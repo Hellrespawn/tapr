@@ -43,7 +43,7 @@ fn len(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
     let string = arguments.unwrap_string(0);
 
     #[allow(clippy::cast_precision_loss)]
-    Ok(Value::Number(string.len() as f64))
+    Ok(Value::number(string.len() as f64))
 }
 
 fn join(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
@@ -53,8 +53,8 @@ fn join(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
     let strings = values
         .into_iter()
         .map(|value| {
-            if let Value::String { string, .. } = value {
-                Ok(string)
+            if let Some(string) = value.as_string() {
+                Ok(string.to_owned())
             } else {
                 Err(ErrorKind::InvalidValueArgument {
                     expected: vec![ParameterType::String],
@@ -77,19 +77,23 @@ fn join_not_nil(
 
     let strings = values
         .into_iter()
-        .filter_map(|value| match value {
-            Value::String { string, .. } => Some(Ok(string)),
-            Value::Nil => None,
-            other => Some(Err(ErrorKind::InvalidValueArgument {
-                expected: vec![ParameterType::String],
-                actual: other,
+        .filter_map(|value| {
+            if value.is_nil() {
+                None
+            } else if let Some(string) = value.as_string() {
+                Some(Ok(string.to_owned()))
+            } else {
+                Some(Err(ErrorKind::InvalidValueArgument {
+                    expected: vec![ParameterType::String],
+                    actual: value,
+                }
+                .into()))
             }
-            .into())),
         })
         .collect::<Result<Vec<_>>>()?;
 
     if strings.is_empty() {
-        Ok(Value::Nil)
+        Ok(Value::nil())
     } else {
         Ok(Value::string(strings.join(&separator)))
     }
@@ -108,8 +112,5 @@ fn split(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
         .map(|s| Value::string(s.to_owned()))
         .collect::<Vec<_>>();
 
-    Ok(Value::List {
-        mutable: false,
-        list: values,
-    })
+    Ok(Value::b_tuple(values))
 }

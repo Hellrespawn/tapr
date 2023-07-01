@@ -33,7 +33,7 @@ fn read_to_string(
 ) -> Result<Value> {
     let path = arguments.unwrap_string(0);
 
-    Ok(std::fs::read_to_string(path)?.into())
+    Ok(Value::string(std::fs::read_to_string(path)?))
 }
 
 fn write(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
@@ -42,5 +42,5 @@ fn write(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
 
     std::fs::write(path, body)?;
 
-    Ok(Value::Nil)
+    Ok(Value::nil())
 }

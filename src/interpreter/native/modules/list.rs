@@ -34,7 +34,7 @@ impl NativeModule for List {
 fn head(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
     let list = arguments.unwrap_list(0);
 
-    Ok(list.into_iter().next().unwrap_or_else(|| Value::Nil))
+    Ok(list.into_iter().next().unwrap_or_else(Value::nil))
 }
 
 fn tail(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
@@ -44,10 +44,7 @@ fn tail(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
         .map(Vec::from)
         .unwrap_or_default();
 
-    Ok(Value::List {
-        mutable: false,
-        list,
-    })
+    Ok(Value::b_tuple(list))
 }
 
 fn push(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
@@ -57,10 +54,7 @@ fn push(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
 
     let output = [list, values].into_iter().flatten().collect();
 
-    Ok(Value::List {
-        mutable: false,
-        list: output,
-    })
+    Ok(Value::b_tuple(output))
 }
 
 fn reduce(
@@ -111,10 +105,7 @@ fn filter(
         }
     }
 
-    Ok(Value::List {
-        mutable: false,
-        list: output,
-    })
+    Ok(Value::b_tuple(output))
 }
 
 fn map(intp: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
@@ -131,8 +122,5 @@ fn map(intp: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
         })
         .collect::<Result<Vec<_>>>()?;
 
-    Ok(Value::List {
-        mutable: false,
-        list: output,
-    })
+    Ok(Value::b_tuple(output))
 }

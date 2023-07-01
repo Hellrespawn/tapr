@@ -1,11 +1,12 @@
 use crate::location::Location;
 use crate::visitor::Visitor;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Node {
     location: Location,
-    data: NodeData,
+    data: NodeData<Node>,
 }
 
 impl std::fmt::Display for Node {
@@ -15,11 +16,11 @@ impl std::fmt::Display for Node {
 }
 
 impl Node {
-    pub fn new(location: Location, data: NodeData) -> Self {
+    pub fn new(location: Location, data: NodeData<Node>) -> Self {
         Self { location, data }
     }
 
-    pub fn mock(data: NodeData) -> Self {
+    pub fn mock(data: NodeData<Node>) -> Self {
         Self {
             location: Location::new(0, 0),
             data,
@@ -33,28 +34,38 @@ impl Node {
         visitor.visit_node(self)
     }
 
-    pub fn data(&self) -> &NodeData {
+    pub fn data(&self) -> &NodeData<Node> {
         &self.data
     }
 
-    pub fn data_mut(&mut self) -> &mut NodeData {
+    pub fn data_mut(&mut self) -> &mut NodeData<Node> {
         &mut self.data
     }
 
     pub fn location(&self) -> Location {
         self.location
     }
+
+    pub fn is_unquote(&self) -> bool {
+        if let NodeData::Symbol(symbol) = self.data() {
+            if symbol == "unquote" {
+                return true;
+            }
+        }
+
+        false
+    }
 }
 
 #[derive(Debug, Clone)]
-pub enum NodeData {
-    Main(Vec<Node>),
-    Table(HashMap<Node, Node>),
-    PArray(Vec<Node>),
-    BArray(Vec<Node>),
-    Struct(HashMap<Node, Node>),
-    PTuple(Vec<Node>),
-    BTuple(Vec<Node>),
+pub enum NodeData<T> {
+    Main(Vec<T>),
+    Table(HashMap<T, T>),
+    PArray(Vec<T>),
+    BArray(Vec<T>),
+    Struct(HashMap<T, T>),
+    PTuple(Vec<T>),
+    BTuple(Vec<T>),
     Number(f64),
     String(String),
     Buffer(String),
@@ -65,16 +76,73 @@ pub enum NodeData {
     Nil,
 }
 
-impl std::fmt::Display for NodeData {
+impl<T> std::fmt::Display for NodeData<T>
+where
+    T: std::fmt::Display,
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Main(nodes) => write!(f, "<main {}>", nodes.len()),
-            Self::Table(map) => write!(f, "@{{{}}}", map.len()),
-            Self::PArray(nodes) => write!(f, "<@({})>", nodes.len()),
-            Self::BArray(nodes) => write!(f, "<@[{}]>", nodes.len()),
-            Self::Struct(map) => write!(f, "{{{}}}", map.len()),
-            Self::PTuple(nodes) => write!(f, "<({})>", nodes.len()),
-            Self::BTuple(nodes) => write!(f, "<[{}]>", nodes.len()),
+            Self::Main(nodes) => write!(
+                f,
+                "<main {}>",
+                nodes
+                    .iter()
+                    .map(std::string::ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            ),
+            Self::Table(map) => write!(
+                f,
+                "@{{{}}}",
+                map.iter()
+                    .map(|(key, value)| { format!("{key} => {value}") })
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+            Self::PArray(nodes) => write!(
+                f,
+                "<@({})>",
+                nodes
+                    .iter()
+                    .map(std::string::ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            ),
+            Self::BArray(nodes) => write!(
+                f,
+                "<@[{}]>",
+                nodes
+                    .iter()
+                    .map(std::string::ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            ),
+            Self::Struct(map) => write!(
+                f,
+                "{{{}}}",
+                map.iter()
+                    .map(|(key, value)| { format!("{key} => {value}") })
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+            Self::PTuple(nodes) => write!(
+                f,
+                "<({})>",
+                nodes
+                    .iter()
+                    .map(std::string::ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            ),
+            Self::BTuple(nodes) => write!(
+                f,
+                "<[{}]>",
+                nodes
+                    .iter()
+                    .map(std::string::ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            ),
             Self::Number(number) => write!(f, "{number}"),
             Self::String(string) => write!(f, "\"{string}\""),
             Self::Buffer(string) => write!(f, "@\"{string}\""),
@@ -87,20 +155,56 @@ impl std::fmt::Display for NodeData {
     }
 }
 
-impl PartialEq for NodeData {
+impl<T: PartialEq + Eq + std::hash::Hash> PartialEq for NodeData<T> {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Self::Number(lhs), Self::Number(rhs)) => {
+            (NodeData::Main(lhs), NodeData::Main(rhs))
+            | (NodeData::PArray(lhs), NodeData::PArray(rhs))
+            | (NodeData::BArray(lhs), NodeData::BArray(rhs))
+            | (NodeData::PTuple(lhs), NodeData::PTuple(rhs))
+            | (NodeData::BTuple(lhs), NodeData::BTuple(rhs)) => lhs == rhs,
+            (NodeData::Table(lhs), NodeData::Table(rhs))
+            | (NodeData::Struct(lhs), NodeData::Struct(rhs)) => lhs == rhs,
+
+            (NodeData::String(lhs), NodeData::String(rhs))
+            | (NodeData::Buffer(lhs), NodeData::Buffer(rhs))
+            | (NodeData::Symbol(lhs), NodeData::Symbol(rhs))
+            | (NodeData::Keyword(lhs), NodeData::Keyword(rhs)) => lhs == rhs,
+
+            (NodeData::True, NodeData::True)
+            | (NodeData::False, NodeData::False)
+            | (NodeData::Nil, NodeData::Nil) => true,
+            (NodeData::Number(lhs), NodeData::Number(rhs)) => {
                 lhs.to_bits() == rhs.to_bits()
             }
-            (lhs, rhs) => lhs.eq(rhs),
+            _ => false,
         }
     }
 }
 
-impl Eq for NodeData {}
+impl<T: PartialEq + Eq + std::hash::Hash> Eq for NodeData<T> {}
 
-impl std::hash::Hash for NodeData {
+impl<T: PartialOrd + PartialEq + Eq + std::hash::Hash> PartialOrd
+    for NodeData<T>
+{
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        match (self, other) {
+            (NodeData::Nil, NodeData::Nil) => Some(Ordering::Equal),
+            (NodeData::Number(lhs), NodeData::Number(rhs)) => {
+                lhs.partial_cmp(rhs)
+            }
+            (NodeData::String(lhs), NodeData::String(rhs)) => {
+                lhs.partial_cmp(rhs)
+            }
+            (NodeData::Symbol(left), NodeData::Symbol(right)) => {
+                left.partial_cmp(right)
+            }
+            _ => None,
+        }
+    }
+}
+
+impl<T: std::hash::Hash> std::hash::Hash for NodeData<T> {
     fn hash<H>(&self, state: &mut H)
     where
         H: std::hash::Hasher,

@@ -29,5 +29,5 @@ pub fn read(_: &mut Interpreter, _: Arguments<Value>) -> Result<Value> {
 
     std::io::stdin().read_line(&mut buffer)?;
 
-    Ok(buffer.into())
+    Ok(Value::string(buffer))
 }

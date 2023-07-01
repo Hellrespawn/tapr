@@ -38,7 +38,7 @@ fn println(
 
     println!();
 
-    Ok(Value::Nil)
+    Ok(Value::nil())
 }
 
 fn print(
@@ -49,11 +49,11 @@ fn print(
         print!("{argument}");
     }
 
-    Ok(Value::Nil)
+    Ok(Value::nil())
 }
 
 fn is_nil(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
     let argument = arguments.unwrap(0);
 
-    Ok(matches!(argument, Value::Nil).into())
+    Ok(Value::bool(argument.is_nil()))
 }

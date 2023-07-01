@@ -45,19 +45,19 @@ fn variadic(op: BinaryOp, arguments: Arguments<Value>) -> Result<Value> {
         acc = op(acc, rhs);
     }
 
-    Ok(Value::Number(acc))
+    Ok(Value::number(acc))
 }
 
 fn binary(op: BinaryOp, arguments: Arguments<Value>) -> Result<Value> {
     let [lhs, rhs] = arguments.unwrap_numbers()[..] else { panic!() };
 
-    Ok(Value::Number(op(lhs, rhs)))
+    Ok(Value::number(op(lhs, rhs)))
 }
 
 fn unary(op: UnaryOp, arguments: Arguments<Value>) -> Result<Value> {
     let number = arguments.unwrap_numbers()[0];
 
-    Ok(Value::Number(op(number)))
+    Ok(Value::number(op(number)))
 }
 
 pub fn add(

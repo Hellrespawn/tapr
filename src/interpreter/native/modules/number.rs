@@ -45,7 +45,7 @@ pub fn align(
         .approx()
         .map_err(|_| ErrorKind::InvalidInteger(f_width))?;
 
-    Ok(format!("{n:0>width$}").into())
+    Ok(Value::string(format!("{n:0>width$}")))
 }
 
 pub fn parse(
@@ -59,5 +59,5 @@ pub fn parse(
         .parse()
         .map_err(|_| ErrorKind::ParseNumberError(string).into());
 
-    Ok(Value::Number(result?))
+    Ok(Value::number(result?))
 }

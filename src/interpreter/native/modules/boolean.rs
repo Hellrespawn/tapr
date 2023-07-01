@@ -50,13 +50,13 @@ fn variadic(op: BinaryOp, arguments: Arguments<Value>) -> Result<Value> {
         acc = op(lhs, rhs);
     }
 
-    Ok(Value::Boolean(acc))
+    Ok(Value::bool(acc))
 }
 
 fn unary(op: UnaryOp, arguments: Arguments<Value>) -> Result<Value> {
     let value = arguments.unwrap(0);
 
-    Ok(Value::Boolean(op(value)))
+    Ok(Value::bool(op(value)))
 }
 
 pub fn not(
@@ -148,7 +148,7 @@ pub fn nil_coalesce(
     let last_index = values.len() - 1;
 
     for (i, argument) in values.into_iter().enumerate() {
-        if !matches!(argument, Value::Nil) || i == last_index {
+        if !argument.is_nil() || i == last_index {
             return Ok(argument);
         }
     }

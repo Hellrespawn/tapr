@@ -135,11 +135,13 @@ impl<'a> Arguments<'a, Value> {
     pub fn unwrap_string(&self, index: usize) -> String {
         let argument = &self.arguments[index];
 
-        let Value::String{ string, .. } = argument else {
-            panic!("Called unwrap_string on non-Value::String")
-        };
-
-        string.clone()
+        match argument {
+            Value::Node(
+                NodeData::Buffer(string) | NodeData::String(string),
+            ) => string,
+            _ => panic!("Invalid unwrap_string, called on:\n{argument}"),
+        }
+        .clone()
     }
 
     pub fn unwrap_strings(&self) -> Vec<String> {
@@ -150,10 +152,13 @@ impl<'a> Arguments<'a, Value> {
         self.arguments[start_index..]
             .iter()
             .map(|v| {
-                let Value::String{ string, .. } = v else {
-                panic!("Called unwrap_strings on non-Value::String")
-            };
-                string.clone()
+                match v {
+                    Value::Node(
+                        NodeData::Buffer(string) | NodeData::String(string),
+                    ) => string,
+                    _ => panic!("Invalid unwrap_strings, called on:\n{v}"),
+                }
+                .clone()
             })
             .collect()
     }
@@ -161,11 +166,16 @@ impl<'a> Arguments<'a, Value> {
     pub fn unwrap_list(&self, index: usize) -> Vec<Value> {
         let argument = &self.arguments[index];
 
-        let Value::List {list, ..} = argument else {
-            panic!("Called unwrap_list on non-Value::List")
-        };
-
-        list.clone()
+        match argument {
+            Value::Node(
+                NodeData::BTuple(nodes)
+                | NodeData::PArray(nodes)
+                | NodeData::PTuple(nodes),
+            ) => nodes,
+            // Value::Node(NodeData::PTuple(nodes)) => nodes,
+            _ => panic!("Invalid unwrap_list, called on:\n{argument}"),
+        }
+        .clone()
     }
 
     pub fn unwrap_module(&self, index: usize) -> &Environment {
@@ -191,7 +201,7 @@ impl<'a> Arguments<'a, Value> {
     pub fn unwrap_keyword(&self, index: usize) -> String {
         let argument = &self.arguments[index];
 
-        let Value::Keyword(keyword) = argument else {
+        let Value::Node(NodeData::Keyword(keyword)) = argument else {
             panic!("Called unwrap_keyword on non-Value::Keyword")
         };
 
@@ -201,7 +211,7 @@ impl<'a> Arguments<'a, Value> {
     pub fn unwrap_number(&self, index: usize) -> f64 {
         let argument = &self.arguments[index];
 
-        let Value::Number(number) = argument else {
+        let Value::Node(NodeData::Number(number)) = argument else {
             panic!("Called unwrap_number on non-Value::Number")
         };
 
@@ -212,7 +222,7 @@ impl<'a> Arguments<'a, Value> {
         self.arguments
             .iter()
             .map(|v| {
-                let Value::Number(number) = v else {
+                let Value::Node(NodeData::Number(number)) = v else {
                 panic!("Called unwrap_numbers on non-Value::Number")
             };
                 *number

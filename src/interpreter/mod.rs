@@ -25,6 +25,12 @@ enum IntpMode {
     Unquote,
 }
 
+impl IntpMode {
+    fn is_quoted(&self) -> bool {
+        matches!(self, Self::Quote | Self::Quasiquote)
+    }
+}
+
 #[derive(Debug)]
 pub struct Interpreter {
     environment: Environment,
@@ -94,75 +100,118 @@ impl Interpreter {
             .collect::<Result<Vec<_>>>()
             .map_err(|e| Self::add_location_to_error(e, location))?
             .pop()
-            .unwrap_or(Value::Nil))
+            .unwrap_or(Value::nil()))
+    }
+
+    fn visit_table(
+        &mut self,
+        location: Location,
+        map: &HashMap<Node, Node>,
+    ) -> Result<Value> {
+        let map = self.visit_map(location, map)?;
+
+        Ok(Value::table(map))
+    }
+
+    fn visit_struct(
+        &mut self,
+        location: Location,
+        map: &HashMap<Node, Node>,
+    ) -> Result<Value> {
+        let map = self.visit_map(location, map)?;
+
+        Ok(Value::struct_(map))
     }
 
     fn visit_map(
         &mut self,
         location: Location,
         map: &HashMap<Node, Node>,
-        mutable: bool,
-    ) -> Result<Value> {
+    ) -> Result<HashMap<Value, Value>> {
         map.iter()
             .map(|(k, v)| self.visit_key_value(k, v))
             .collect::<Result<HashMap<_, _>>>()
-            .map(|map| Value::Map { mutable, map })
             .map_err(|e| Self::add_location_to_error(e, location))
+    }
+
+    fn visit_p_array(
+        &mut self,
+        location: Location,
+        nodes: &[Node],
+    ) -> Result<Value> {
+        let values = self.visit_list(location, nodes)?;
+
+        Ok(Value::p_array(values))
+    }
+
+    fn visit_b_array(
+        &mut self,
+        location: Location,
+        nodes: &[Node],
+    ) -> Result<Value> {
+        let values = self.visit_list(location, nodes)?;
+
+        Ok(Value::b_array(values))
+    }
+
+    fn visit_b_tuple(
+        &mut self,
+        location: Location,
+        nodes: &[Node],
+    ) -> Result<Value> {
+        let values = self.visit_list(location, nodes)?;
+
+        Ok(Value::b_tuple(values))
     }
 
     fn visit_list(
         &mut self,
         location: Location,
         nodes: &[Node],
-        mutable: bool,
-        bracket: bool,
-    ) -> Result<Value> {
+    ) -> Result<Vec<Value>> {
         let visited_nodes = nodes
             .iter()
             .map(|n| n.accept(self))
             .collect::<Result<Vec<_>>>()
             .map_err(|e| Self::add_location_to_error(e, location))?;
 
-        if !mutable && !bracket {
-            unreachable!("Function calls should be handled separately.")
-        }
-
-        let value = Value::List {
-            mutable,
-            list: visited_nodes,
-        };
-
-        Ok(value)
+        Ok(visited_nodes)
     }
 
-    fn visit_call(
+    fn visit_p_tuple(
         &mut self,
         location: Location,
         nodes: &[Node],
     ) -> Result<Value> {
         if nodes.is_empty() {
-            return Ok(Value::Nil);
-        }
-
-        if let NodeData::Symbol(symbol) = nodes[0].data() {
-            if symbol.is_special_form() {
-                return self.visit_special_form(location, symbol, &nodes[1..]);
+            Ok(Value::Node(NodeData::Nil))
+        } else if self.mode.is_quoted() && !nodes[0].is_unquote() {
+            Ok(Value::p_tuple(self.visit_list(location, nodes)?))
+        } else {
+            if let NodeData::Symbol(symbol) = nodes[0].data() {
+                if symbol.is_special_form() {
+                    return self.visit_special_form(
+                        location,
+                        symbol,
+                        &nodes[1..],
+                    );
+                }
             }
-        }
 
-        let first_node = nodes[0].accept(self)?;
+            let first_node = nodes[0].accept(self)?;
 
-        match first_node {
-            Value::Function(callable) => {
-                self.visit_function(location, &*callable, &nodes[1..])
+            match first_node {
+                Value::Function(callable) => {
+                    self.visit_function(location, &*callable, &nodes[1..])
+                }
+                Value::Macro(callable) => {
+                    let node =
+                        self.visit_macro(location, &*callable, &nodes[1..])?;
+
+                    node.accept(self)
+                }
+                _ => todo!("Throw error"),
             }
-            Value::Macro(callable) => {
-                let node =
-                    self.visit_macro(location, &*callable, &nodes[1..])?;
-
-                node.accept(self)
-            }
-            _ => todo!("Throw error"),
         }
     }
 
@@ -187,9 +236,9 @@ impl Interpreter {
 
     fn visit_macro(
         &mut self,
-        location: Location,
-        callable: &dyn Callable<Node>,
-        arguments: &[Node],
+        _location: Location,
+        _callable: &dyn Callable<Node>,
+        _arguments: &[Node],
     ) -> Result<Node> {
         todo!("Implement macro");
         // let node = callable
@@ -205,20 +254,21 @@ impl Interpreter {
         symbol: &str,
         arguments: &[Node],
     ) -> Result<Value> {
+        #[allow(clippy::match_same_arms)]
         let result = match symbol {
             "def" => self.visit_def(arguments),
             "var" => self.visit_var(arguments),
             "fn" => self.visit_fn(arguments),
-            "do" => todo!(),
-            "quote" => todo!(),
+            "do" => self.visit_noop(location, arguments),
+            "quote" => self.visit_quote(arguments),
             "if" => self.visit_if(arguments),
-            "splice" => todo!(),
-            "while" => todo!(),
-            "break" => todo!(),
-            "set" => todo!(),
-            "quasiquote" => todo!(),
-            "unquote" => todo!(),
-            "upscope" => todo!(),
+            "splice" => self.visit_noop(location, arguments),
+            "while" => self.visit_noop(location, arguments),
+            "break" => self.visit_noop(location, arguments),
+            "set" => self.visit_noop(location, arguments),
+            "quasiquote" => self.visit_quasiquote(arguments),
+            "unquote" => self.visit_unquote(arguments),
+            "upscope" => self.visit_noop(location, arguments),
             _ => unreachable!(),
         };
 
@@ -235,7 +285,7 @@ impl Interpreter {
 
         self.environment.def(key.clone(), value)?;
 
-        Ok(Value::Symbol(key))
+        Ok(Value::symbol(key))
     }
 
     fn visit_var(&mut self, arguments: &[Node]) -> Result<Value> {
@@ -248,7 +298,7 @@ impl Interpreter {
 
         self.environment.var(key.clone(), value)?;
 
-        Ok(Value::Symbol(key))
+        Ok(Value::symbol(key))
     }
 
     #[allow(clippy::unused_self)]
@@ -265,7 +315,10 @@ impl Interpreter {
         Ok(Value::Function(Arc::new(function)))
     }
 
-    #[allow(clippy::unused_self)]
+    fn visit_quote(&mut self, arguments: &[Node]) -> Result<Value> {
+        self.visit_with_mode(IntpMode::Quote, arguments)
+    }
+
     fn visit_if(&mut self, arguments: &[Node]) -> Result<Value> {
         let parameters = "condition then &opt else".try_into().unwrap();
 
@@ -276,7 +329,22 @@ impl Interpreter {
         } else if let Some(node) = arguments.get(2) {
             node.accept(self)
         } else {
-            Ok(Value::Nil)
+            Ok(Value::nil())
+        }
+    }
+
+    fn visit_quasiquote(&mut self, arguments: &[Node]) -> Result<Value> {
+        self.visit_with_mode(IntpMode::Quasiquote, arguments)
+    }
+
+    fn visit_unquote(&mut self, arguments: &[Node]) -> Result<Value> {
+        if matches!(self.mode, IntpMode::Quasiquote) {
+            self.visit_with_mode(IntpMode::Unquote, arguments)
+        } else {
+            Err(ErrorKind::Message(
+                "unquote is only valid inside quasiquote.".to_owned(),
+            )
+            .into())
         }
     }
 
@@ -285,7 +353,9 @@ impl Interpreter {
         location: Location,
         symbol: &str,
     ) -> Result<Value> {
-        if let Some(value) = self.environment.get(symbol) {
+        if self.mode.is_quoted() {
+            Ok(Value::symbol(symbol.to_owned()))
+        } else if let Some(value) = self.environment.get(symbol) {
             Ok(value.clone())
         } else {
             Err(Error::new(
@@ -293,6 +363,34 @@ impl Interpreter {
                 ErrorKind::SymbolNotDefined(symbol.to_owned()),
             ))
         }
+    }
+
+    fn visit_noop(
+        &mut self,
+        _location: Location,
+        _arguments: &[Node],
+    ) -> Result<Value> {
+        Ok(Value::nil())
+    }
+
+    fn visit_with_mode(
+        &mut self,
+        new_mode: IntpMode,
+        arguments: &[Node],
+    ) -> Result<Value> {
+        let parameters = "x".try_into().unwrap();
+
+        let argument =
+            Arguments::from_nodes(&parameters, arguments.to_vec())?.unwrap(0);
+
+        let old_mode = self.mode;
+        self.mode = new_mode;
+
+        let result = argument.accept(self);
+
+        self.mode = old_mode;
+
+        result
     }
 }
 
@@ -302,29 +400,20 @@ impl Visitor<Result<Value>> for Interpreter {
 
         match node.data() {
             NodeData::Main(nodes) => self.visit_main(location, nodes),
-            NodeData::Table(map) => self.visit_map(location, map, true),
-            NodeData::PArray(nodes) => {
-                self.visit_list(location, nodes, true, false)
-            }
-            NodeData::BArray(nodes) => {
-                self.visit_list(location, nodes, true, true)
-            }
-            NodeData::Struct(map) => self.visit_map(location, map, false),
-            NodeData::PTuple(nodes) => self.visit_call(location, nodes),
-            NodeData::BTuple(nodes) => {
-                self.visit_list(location, nodes, false, true)
-            }
+            NodeData::Table(map) => self.visit_table(location, map),
+            NodeData::PArray(nodes) => self.visit_p_array(location, nodes),
+            NodeData::BArray(nodes) => self.visit_b_array(location, nodes),
+            NodeData::Struct(map) => self.visit_struct(location, map),
+            NodeData::PTuple(nodes) => self.visit_p_tuple(location, nodes),
+            NodeData::BTuple(nodes) => self.visit_b_tuple(location, nodes),
             NodeData::Symbol(symbol) => self.visit_symbol(location, symbol),
-            NodeData::Number(number) => Ok(Value::Number(*number)),
+            NodeData::Number(number) => Ok(Value::number(*number)),
             NodeData::String(string) => Ok(Value::string(string.clone())),
-            NodeData::Buffer(string) => Ok(Value::String {
-                mutable: true,
-                string: string.clone(),
-            }),
-            NodeData::Keyword(keyword) => Ok(Value::Keyword(keyword.clone())),
-            NodeData::True => Ok(Value::Boolean(true)),
-            NodeData::False => Ok(Value::Boolean(false)),
-            NodeData::Nil => Ok(Value::Nil),
+            NodeData::Buffer(string) => Ok(Value::buffer(string.clone())),
+            NodeData::Keyword(keyword) => Ok(Value::keyword(keyword.clone())),
+            NodeData::True => Ok(Value::bool(true)),
+            NodeData::False => Ok(Value::bool(false)),
+            NodeData::Nil => Ok(Value::nil()),
         }
         .map_err(|e| Self::add_location_to_error(e, location))
     }
