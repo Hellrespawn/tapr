@@ -26,7 +26,7 @@ enum IntpMode {
 }
 
 impl IntpMode {
-    fn is_quoted(&self) -> bool {
+    fn is_quoted(self) -> bool {
         matches!(self, Self::Quote | Self::Quasiquote)
     }
 }
@@ -74,6 +74,14 @@ impl Interpreter {
             .expect("Scope to have parent.");
 
         std::mem::replace(&mut self.environment, parent_environment)
+    }
+
+    fn enter_scope(&mut self) {
+        self.push_environment(Environment::new());
+    }
+
+    fn exit_scope(&mut self) {
+        self.pop_environment();
     }
 
     fn add_location_to_error(mut error: Error, location: Location) -> Error {
@@ -259,11 +267,11 @@ impl Interpreter {
             "def" => self.visit_def(arguments),
             "var" => self.visit_var(arguments),
             "fn" => self.visit_fn(arguments),
-            "do" => self.visit_noop(location, arguments),
+            "do" => self.visit_do(arguments),
             "quote" => self.visit_quote(arguments),
             "if" => self.visit_if(arguments),
             "splice" => self.visit_noop(location, arguments),
-            "while" => self.visit_noop(location, arguments),
+            "while" => self.visit_while(arguments),
             "break" => self.visit_noop(location, arguments),
             "set" => self.visit_noop(location, arguments),
             "quasiquote" => self.visit_quasiquote(arguments),
@@ -315,6 +323,20 @@ impl Interpreter {
         Ok(Value::Function(Arc::new(function)))
     }
 
+    #[allow(clippy::unused_self)]
+    fn visit_do(&mut self, arguments: &[Node]) -> Result<Value> {
+        self.enter_scope();
+
+        let result = arguments
+            .iter()
+            .map(|n| n.accept(self))
+            .collect::<Result<Vec<_>>>();
+
+        self.exit_scope();
+
+        Ok(result?.pop().unwrap_or(Value::nil()))
+    }
+
     fn visit_quote(&mut self, arguments: &[Node]) -> Result<Value> {
         self.visit_with_mode(IntpMode::Quote, arguments)
     }
@@ -331,6 +353,23 @@ impl Interpreter {
         } else {
             Ok(Value::nil())
         }
+    }
+
+    fn visit_while(&mut self, arguments: &[Node]) -> Result<Value> {
+        let parameters = "condition & body".try_into().unwrap();
+
+        let arguments = Arguments::from_nodes(&parameters, arguments.to_vec())?;
+
+        let condition = arguments.unwrap(0);
+        let body = arguments.unwrap_from(1);
+
+        while condition.accept(self)?.is_truthy() {
+            for node in &body {
+                node.accept(self)?;
+            }
+        }
+
+        Ok(Value::nil())
     }
 
     fn visit_quasiquote(&mut self, arguments: &[Node]) -> Result<Value> {

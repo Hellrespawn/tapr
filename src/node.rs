@@ -84,7 +84,7 @@ where
         match self {
             Self::Main(nodes) => write!(
                 f,
-                "<main {}>",
+                "{}",
                 nodes
                     .iter()
                     .map(std::string::ToString::to_string)
@@ -101,7 +101,7 @@ where
             ),
             Self::PArray(nodes) => write!(
                 f,
-                "<@({})>",
+                "@({})",
                 nodes
                     .iter()
                     .map(std::string::ToString::to_string)
@@ -110,7 +110,7 @@ where
             ),
             Self::BArray(nodes) => write!(
                 f,
-                "<@[{}]>",
+                "@[{}]",
                 nodes
                     .iter()
                     .map(std::string::ToString::to_string)
@@ -127,7 +127,7 @@ where
             ),
             Self::PTuple(nodes) => write!(
                 f,
-                "<({})>",
+                "({})",
                 nodes
                     .iter()
                     .map(std::string::ToString::to_string)
@@ -136,7 +136,7 @@ where
             ),
             Self::BTuple(nodes) => write!(
                 f,
-                "<[{}]>",
+                "[{}]",
                 nodes
                     .iter()
                     .map(std::string::ToString::to_string)
