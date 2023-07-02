@@ -1,10 +1,13 @@
 #![allow(clippy::unnecessary_wraps)]
 #![allow(clippy::needless_pass_by_value)]
 
-use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
+use super::{
+    function_tuples_to_environment, NativeFunctionTuple, NativeModule,
+};
 use crate::error::ErrorKind;
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::location::Location;
 use crate::{ParameterType, Result};
 
 pub struct StringModule;
@@ -19,7 +22,11 @@ impl NativeModule for StringModule {
             ("split", split, "separator:string string:string"),
         ];
 
-        tuples_to_environment(tuples, self.name())
+        let mut env = Environment::new();
+
+        function_tuples_to_environment(&mut env, tuples, self.name());
+
+        env
     }
 
     fn name(&self) -> &'static str {
@@ -39,14 +46,22 @@ fn unary(op: UnaryOp, arguments: Arguments<Value>) -> Result<Value> {
     Ok(Value::string(op(&string)))
 }
 
-fn len(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
+fn len(
+    _location: Location,
+    _: &mut Interpreter,
+    arguments: Arguments<Value>,
+) -> Result<Value> {
     let string = arguments.unwrap_string(0);
 
     #[allow(clippy::cast_precision_loss)]
     Ok(Value::number(string.len() as f64))
 }
 
-fn join(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
+fn join(
+    _location: Location,
+    _: &mut Interpreter,
+    arguments: Arguments<Value>,
+) -> Result<Value> {
     let separator = arguments.unwrap_string(0);
     let values = arguments.unwrap_list(1);
 
@@ -69,6 +84,7 @@ fn join(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
 }
 
 fn join_not_nil(
+    _location: Location,
     _: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
@@ -99,11 +115,19 @@ fn join_not_nil(
     }
 }
 
-fn trim(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
+fn trim(
+    _location: Location,
+    _: &mut Interpreter,
+    arguments: Arguments<Value>,
+) -> Result<Value> {
     unary(|s| s.trim().to_owned(), arguments)
 }
 
-fn split(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
+fn split(
+    _location: Location,
+    _: &mut Interpreter,
+    arguments: Arguments<Value>,
+) -> Result<Value> {
     let separator = arguments.unwrap_string(0);
     let string = arguments.unwrap_string(1);
 

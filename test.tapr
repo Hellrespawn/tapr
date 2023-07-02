@@ -1,1 +1,10 @@
-;'(defn test [a:string b:number &opt c:bool & d:rest] (string/repeat b a))
+(def test (fn
+  [x]
+  (cond
+    (> x 10) "Pretty big!"
+    (< x 5) "Quite small"
+    "Medium size")))
+
+(test 40) # => "Pretty big!"
+(test 2) # => "Quite small"
+(test 6) # => "Medium size"

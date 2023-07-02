@@ -1,9 +1,12 @@
 #![allow(clippy::unnecessary_wraps)]
 #![allow(clippy::needless_pass_by_value)]
 
-use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
+use super::{
+    function_tuples_to_environment, NativeFunctionTuple, NativeModule,
+};
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::location::Location;
 use crate::Result;
 
 pub struct Fs;
@@ -15,7 +18,11 @@ impl NativeModule for Fs {
             ("write", write, "path:string body:string"),
         ];
 
-        tuples_to_environment(tuples, self.name())
+        let mut env = Environment::new();
+
+        function_tuples_to_environment(&mut env, tuples, self.name());
+
+        env
     }
 
     fn name(&self) -> &'static str {
@@ -28,6 +35,7 @@ impl NativeModule for Fs {
 }
 
 fn read_to_string(
+    _location: Location,
     _: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
@@ -36,7 +44,11 @@ fn read_to_string(
     Ok(Value::string(std::fs::read_to_string(path)?))
 }
 
-fn write(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
+fn write(
+    _location: Location,
+    _: &mut Interpreter,
+    arguments: Arguments<Value>,
+) -> Result<Value> {
     let path = arguments.unwrap_string(0);
     let body = arguments.unwrap_string(1);
 

@@ -1,8 +1,11 @@
 #![allow(clippy::unnecessary_wraps)]
 #![allow(clippy::needless_pass_by_value)]
-use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
+use super::{
+    function_tuples_to_environment, NativeFunctionTuple, NativeModule,
+};
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::location::Location;
 use crate::Result;
 
 pub struct Arithmetic;
@@ -19,7 +22,11 @@ impl NativeModule for Arithmetic {
             ("--", decrement, "n:number"),
         ];
 
-        tuples_to_environment(tuples, self.name())
+        let mut env = Environment::new();
+
+        function_tuples_to_environment(&mut env, tuples, self.name());
+
+        env
     }
 
     fn name(&self) -> &'static str {
@@ -61,6 +68,7 @@ fn unary(op: UnaryOp, arguments: Arguments<Value>) -> Result<Value> {
 }
 
 pub fn add(
+    _location: Location,
     _intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
@@ -68,6 +76,7 @@ pub fn add(
 }
 
 pub fn subtract(
+    _location: Location,
     _intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
@@ -75,6 +84,7 @@ pub fn subtract(
 }
 
 pub fn multiply(
+    _location: Location,
     _intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
@@ -82,6 +92,7 @@ pub fn multiply(
 }
 
 pub fn divide(
+    _location: Location,
     _intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
@@ -89,6 +100,7 @@ pub fn divide(
 }
 
 pub fn modulus(
+    _location: Location,
     _intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
@@ -96,6 +108,7 @@ pub fn modulus(
 }
 
 pub fn increment(
+    _location: Location,
     _intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
@@ -103,6 +116,7 @@ pub fn increment(
 }
 
 pub fn decrement(
+    _location: Location,
     _intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {

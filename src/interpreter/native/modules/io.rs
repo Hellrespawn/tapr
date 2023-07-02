@@ -1,9 +1,12 @@
 #![allow(clippy::unnecessary_wraps)]
 #![allow(clippy::needless_pass_by_value)]
 
-use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
+use super::{
+    function_tuples_to_environment, NativeFunctionTuple, NativeModule,
+};
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::location::Location;
 use crate::Result;
 
 pub struct Io;
@@ -12,7 +15,11 @@ impl NativeModule for Io {
     fn environment(&self) -> Environment {
         let tuples: Vec<NativeFunctionTuple> = vec![("read", read, "")];
 
-        tuples_to_environment(tuples, self.name())
+        let mut env = Environment::new();
+
+        function_tuples_to_environment(&mut env, tuples, self.name());
+
+        env
     }
 
     fn name(&self) -> &'static str {
@@ -24,7 +31,11 @@ impl NativeModule for Io {
     }
 }
 
-pub fn read(_: &mut Interpreter, _: Arguments<Value>) -> Result<Value> {
+pub fn read(
+    _location: Location,
+    _: &mut Interpreter,
+    _: Arguments<Value>,
+) -> Result<Value> {
     let mut buffer = String::new();
 
     std::io::stdin().read_line(&mut buffer)?;

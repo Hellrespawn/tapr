@@ -1,9 +1,11 @@
 use crate::interpreter::arguments::Arguments;
+use crate::location::Location;
 use crate::{Interpreter, Parameters, Result};
 
 #[derive(Hash, PartialEq, Eq)]
 pub enum CallableType {
-    Native,
+    NativeFunction,
+    NativeMacro,
     Function,
     Macro,
 }
@@ -14,7 +16,8 @@ impl std::fmt::Display for CallableType {
             f,
             "{}",
             match self {
-                CallableType::Native => "native fn",
+                CallableType::NativeFunction => "native fn",
+                CallableType::NativeMacro => "native macro",
                 CallableType::Function => "fn",
                 CallableType::Macro => "macro",
             }
@@ -25,6 +28,7 @@ impl std::fmt::Display for CallableType {
 pub trait Callable<T>: Send + Sync {
     fn call(
         &self,
+        location: Location,
         intp: &mut Interpreter,
         arguments: Arguments<T>,
     ) -> Result<T>;

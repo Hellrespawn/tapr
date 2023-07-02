@@ -1,6 +1,7 @@
 use super::{Callable, CallableType, Value};
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter};
+use crate::location::Location;
 use crate::parser::parameters::Parameters;
 use crate::{Node, Result};
 
@@ -25,6 +26,7 @@ impl std::fmt::Display for Function {
 impl Callable<Value> for Function {
     fn call(
         &self,
+        _location: Location,
         intp: &mut Interpreter,
         arguments: Arguments<Value>,
     ) -> Result<Value> {

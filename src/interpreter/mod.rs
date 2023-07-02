@@ -210,7 +210,12 @@ impl Interpreter {
 
             match first_node {
                 Value::Function(callable) => {
-                    self.visit_function(location, &*callable, &nodes[1..])
+                    let arguments = nodes[1..]
+                        .iter()
+                        .map(|n| n.accept(self))
+                        .collect::<Result<Vec<_>>>()?;
+
+                    self.visit_function(location, &*callable, &arguments)
                 }
                 Value::Macro(callable) => {
                     let node =
@@ -227,33 +232,31 @@ impl Interpreter {
         &mut self,
         location: Location,
         callable: &dyn Callable<Value>,
-        arguments: &[Node],
+        arguments: &[Value],
     ) -> Result<Value> {
-        let arguments = arguments
-            .iter()
-            .map(|n| n.accept(self))
-            .collect::<Result<Vec<_>>>()?;
-
         let parameters = callable.parameters();
-        let arguments = Arguments::from_values(&parameters, arguments)?;
+        let arguments =
+            Arguments::from_values(&parameters, arguments.to_owned())?;
 
         callable
-            .call(self, arguments)
+            .call(location, self, arguments)
             .map_err(|e| Self::add_location_to_error(e, location))
     }
 
     fn visit_macro(
         &mut self,
-        _location: Location,
-        _callable: &dyn Callable<Node>,
-        _arguments: &[Node],
+        location: Location,
+        callable: &dyn Callable<Node>,
+        arguments: &[Node],
     ) -> Result<Node> {
-        todo!("Implement macro");
-        // let node = callable
-        //     .call(self, arguments.to_owned())
-        //     .map_err(|e| Self::add_location_to_error(e, location))?;
+        let parameters = callable.parameters();
+        let arguments =
+            Arguments::from_nodes(&parameters, arguments.to_owned())?;
 
-        // node.accept(self)
+        callable
+            .call(location, self, arguments)
+            .map_err(|e| Self::add_location_to_error(e, location))
+            .map_err(|e| Self::add_location_to_error(e, location))
     }
 
     fn visit_special_form(

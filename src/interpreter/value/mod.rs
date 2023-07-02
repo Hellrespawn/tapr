@@ -5,7 +5,7 @@ pub use callable::{Callable, CallableType};
 pub use function::Function;
 
 use super::environment::Environment;
-use super::native::NativeFunction;
+use super::native::{NativeFunction, NativeMacro};
 use crate::{Node, NodeData};
 use std::cmp::Ordering;
 use std::collections::HashMap;
@@ -101,6 +101,12 @@ impl Value {
 impl From<NativeFunction> for Value {
     fn from(value: NativeFunction) -> Self {
         Value::Function(Arc::new(value))
+    }
+}
+
+impl From<NativeMacro> for Value {
+    fn from(value: NativeMacro) -> Self {
+        Value::Macro(Arc::new(value))
     }
 }
 

@@ -1,9 +1,12 @@
 #![allow(clippy::unnecessary_wraps)]
 #![allow(clippy::needless_pass_by_value)]
 
-use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
+use super::{
+    function_tuples_to_environment, NativeFunctionTuple, NativeModule,
+};
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::location::Location;
 use crate::Result;
 
 pub struct List;
@@ -19,7 +22,11 @@ impl NativeModule for List {
             ("reduce", reduce, "f:function init l:list"),
         ];
 
-        tuples_to_environment(tuples, self.name())
+        let mut env = Environment::new();
+
+        function_tuples_to_environment(&mut env, tuples, self.name());
+
+        env
     }
 
     fn name(&self) -> &'static str {
@@ -31,13 +38,21 @@ impl NativeModule for List {
     }
 }
 
-fn head(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
+fn head(
+    _location: Location,
+    _: &mut Interpreter,
+    arguments: Arguments<Value>,
+) -> Result<Value> {
     let list = arguments.unwrap_list(0);
 
     Ok(list.into_iter().next().unwrap_or_else(Value::nil))
 }
 
-fn tail(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
+fn tail(
+    _location: Location,
+    _: &mut Interpreter,
+    arguments: Arguments<Value>,
+) -> Result<Value> {
     let list = arguments
         .unwrap_list(0)
         .get(1..)
@@ -47,7 +62,11 @@ fn tail(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
     Ok(Value::b_tuple(list))
 }
 
-fn push(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
+fn push(
+    _location: Location,
+    _: &mut Interpreter,
+    arguments: Arguments<Value>,
+) -> Result<Value> {
     let list = arguments.unwrap_list(0);
 
     let values = arguments.arguments()[1..].to_owned();
@@ -58,6 +77,7 @@ fn push(_: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
 }
 
 fn reduce(
+    location: Location,
     intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
@@ -69,6 +89,7 @@ fn reduce(
 
     for value in input {
         output = function.call(
+            location,
             intp,
             Arguments::from_values(
                 &function.parameters(),
@@ -81,6 +102,7 @@ fn reduce(
 }
 
 fn filter(
+    location: Location,
     intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
@@ -92,6 +114,7 @@ fn filter(
     for value in values {
         let is_truthy = function
             .call(
+                location,
                 intp,
                 Arguments::from_values(
                     &function.parameters(),
@@ -108,7 +131,11 @@ fn filter(
     Ok(Value::b_tuple(output))
 }
 
-fn map(intp: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
+fn map(
+    location: Location,
+    intp: &mut Interpreter,
+    arguments: Arguments<Value>,
+) -> Result<Value> {
     let function = arguments.unwrap_function(0);
     let values = arguments.unwrap_list(1);
 
@@ -116,6 +143,7 @@ fn map(intp: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value> {
         .into_iter()
         .map(|v| {
             function.call(
+                location,
                 intp,
                 Arguments::from_values(&function.parameters(), vec![v])?,
             )

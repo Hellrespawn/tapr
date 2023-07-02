@@ -2,9 +2,12 @@
 #![allow(clippy::needless_pass_by_value)]
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::location::Location;
 use crate::Result;
 
-use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
+use super::{
+    function_tuples_to_environment, NativeFunctionTuple, NativeModule,
+};
 
 pub struct Boolean;
 
@@ -23,7 +26,11 @@ impl NativeModule for Boolean {
             ("??", nil_coalesce, "& v"),
         ];
 
-        tuples_to_environment(tuples, self.name())
+        let mut env = Environment::new();
+
+        function_tuples_to_environment(&mut env, tuples, self.name());
+
+        env
     }
 
     fn name(&self) -> &'static str {
@@ -53,6 +60,13 @@ fn variadic(op: BinaryOp, arguments: Arguments<Value>) -> Result<Value> {
     Ok(Value::bool(acc))
 }
 
+fn binary(op: BinaryOp, arguments: Arguments<Value>) -> Result<Value> {
+    let lhs = arguments.unwrap(0);
+    let rhs = arguments.unwrap(1);
+
+    Ok(Value::bool(op(lhs, rhs)))
+}
+
 fn unary(op: UnaryOp, arguments: Arguments<Value>) -> Result<Value> {
     let value = arguments.unwrap(0);
 
@@ -60,6 +74,7 @@ fn unary(op: UnaryOp, arguments: Arguments<Value>) -> Result<Value> {
 }
 
 pub fn not(
+    _location: Location,
     _intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
@@ -67,20 +82,31 @@ pub fn not(
 }
 
 pub fn gt(
+    _location: Location,
     _intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
-    variadic(|lhs, rhs| lhs < rhs, arguments)
+    if arguments.len() == 2 {
+        binary(|lhs, rhs| lhs > rhs, arguments)
+    } else {
+        variadic(|lhs, rhs| lhs < rhs, arguments)
+    }
 }
 
 pub fn gte(
+    _location: Location,
     _intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
-    variadic(|lhs, rhs| lhs <= rhs, arguments)
+    if arguments.len() == 2 {
+        binary(|lhs, rhs| lhs >= rhs, arguments)
+    } else {
+        variadic(|lhs, rhs| lhs <= rhs, arguments)
+    }
 }
 
 pub fn eq(
+    _location: Location,
     _intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
@@ -88,20 +114,31 @@ pub fn eq(
 }
 
 pub fn lte(
+    _location: Location,
     _intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
-    variadic(|lhs, rhs| lhs >= rhs, arguments)
+    if arguments.len() == 2 {
+        binary(|lhs, rhs| lhs <= rhs, arguments)
+    } else {
+        variadic(|lhs, rhs| lhs >= rhs, arguments)
+    }
 }
 
 pub fn lt(
+    _location: Location,
     _intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
-    variadic(|lhs, rhs| lhs > rhs, arguments)
+    if arguments.len() == 2 {
+        binary(|lhs, rhs| lhs < rhs, arguments)
+    } else {
+        variadic(|lhs, rhs| lhs > rhs, arguments)
+    }
 }
 
 pub fn ne(
+    _location: Location,
     _intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
@@ -109,6 +146,7 @@ pub fn ne(
 }
 
 pub fn or(
+    _location: Location,
     _intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
@@ -125,6 +163,7 @@ pub fn or(
 }
 
 pub fn and(
+    _location: Location,
     _intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
@@ -141,6 +180,7 @@ pub fn and(
 }
 
 pub fn nil_coalesce(
+    _location: Location,
     _intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {

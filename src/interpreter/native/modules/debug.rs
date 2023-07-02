@@ -1,8 +1,11 @@
 #![allow(clippy::needless_pass_by_value)]
 #![allow(clippy::unnecessary_wraps)]
-use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
+use super::{
+    function_tuples_to_environment, NativeFunctionTuple, NativeModule,
+};
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::location::Location;
 use crate::Result;
 
 pub struct Debug;
@@ -12,7 +15,11 @@ impl NativeModule for Debug {
         let tuples: Vec<NativeFunctionTuple> =
             vec![("env", env, ""), ("lsmod", lsmod, "m:module")];
 
-        tuples_to_environment(tuples, self.name())
+        let mut env = Environment::new();
+
+        function_tuples_to_environment(&mut env, tuples, self.name());
+
+        env
     }
 
     fn name(&self) -> &'static str {
@@ -24,13 +31,18 @@ impl NativeModule for Debug {
     }
 }
 
-fn env(intp: &mut Interpreter, _arguments: Arguments<Value>) -> Result<Value> {
+fn env(
+    _location: Location,
+    intp: &mut Interpreter,
+    _arguments: Arguments<Value>,
+) -> Result<Value> {
     println!("{}", intp.environment);
 
     Ok(Value::nil())
 }
 
 fn lsmod(
+    _location: Location,
     _intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {

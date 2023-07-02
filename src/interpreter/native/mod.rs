@@ -1,9 +1,11 @@
 use super::environment::Environment;
-use super::value::{Callable, CallableType};
-use super::{Arguments, Interpreter, Value};
-use crate::{Parameters, Result};
 
+mod function;
+mod macro_;
 mod modules;
+
+pub use function::{NativeFunction, NativeFunctionImpl};
+pub use macro_::{NativeMacro, NativeMacroImpl};
 
 pub fn get_default_environment() -> Environment {
     let mut environment = Environment::new();
@@ -25,55 +27,4 @@ pub fn get_default_environment() -> Environment {
     }
 
     environment
-}
-
-pub type NativeFunctionImpl =
-    fn(intp: &mut Interpreter, arguments: Arguments<Value>) -> Result<Value>;
-
-#[derive(Debug, Clone)]
-pub struct NativeFunction {
-    name: &'static str,
-    function: NativeFunctionImpl,
-    parameters: Parameters,
-}
-
-impl NativeFunction {
-    pub fn new(
-        name: &'static str,
-        function: fn(
-            intp: &mut Interpreter,
-            arguments: Arguments<Value>,
-        ) -> Result<Value>,
-        parameters: Parameters,
-    ) -> Self {
-        Self {
-            name,
-            function,
-            parameters,
-        }
-    }
-}
-
-impl std::fmt::Display for NativeFunction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "<native function {} {}>", self.name, self.parameters)
-    }
-}
-
-impl Callable<Value> for NativeFunction {
-    fn call(
-        &self,
-        intp: &mut Interpreter,
-        arguments: Arguments<Value>,
-    ) -> Result<Value> {
-        (self.function)(intp, arguments)
-    }
-
-    fn callable_type(&self) -> CallableType {
-        CallableType::Native
-    }
-
-    fn parameters(&self) -> Parameters {
-        self.parameters.clone()
-    }
 }

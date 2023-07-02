@@ -1,4 +1,4 @@
-use super::{NativeFunction, NativeFunctionImpl};
+use super::{NativeFunction, NativeFunctionImpl, NativeMacro, NativeMacroImpl};
 use crate::interpreter::environment::Environment;
 use crate::interpreter::Value;
 
@@ -27,6 +27,7 @@ pub fn get_modules<'a>() -> Vec<&'a dyn NativeModule> {
 }
 
 pub type NativeFunctionTuple = (&'static str, NativeFunctionImpl, &'static str);
+pub type NativeMacroTuple = (&'static str, NativeMacroImpl, &'static str);
 
 pub trait NativeModule {
     fn environment(&self) -> Environment;
@@ -36,24 +37,34 @@ pub trait NativeModule {
     fn is_core_module(&self) -> bool;
 }
 
-fn tuples_to_environment(
+fn function_tuples_to_environment(
+    environment: &mut Environment,
     tuples: Vec<NativeFunctionTuple>,
     name: &str,
-) -> Environment {
-    let mut environment = Environment::new();
-
+) {
     for tuple in tuples {
         environment
-            .def(tuple.0.to_owned(), tuple_to_value(tuple))
+            .def(tuple.0.to_owned(), function_tuple_to_value(tuple))
             .unwrap_or_else(|_| {
                 panic!("Unable to add {name} functions to environment.")
             });
     }
-
-    environment
+}
+fn macro_tuples_to_environment(
+    environment: &mut Environment,
+    tuples: Vec<NativeMacroTuple>,
+    name: &str,
+) {
+    for tuple in tuples {
+        environment
+            .def(tuple.0.to_owned(), macro_tuple_to_value(tuple))
+            .unwrap_or_else(|_| {
+                panic!("Unable to add {name} functions to environment.")
+            });
+    }
 }
 
-fn tuple_to_value(tuple: NativeFunctionTuple) -> Value {
+fn function_tuple_to_value(tuple: NativeFunctionTuple) -> Value {
     NativeFunction::new(
         tuple.0,
         tuple.1,
@@ -61,6 +72,18 @@ fn tuple_to_value(tuple: NativeFunctionTuple) -> Value {
             .2
             .try_into()
             .expect("Native function should have valid parameters-string."),
+    )
+    .into()
+}
+
+fn macro_tuple_to_value(tuple: NativeMacroTuple) -> Value {
+    NativeMacro::new(
+        tuple.0,
+        tuple.1,
+        tuple
+            .2
+            .try_into()
+            .expect("Native macro should have valid parameters-string."),
     )
     .into()
 }
