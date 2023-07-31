@@ -1,11 +1,6 @@
-use super::environment::Environment;
+use crate::Environment;
 
-mod function;
-mod macro_;
 mod modules;
-
-pub use function::{NativeFunction, NativeFunctionImpl};
-pub use macro_::{NativeMacro, NativeMacroImpl};
 
 pub fn get_default_environment() -> Environment {
     let mut environment = Environment::new();

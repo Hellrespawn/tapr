@@ -1,12 +1,32 @@
+use crate::callable::{NativeFunction, NativeMacro};
 use crate::location::Location;
 use crate::visitor::Visitor;
+use crate::{Callable, Environment};
 use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::sync::Arc;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum NodeSource {
+    Location(Location),
+    Node(Box<Node>),
+    Unknown,
+}
+
+impl NodeSource {
+    pub fn location(&self) -> Option<Location> {
+        match self {
+            NodeSource::Location(location) => Some(*location),
+            NodeSource::Node(node) => node.source().location(),
+            NodeSource::Unknown => None,
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Node {
-    location: Location,
-    data: NodeData<Node>,
+    data: NodeData,
+    source: NodeSource,
 }
 
 impl std::fmt::Display for Node {
@@ -15,14 +35,46 @@ impl std::fmt::Display for Node {
     }
 }
 
+impl From<NativeFunction> for Node {
+    fn from(value: NativeFunction) -> Self {
+        Self::unknown(NodeData::Function(Arc::new(value)))
+    }
+}
+
+impl From<NativeMacro> for Node {
+    fn from(value: NativeMacro) -> Self {
+        Self::unknown(NodeData::Macro(Arc::new(value)))
+    }
+}
+
+impl From<Environment> for Node {
+    fn from(value: Environment) -> Self {
+        Self::unknown(NodeData::Module(value))
+    }
+}
+
 impl Node {
-    pub fn new(location: Location, data: NodeData<Node>) -> Self {
-        Self { location, data }
+    pub fn new(source: NodeSource, data: NodeData) -> Self {
+        Self { source, data }
     }
 
-    pub fn mock(data: NodeData<Node>) -> Self {
+    pub fn with_location(location: Location, data: NodeData) -> Self {
         Self {
-            location: Location::new(0, 0),
+            source: NodeSource::Location(location),
+            data,
+        }
+    }
+
+    pub fn from_node(node: Node, data: NodeData) -> Self {
+        Self {
+            source: NodeSource::Node(Box::new(node)),
+            data,
+        }
+    }
+
+    pub fn unknown(data: NodeData) -> Self {
+        Self {
+            source: NodeSource::Unknown,
             data,
         }
     }
@@ -34,16 +86,16 @@ impl Node {
         visitor.visit_node(self)
     }
 
-    pub fn data(&self) -> &NodeData<Node> {
+    pub fn data(&self) -> &NodeData {
         &self.data
     }
 
-    pub fn data_mut(&mut self) -> &mut NodeData<Node> {
+    pub fn data_mut(&mut self) -> &mut NodeData {
         &mut self.data
     }
 
-    pub fn location(&self) -> Location {
-        self.location
+    pub fn source(&self) -> NodeSource {
+        self.source
     }
 
     pub fn is_unquote(&self) -> bool {
@@ -58,14 +110,19 @@ impl Node {
 }
 
 #[derive(Debug, Clone)]
-pub enum NodeData<T> {
-    Main(Vec<T>),
-    Table(HashMap<T, T>),
-    PArray(Vec<T>),
-    BArray(Vec<T>),
-    Struct(HashMap<T, T>),
-    PTuple(Vec<T>),
-    BTuple(Vec<T>),
+pub enum NodeData {
+    // Interpreter only
+    Function(Arc<dyn Callable>),
+    Macro(Arc<dyn Callable>),
+    Module(Environment),
+    // Parser only
+    Main(Vec<Node>),
+    Table(HashMap<Node, Node>),
+    PArray(Vec<Node>),
+    BArray(Vec<Node>),
+    Struct(HashMap<Node, Node>),
+    PTuple(Vec<Node>),
+    BTuple(Vec<Node>),
     Number(f64),
     String(String),
     Buffer(String),
@@ -76,12 +133,14 @@ pub enum NodeData<T> {
     Nil,
 }
 
-impl<T> std::fmt::Display for NodeData<T>
-where
-    T: std::fmt::Display,
-{
+impl std::fmt::Display for NodeData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Module(environment) => {
+                write!(f, "<module ({})>", environment.len())
+            }
+            Self::Function(function) => function.fmt(f),
+            Self::Macro(macro_) => macro_.fmt(f),
             Self::Main(nodes) => write!(
                 f,
                 "{}",
@@ -155,7 +214,7 @@ where
     }
 }
 
-impl<T: PartialEq + Eq + std::hash::Hash> PartialEq for NodeData<T> {
+impl PartialEq for NodeData {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (NodeData::Main(lhs), NodeData::Main(rhs))
@@ -182,11 +241,9 @@ impl<T: PartialEq + Eq + std::hash::Hash> PartialEq for NodeData<T> {
     }
 }
 
-impl<T: PartialEq + Eq + std::hash::Hash> Eq for NodeData<T> {}
+impl Eq for NodeData {}
 
-impl<T: PartialOrd + PartialEq + Eq + std::hash::Hash> PartialOrd
-    for NodeData<T>
-{
+impl PartialOrd for NodeData {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         match (self, other) {
             (NodeData::Nil, NodeData::Nil) => Some(Ordering::Equal),
@@ -204,7 +261,7 @@ impl<T: PartialOrd + PartialEq + Eq + std::hash::Hash> PartialOrd
     }
 }
 
-impl<T: std::hash::Hash> std::hash::Hash for NodeData<T> {
+impl std::hash::Hash for NodeData {
     fn hash<H>(&self, state: &mut H)
     where
         H: std::hash::Hasher,
@@ -212,6 +269,9 @@ impl<T: std::hash::Hash> std::hash::Hash for NodeData<T> {
         core::mem::discriminant(self).hash(state);
 
         match self {
+            Self::Function(_) => unreachable!("Unable to hash callable"),
+            Self::Macro(_) => unreachable!("Unable to hash macro"),
+            Self::Module(env) => env.hash(state),
             Self::Main(nodes)
             | Self::PArray(nodes)
             | Self::PTuple(nodes)

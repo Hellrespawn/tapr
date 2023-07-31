@@ -5,10 +5,9 @@ use super::{
     function_tuples_to_environment, NativeFunctionTuple, NativeModule,
 };
 use crate::error::ErrorKind;
-use crate::interpreter::environment::Environment;
-use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::interpreter::{Arguments, Interpreter};
 use crate::location::Location;
-use crate::{ParameterType, Result};
+use crate::{ParameterType, Result, Environment, Node};
 
 pub struct StringModule;
 
@@ -40,28 +39,28 @@ impl NativeModule for StringModule {
 
 type UnaryOp = fn(&str) -> String;
 
-fn unary(op: UnaryOp, arguments: Arguments<Value>) -> Result<Value> {
+fn unary(op: UnaryOp, arguments: Arguments) -> Result<Node> {
     let string = arguments.unwrap_string(0);
 
-    Ok(Value::string(op(&string)))
+    Ok(Node::string(op(&string)))
 }
 
 fn len(
     _location: Location,
     _: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     let string = arguments.unwrap_string(0);
 
     #[allow(clippy::cast_precision_loss)]
-    Ok(Value::number(string.len() as f64))
+    Ok(Node::number(string.len() as f64))
 }
 
 fn join(
     _location: Location,
     _: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     let separator = arguments.unwrap_string(0);
     let values = arguments.unwrap_list(1);
 
@@ -71,7 +70,7 @@ fn join(
             if let Some(string) = value.as_string() {
                 Ok(string.to_owned())
             } else {
-                Err(ErrorKind::InvalidValueArgument {
+                Err(ErrorKind::InvalidNodeArgument {
                     expected: vec![ParameterType::String],
                     actual: value,
                 }
@@ -80,14 +79,14 @@ fn join(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    Ok(Value::string(strings.join(&separator)))
+    Ok(Node::string(strings.join(&separator)))
 }
 
 fn join_not_nil(
     _location: Location,
     _: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     let separator = arguments.unwrap_string(0);
     let values = arguments.unwrap_list(1);
 
@@ -99,7 +98,7 @@ fn join_not_nil(
             } else if let Some(string) = value.as_string() {
                 Some(Ok(string.to_owned()))
             } else {
-                Some(Err(ErrorKind::InvalidValueArgument {
+                Some(Err(ErrorKind::InvalidNodeArgument {
                     expected: vec![ParameterType::String],
                     actual: value,
                 }
@@ -109,32 +108,32 @@ fn join_not_nil(
         .collect::<Result<Vec<_>>>()?;
 
     if strings.is_empty() {
-        Ok(Value::nil())
+        Ok(Node::nil())
     } else {
-        Ok(Value::string(strings.join(&separator)))
+        Ok(Node::string(strings.join(&separator)))
     }
 }
 
 fn trim(
     _location: Location,
     _: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     unary(|s| s.trim().to_owned(), arguments)
 }
 
 fn split(
     _location: Location,
     _: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     let separator = arguments.unwrap_string(0);
     let string = arguments.unwrap_string(1);
 
     let values = string
         .split(&separator)
-        .map(|s| Value::string(s.to_owned()))
+        .map(|s| Node::string(s.to_owned()))
         .collect::<Vec<_>>();
 
-    Ok(Value::b_tuple(values))
+    Ok(Node::b_tuple(values))
 }

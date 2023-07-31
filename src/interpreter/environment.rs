@@ -1,23 +1,22 @@
-use super::Value;
 use crate::error::ErrorKind;
-use crate::Result;
+use crate::{Node, NodeData, Result};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Hash)]
 struct ValueWrapper {
     mutable: bool,
-    value: Value,
+    value: Node,
 }
 
 impl ValueWrapper {
-    fn def(value: Value) -> Self {
+    fn def(value: Node) -> Self {
         ValueWrapper {
             mutable: false,
             value,
         }
     }
 
-    fn var(value: Value) -> Self {
+    fn var(value: Node) -> Self {
         ValueWrapper {
             mutable: true,
             value,
@@ -57,11 +56,11 @@ impl Environment {
         env.map(|e| *e)
     }
 
-    pub fn def(&mut self, key: String, value: Value) -> Result<()> {
+    pub fn def(&mut self, key: String, value: Node) -> Result<()> {
         self.insert(key, ValueWrapper::def(value))
     }
 
-    pub fn var(&mut self, key: String, value: Value) -> Result<()> {
+    pub fn var(&mut self, key: String, value: Node) -> Result<()> {
         self.insert(key, ValueWrapper::var(value))
     }
 
@@ -76,7 +75,7 @@ impl Environment {
         }
     }
 
-    pub fn get(&self, key: &str) -> Option<&Value> {
+    pub fn get(&self, key: &str) -> Option<&Node> {
         let (key, remainder) = key.split_once('/').unwrap_or((key, ""));
 
         let value = self.map.get(key).map(|v| &v.value).or_else(|| {
@@ -89,14 +88,14 @@ impl Environment {
 
         if remainder.is_empty() {
             value
-        } else if let Some(Value::Module(module)) = value {
+        } else if let Some(NodeData::Module(module)) = value.map(|v| v.data()) {
             module.get(remainder)
         } else {
             None
         }
     }
 
-    pub fn get_mut(&mut self, key: &str) -> Option<&mut Value> {
+    pub fn get_mut(&mut self, key: &str) -> Option<&mut Node> {
         self.map.get_mut(key).map(|v| &mut v.value).or_else(|| {
             if let Some(environment) = &mut self.parent {
                 environment.get_mut(key)
@@ -122,7 +121,7 @@ impl Environment {
         self.map.len()
     }
 
-    pub fn format_table(mut values: Vec<(&str, &Value)>) -> String {
+    pub fn format_table(mut values: Vec<(&str, &Node)>) -> String {
         values.sort_by(|(l, _), (r, _)| l.cmp(r));
 
         let key_width = values

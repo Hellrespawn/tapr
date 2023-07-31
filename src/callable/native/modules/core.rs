@@ -5,10 +5,9 @@ use super::{
     function_tuples_to_environment, macro_tuples_to_environment,
     NativeFunctionTuple, NativeMacroTuple, NativeModule,
 };
-use crate::interpreter::environment::Environment;
-use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::interpreter::{Arguments, Interpreter};
 use crate::location::Location;
-use crate::{Node, NodeData, Result};
+use crate::{Node, NodeData, Result, Environment};
 
 pub struct Core;
 
@@ -44,43 +43,43 @@ impl NativeModule for Core {
 fn println(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     for argument in arguments.arguments() {
         print!("{argument}");
     }
 
     println!();
 
-    Ok(Value::nil())
+    Ok(Node::nil())
 }
 
 fn print(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     for argument in arguments.arguments() {
         print!("{argument}");
     }
 
-    Ok(Value::nil())
+    Ok(Node::nil())
 }
 
 fn is_nil(
     _location: Location,
     _: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     let argument = arguments.unwrap(0);
 
-    Ok(Value::bool(argument.is_nil()))
+    Ok(Node::bool(argument.is_nil()))
 }
 
 fn cond(
     location: Location,
     _: &mut Interpreter,
-    arguments: Arguments<Node>,
+    arguments: Arguments,
 ) -> Result<Node> {
     let mut arguments = arguments.unwrap_from(0);
 

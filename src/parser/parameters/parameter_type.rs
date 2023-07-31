@@ -1,5 +1,4 @@
 use crate::error::{Error, ErrorKind};
-use crate::interpreter::Value;
 use crate::{Node, NodeData, Result};
 
 #[derive(Debug, Clone, Copy)]
@@ -17,71 +16,8 @@ pub enum ParameterType {
 }
 
 impl ParameterType {
-    pub fn value_is_type(&self, value: &Value) -> bool {
-        match self {
-            ParameterType::Module => {
-                matches!(value, Value::Module { .. })
-            }
-            ParameterType::Map => {
-                matches!(
-                    value,
-                    Value::Node(NodeData::Struct(_) | NodeData::Table(_))
-                )
-            }
-            ParameterType::Function => matches!(value, Value::Function(_)),
-            ParameterType::List => matches!(
-                value,
-                Value::Node(
-                    NodeData::PArray(_)
-                        | NodeData::BArray(_)
-                        | NodeData::BTuple(_)
-                        | NodeData::PTuple(_)
-                )
-            ),
-            ParameterType::Number => {
-                matches!(value, Value::Node(NodeData::Number(_)))
-            }
-            ParameterType::String => matches!(
-                value,
-                Value::Node(NodeData::String(_) | NodeData::Buffer(_))
-            ),
-            ParameterType::Boolean => {
-                matches!(value, Value::Node(NodeData::True | NodeData::False))
-            }
-            ParameterType::Symbol => {
-                matches!(value, Value::Node(NodeData::Symbol(_)))
-            }
-            ParameterType::Keyword => {
-                matches!(value, Value::Node(NodeData::Keyword(_)))
-            }
-            ParameterType::Nil => matches!(value, Value::Node(NodeData::Nil)),
-        }
-    }
-
-    pub fn node_is_type(&self, node: &Node) -> bool {
-        let data = node.data();
-
-        match self {
-            ParameterType::Module => false,
-            ParameterType::Map => {
-                matches!(data, NodeData::Struct(_) | NodeData::Table(_))
-            }
-            ParameterType::Function => matches!(data, NodeData::PTuple(_)),
-            ParameterType::List => matches!(
-                data,
-                NodeData::BTuple(_) | NodeData::PArray(_) | NodeData::BArray(_)
-            ),
-            ParameterType::Number => matches!(data, NodeData::Number(_)),
-            ParameterType::String => {
-                matches!(data, NodeData::String(_) | NodeData::Buffer(_))
-            }
-            ParameterType::Symbol => matches!(data, NodeData::Symbol(_)),
-            ParameterType::Keyword => matches!(data, NodeData::Keyword(_)),
-            ParameterType::Boolean => {
-                matches!(data, NodeData::True | NodeData::False)
-            }
-            ParameterType::Nil => matches!(data, NodeData::Nil),
-        }
+    pub fn node_is_type(&self, value: &Node) -> bool {
+        todo!("Implement `node_is_type`")
     }
 }
 

@@ -3,10 +3,10 @@
 use super::{
     function_tuples_to_environment, NativeFunctionTuple, NativeModule,
 };
-use crate::interpreter::environment::Environment;
-use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::interpreter::Environment;
+use crate::interpreter::{Arguments, Interpreter};
 use crate::location::Location;
-use crate::Result;
+use crate::{Node, Result};
 
 pub struct Arithmetic;
 
@@ -41,7 +41,7 @@ impl NativeModule for Arithmetic {
 type BinaryOp = fn(f64, f64) -> f64;
 type UnaryOp = fn(f64) -> f64;
 
-fn variadic(op: BinaryOp, arguments: Arguments<Value>) -> Result<Value> {
+fn variadic(op: BinaryOp, arguments: Arguments) -> Result<Node> {
     let numbers = arguments.unwrap_numbers();
 
     let mut iter = numbers.into_iter();
@@ -52,75 +52,75 @@ fn variadic(op: BinaryOp, arguments: Arguments<Value>) -> Result<Value> {
         acc = op(acc, rhs);
     }
 
-    Ok(Value::number(acc))
+    Ok(Node::number(acc))
 }
 
-fn binary(op: BinaryOp, arguments: Arguments<Value>) -> Result<Value> {
+fn binary(op: BinaryOp, arguments: Arguments) -> Result<Node> {
     let [lhs, rhs] = arguments.unwrap_numbers()[..] else {
         panic!()
     };
 
-    Ok(Value::number(op(lhs, rhs)))
+    Ok(Node::number(op(lhs, rhs)))
 }
 
-fn unary(op: UnaryOp, arguments: Arguments<Value>) -> Result<Value> {
+fn unary(op: UnaryOp, arguments: Arguments) -> Result<Node> {
     let number = arguments.unwrap_numbers()[0];
 
-    Ok(Value::number(op(number)))
+    Ok(Node::number(op(number)))
 }
 
 pub fn add(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     variadic(|lhs, rhs| lhs + rhs, arguments)
 }
 
 pub fn subtract(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     variadic(|lhs, rhs| lhs - rhs, arguments)
 }
 
 pub fn multiply(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     variadic(|lhs, rhs| lhs * rhs, arguments)
 }
 
 pub fn divide(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     variadic(|lhs, rhs| lhs / rhs, arguments)
 }
 
 pub fn modulus(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     binary(|lhs, rhs| lhs % rhs, arguments)
 }
 
 pub fn increment(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     unary(|n| n + 1.0, arguments)
 }
 
 pub fn decrement(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     unary(|n| n - 1.0, arguments)
 }

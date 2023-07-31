@@ -1,6 +1,16 @@
-use crate::interpreter::arguments::Arguments;
+mod macro_;
+mod native;
+mod native_function;
+mod function;
+
+use crate::arguments::Arguments;
 use crate::location::Location;
-use crate::{Interpreter, Parameters, Result};
+use crate::{Interpreter, Parameters, Result, Node};
+
+pub use macro_::{NativeMacro, NativeMacroImpl};
+pub use native_function::{NativeFunction, NativeFunctionImpl};
+pub use native::get_default_environment;
+pub use function::Function;
 
 #[derive(Hash, PartialEq, Eq)]
 pub enum CallableType {
@@ -25,26 +35,26 @@ impl std::fmt::Display for CallableType {
     }
 }
 
-pub trait Callable<T>: Send + Sync {
+pub trait Callable: Send + Sync {
     fn call(
         &self,
         location: Location,
         intp: &mut Interpreter,
-        arguments: Arguments<T>,
-    ) -> Result<T>;
+        arguments: Arguments,
+    ) -> Result<Node>;
 
     fn callable_type(&self) -> CallableType;
 
     fn parameters(&self) -> Parameters;
 }
 
-impl<T> std::fmt::Display for dyn Callable<T> {
+impl std::fmt::Display for dyn Callable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "<{}{}> ", self.callable_type(), self.parameters())
     }
 }
 
-impl<T> std::fmt::Debug for dyn Callable<T> {
+impl std::fmt::Debug for dyn Callable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{self}")
     }

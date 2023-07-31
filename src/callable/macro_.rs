@@ -1,53 +1,53 @@
 use crate::location::Location;
 use crate::{
-    Arguments, Callable, CallableType, Interpreter, Parameters, Result, Value,
+    Arguments, Callable, CallableType, Interpreter, Node, Parameters, Result,
 };
 
-pub type NativeFunctionImpl = fn(
+pub type NativeMacroImpl = fn(
     location: Location,
     intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value>;
+    arguments: Arguments,
+) -> Result<Node>;
 
 #[derive(Debug, Clone)]
-pub struct NativeFunction {
+pub struct NativeMacro {
     name: &'static str,
-    function: NativeFunctionImpl,
+    macro_: NativeMacroImpl,
     parameters: Parameters,
 }
 
-impl NativeFunction {
+impl NativeMacro {
     pub fn new(
         name: &'static str,
-        function: NativeFunctionImpl,
+        macro_: NativeMacroImpl,
         parameters: Parameters,
     ) -> Self {
         Self {
             name,
-            function,
+            macro_,
             parameters,
         }
     }
 }
 
-impl std::fmt::Display for NativeFunction {
+impl std::fmt::Display for NativeMacro {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "<native function {} {}>", self.name, self.parameters)
+        write!(f, "<native macro {} {}>", self.name, self.parameters)
     }
 }
 
-impl Callable<Value> for NativeFunction {
+impl Callable for NativeMacro {
     fn call(
         &self,
         location: Location,
         intp: &mut Interpreter,
-        arguments: Arguments<Value>,
-    ) -> Result<Value> {
-        (self.function)(location, intp, arguments)
+        arguments: Arguments,
+    ) -> Result<Node> {
+        (self.macro_)(location, intp, arguments)
     }
 
     fn callable_type(&self) -> CallableType {
-        CallableType::NativeFunction
+        CallableType::NativeMacro
     }
 
     fn parameters(&self) -> Parameters {

@@ -4,10 +4,9 @@ use super::{
     function_tuples_to_environment, NativeFunctionTuple, NativeModule,
 };
 use crate::error::ErrorKind;
-use crate::interpreter::environment::Environment;
-use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::interpreter::{Arguments, Interpreter};
 use crate::location::Location;
-use crate::{ParameterType, Result};
+use crate::{ParameterType, Result, Environment, Node};
 
 pub struct Debug;
 
@@ -35,21 +34,21 @@ impl NativeModule for Debug {
 fn lsmod(
     _location: Location,
     intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     if let Some(argument) = arguments.get(0) {
-        if let Value::Module(environment) = argument {
+        if let Node::Module(environment) = argument {
             println!("{environment}");
         } else {
-            return Err(ErrorKind::InvalidValueArgument {
+            return Err(ErrorKind::InvalidNodeArgument {
                 expected: vec![ParameterType::Module],
                 actual: argument,
             }
             .into());
         }
     } else {
-        println!("{}", intp.environment);
+        println!("{}", intp.environment());
     }
 
-    Ok(Value::nil())
+    Ok(Node::nil())
 }

@@ -1,9 +1,8 @@
 #![allow(clippy::unnecessary_wraps)]
 #![allow(clippy::needless_pass_by_value)]
-use crate::interpreter::environment::Environment;
-use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::interpreter::{Arguments, Interpreter};
 use crate::location::Location;
-use crate::Result;
+use crate::{Result, Environment, Node};
 
 use super::{
     function_tuples_to_environment, NativeFunctionTuple, NativeModule,
@@ -42,10 +41,10 @@ impl NativeModule for Boolean {
     }
 }
 
-type BinaryOp = fn(Value, Value) -> bool;
-type UnaryOp = fn(Value) -> bool;
+type BinaryOp = fn(Node, Node) -> bool;
+type UnaryOp = fn(Node) -> bool;
 
-fn variadic(op: BinaryOp, arguments: Arguments<Value>) -> Result<Value> {
+fn variadic(op: BinaryOp, arguments: Arguments) -> Result<Node> {
     let values = arguments.unwrap_from(0);
 
     let mut acc = true;
@@ -57,35 +56,35 @@ fn variadic(op: BinaryOp, arguments: Arguments<Value>) -> Result<Value> {
         acc = op(lhs, rhs);
     }
 
-    Ok(Value::bool(acc))
+    Ok(Node::bool(acc))
 }
 
-fn binary(op: BinaryOp, arguments: Arguments<Value>) -> Result<Value> {
+fn binary(op: BinaryOp, arguments: Arguments) -> Result<Node> {
     let lhs = arguments.unwrap(0);
     let rhs = arguments.unwrap(1);
 
-    Ok(Value::bool(op(lhs, rhs)))
+    Ok(Node::bool(op(lhs, rhs)))
 }
 
-fn unary(op: UnaryOp, arguments: Arguments<Value>) -> Result<Value> {
+fn unary(op: UnaryOp, arguments: Arguments) -> Result<Node> {
     let value = arguments.unwrap(0);
 
-    Ok(Value::bool(op(value)))
+    Ok(Node::bool(op(value)))
 }
 
 pub fn not(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     unary(|v| v.is_falsy(), arguments)
 }
 
 pub fn gt(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     if arguments.len() == 2 {
         binary(|lhs, rhs| lhs > rhs, arguments)
     } else {
@@ -96,8 +95,8 @@ pub fn gt(
 pub fn gte(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     if arguments.len() == 2 {
         binary(|lhs, rhs| lhs >= rhs, arguments)
     } else {
@@ -108,16 +107,16 @@ pub fn gte(
 pub fn eq(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     variadic(|lhs, rhs| lhs == rhs, arguments)
 }
 
 pub fn lte(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     if arguments.len() == 2 {
         binary(|lhs, rhs| lhs <= rhs, arguments)
     } else {
@@ -128,8 +127,8 @@ pub fn lte(
 pub fn lt(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     if arguments.len() == 2 {
         binary(|lhs, rhs| lhs < rhs, arguments)
     } else {
@@ -140,16 +139,16 @@ pub fn lt(
 pub fn ne(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     variadic(|lhs, rhs| lhs != rhs, arguments)
 }
 
 pub fn or(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     let values = arguments.unwrap_from(0);
     let last_index = values.len() - 1;
 
@@ -165,8 +164,8 @@ pub fn or(
 pub fn and(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     let values = arguments.unwrap_from(0);
     let last_index = values.len() - 1;
 
@@ -182,8 +181,8 @@ pub fn and(
 pub fn nil_coalesce(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     let values = arguments.unwrap_from(0);
     let last_index = values.len() - 1;
 

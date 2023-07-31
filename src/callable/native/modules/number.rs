@@ -5,10 +5,9 @@ use super::{
     function_tuples_to_environment, NativeFunctionTuple, NativeModule,
 };
 use crate::error::ErrorKind;
-use crate::interpreter::environment::Environment;
-use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::interpreter::{Arguments, Interpreter};
 use crate::location::Location;
-use crate::Result;
+use crate::{Result, Environment, Node};
 use conv::prelude::*;
 
 pub struct Number;
@@ -39,8 +38,8 @@ impl NativeModule for Number {
 pub fn align(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     let f_width = arguments.unwrap_number(0);
     let n = arguments.unwrap_number(1);
 
@@ -53,14 +52,14 @@ pub fn align(
         .approx()
         .map_err(|_| ErrorKind::InvalidInteger(f_width))?;
 
-    Ok(Value::string(format!("{n:0>width$}")))
+    Ok(Node::string(format!("{n:0>width$}")))
 }
 
 pub fn parse(
     _location: Location,
     _intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     let string = arguments.unwrap_string(0);
 
     let result: Result<f64> = string
@@ -68,5 +67,5 @@ pub fn parse(
         .parse()
         .map_err(|_| ErrorKind::ParseNumberError(string).into());
 
-    Ok(Value::number(result?))
+    Ok(Node::number(result?))
 }

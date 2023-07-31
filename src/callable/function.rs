@@ -1,9 +1,7 @@
-use super::{Callable, CallableType, Value};
-use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter};
 use crate::location::Location;
 use crate::parser::parameters::Parameters;
-use crate::{Node, Result};
+use crate::{Node, Result, Callable, Environment, NodeData, CallableType};
 
 #[derive(Debug, Clone)]
 pub struct Function {
@@ -23,13 +21,13 @@ impl std::fmt::Display for Function {
     }
 }
 
-impl Callable<Value> for Function {
+impl Callable for Function {
     fn call(
         &self,
         _location: Location,
         intp: &mut Interpreter,
-        arguments: Arguments<Value>,
-    ) -> Result<Value> {
+        arguments: Arguments,
+    ) -> Result<Node> {
         let mut function_environment = Environment::new();
         arguments.add_to_env(&mut function_environment)?;
 
@@ -43,7 +41,7 @@ impl Callable<Value> for Function {
 
         intp.pop_environment();
 
-        Ok(values.pop().unwrap_or(Value::nil()))
+        Ok(values.pop().unwrap_or(Node::unknown(NodeData::Nil)))
     }
 
     fn callable_type(&self) -> CallableType {

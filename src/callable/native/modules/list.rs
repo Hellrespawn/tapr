@@ -4,10 +4,9 @@
 use super::{
     function_tuples_to_environment, NativeFunctionTuple, NativeModule,
 };
-use crate::interpreter::environment::Environment;
-use crate::interpreter::{Arguments, Interpreter, Value};
+use crate::interpreter::{Arguments, Interpreter};
 use crate::location::Location;
-use crate::Result;
+use crate::{Result, Environment, Node};
 
 pub struct List;
 
@@ -41,46 +40,46 @@ impl NativeModule for List {
 fn head(
     _location: Location,
     _: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     let list = arguments.unwrap_list(0);
 
-    Ok(list.into_iter().next().unwrap_or_else(Value::nil))
+    Ok(list.into_iter().next().unwrap_or_else(Node::nil))
 }
 
 fn tail(
     _location: Location,
     _: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     let list = arguments
         .unwrap_list(0)
         .get(1..)
         .map(Vec::from)
         .unwrap_or_default();
 
-    Ok(Value::b_tuple(list))
+    Ok(Node::b_tuple(list))
 }
 
 fn push(
     _location: Location,
     _: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     let list = arguments.unwrap_list(0);
 
     let values = arguments.arguments()[1..].to_owned();
 
     let output = [list, values].into_iter().flatten().collect();
 
-    Ok(Value::b_tuple(output))
+    Ok(Node::b_tuple(output))
 }
 
 fn reduce(
     location: Location,
     intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     let function = arguments.unwrap_function(0);
     let init = arguments.unwrap(1);
     let input = arguments.unwrap_list(2);
@@ -104,8 +103,8 @@ fn reduce(
 fn filter(
     location: Location,
     intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     let function = arguments.unwrap_function(0);
     let values = arguments.unwrap_list(1);
 
@@ -128,14 +127,14 @@ fn filter(
         }
     }
 
-    Ok(Value::b_tuple(output))
+    Ok(Node::b_tuple(output))
 }
 
 fn map(
     location: Location,
     intp: &mut Interpreter,
-    arguments: Arguments<Value>,
-) -> Result<Value> {
+    arguments: Arguments,
+) -> Result<Node> {
     let function = arguments.unwrap_function(0);
     let values = arguments.unwrap_list(1);
 
@@ -150,5 +149,5 @@ fn map(
         })
         .collect::<Result<Vec<_>>>()?;
 
-    Ok(Value::b_tuple(output))
+    Ok(Node::b_tuple(output))
 }

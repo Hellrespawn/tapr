@@ -98,7 +98,7 @@ pub fn parse_pair(pair: Pair<Rule>) -> Node {
         }
     };
 
-    Node::new(location, data)
+    Node::with_location(location, data)
 }
 
 fn extract_string(pair: Pair<Rule>) -> String {
@@ -126,11 +126,11 @@ fn parse_value(pair: Pair<Rule>) -> Node {
         let location = Location::from_pair(pair);
 
         let data = NodeData::PTuple(vec![
-            Node::new(location, NodeData::Symbol(reader_macro.to_string())),
+            Node::with_location(location, NodeData::Symbol(reader_macro.to_string())),
             node,
         ]);
 
-        node = Node::new(location, data);
+        node = Node::with_location(location, data);
     }
 
     node

@@ -1,6 +1,9 @@
-use super::{NativeFunction, NativeFunctionImpl, NativeMacro, NativeMacroImpl};
-use crate::interpreter::environment::Environment;
-use crate::interpreter::Value;
+use crate::{
+    callable::{
+        NativeFunction, NativeFunctionImpl, NativeMacro, NativeMacroImpl,
+    },
+    Environment, Node,
+};
 
 mod arithmetic;
 mod boolean;
@@ -64,7 +67,7 @@ fn macro_tuples_to_environment(
     }
 }
 
-fn function_tuple_to_value(tuple: NativeFunctionTuple) -> Value {
+fn function_tuple_to_value(tuple: NativeFunctionTuple) -> Node {
     NativeFunction::new(
         tuple.0,
         tuple.1,
@@ -76,7 +79,7 @@ fn function_tuple_to_value(tuple: NativeFunctionTuple) -> Value {
     .into()
 }
 
-fn macro_tuple_to_value(tuple: NativeMacroTuple) -> Value {
+fn macro_tuple_to_value(tuple: NativeMacroTuple) -> Node {
     NativeMacro::new(
         tuple.0,
         tuple.1,

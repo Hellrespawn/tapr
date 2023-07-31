@@ -1,8 +1,6 @@
-use crate::interpreter::Value;
 use crate::location::Location;
-use crate::parser::parameters::ParameterType;
 use crate::parser::Rule;
-use crate::Node;
+use crate::{Node, ParameterType};
 use thiserror::Error;
 
 #[derive(Debug)]
@@ -107,7 +105,7 @@ pub enum ErrorKind {
     #[error("Invalid argument '{actual}', expected '{expected:?}'")]
     InvalidValueArgument {
         expected: Vec<ParameterType>,
-        actual: Value,
+        actual: Node,
     },
 
     #[error("Invalid argument '{actual}', expected '{expected:?}'")]
@@ -134,5 +132,5 @@ pub enum ErrorKind {
     InvalidInteger(f64),
 
     #[error("Unable to call value:\n{0}")]
-    NotCallable(Value),
+    NotCallable(Node),
 }
