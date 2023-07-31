@@ -132,4 +132,7 @@ pub enum ErrorKind {
 
     #[error("Unable to parse {0} as integer.")]
     InvalidInteger(f64),
+
+    #[error("Unable to call value:\n{0}")]
+    NotCallable(Value),
 }

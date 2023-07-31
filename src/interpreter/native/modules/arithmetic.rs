@@ -56,7 +56,9 @@ fn variadic(op: BinaryOp, arguments: Arguments<Value>) -> Result<Value> {
 }
 
 fn binary(op: BinaryOp, arguments: Arguments<Value>) -> Result<Value> {
-    let [lhs, rhs] = arguments.unwrap_numbers()[..] else { panic!() };
+    let [lhs, rhs] = arguments.unwrap_numbers()[..] else {
+        panic!()
+    };
 
     Ok(Value::number(op(lhs, rhs)))
 }

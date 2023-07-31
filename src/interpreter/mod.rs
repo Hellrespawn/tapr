@@ -223,7 +223,7 @@ impl Interpreter {
 
                     node.accept(self)
                 }
-                _ => todo!("Throw error"),
+                other => Err(ErrorKind::NotCallable(other).into()),
             }
         }
     }

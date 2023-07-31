@@ -3,17 +3,18 @@
 use super::{
     function_tuples_to_environment, NativeFunctionTuple, NativeModule,
 };
+use crate::error::ErrorKind;
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::location::Location;
-use crate::Result;
+use crate::{ParameterType, Result};
 
 pub struct Debug;
 
 impl NativeModule for Debug {
     fn environment(&self) -> Environment {
         let tuples: Vec<NativeFunctionTuple> =
-            vec![("env", env, ""), ("lsmod", lsmod, "m:module")];
+            vec![("lsmod", lsmod, "&opt m:module")];
 
         let mut env = Environment::new();
 
@@ -31,24 +32,24 @@ impl NativeModule for Debug {
     }
 }
 
-fn env(
-    _location: Location,
-    intp: &mut Interpreter,
-    _arguments: Arguments<Value>,
-) -> Result<Value> {
-    println!("{}", intp.environment);
-
-    Ok(Value::nil())
-}
-
 fn lsmod(
     _location: Location,
-    _intp: &mut Interpreter,
+    intp: &mut Interpreter,
     arguments: Arguments<Value>,
 ) -> Result<Value> {
-    let environment = arguments.unwrap_module(0);
-
-    println!("{environment}");
+    if let Some(argument) = arguments.get(0) {
+        if let Value::Module(environment) = argument {
+            println!("{environment}");
+        } else {
+            return Err(ErrorKind::InvalidValueArgument {
+                expected: vec![ParameterType::Module],
+                actual: argument,
+            }
+            .into());
+        }
+    } else {
+        println!("{}", intp.environment);
+    }
 
     Ok(Value::nil())
 }

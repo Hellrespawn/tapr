@@ -223,8 +223,8 @@ impl<'a> Arguments<'a, Value> {
             .iter()
             .map(|v| {
                 let Value::Node(NodeData::Number(number)) = v else {
-                panic!("Called unwrap_numbers on non-Value::Number")
-            };
+                    panic!("Called unwrap_numbers on non-Value::Number")
+                };
                 *number
             })
             .collect()
