@@ -6,8 +6,8 @@ use super::{
 };
 use crate::error::ErrorKind;
 use crate::interpreter::{Arguments, Interpreter};
-use crate::location::Location;
-use crate::{Result, Environment, Node};
+use crate::node::NodeSource;
+use crate::{Environment, Node, NodeData, Result};
 use conv::prelude::*;
 
 pub struct Number;
@@ -36,7 +36,7 @@ impl NativeModule for Number {
 }
 
 pub fn align(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -52,11 +52,11 @@ pub fn align(
         .approx()
         .map_err(|_| ErrorKind::InvalidInteger(f_width))?;
 
-    Ok(Node::string(format!("{n:0>width$}")))
+    Ok(Node::unknown(NodeData::String(format!("{n:0>width$}"))))
 }
 
 pub fn parse(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -67,5 +67,5 @@ pub fn parse(
         .parse()
         .map_err(|_| ErrorKind::ParseNumberError(string).into());
 
-    Ok(Node::number(result?))
+    Ok(Node::unknown(NodeData::Number(result?)))
 }

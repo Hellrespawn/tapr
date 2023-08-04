@@ -1,4 +1,3 @@
-use self::reader_macro::ReaderMacro;
 use crate::env::{DebugAst, DEBUG_AST, DEBUG_PARSER};
 use crate::graph::GraphVisitor;
 use crate::location::Location;
@@ -8,7 +7,6 @@ use pest::iterators::Pair;
 use pest::Parser as PestParser;
 
 pub mod parameters;
-pub mod reader_macro;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
@@ -52,8 +50,8 @@ pub fn parse_pair(pair: Pair<Rule>) -> Node {
             NodeData::Keyword(pair.as_str().get(1..).unwrap_or("").to_owned())
         }
         Rule::constant => match pair.as_str() {
-            "true" => NodeData::True,
-            "false" => NodeData::False,
+            "true" => NodeData::Bool(true),
+            "false" => NodeData::Bool(false),
             "nil" => NodeData::Nil,
             other => unreachable!("Invalid constant '{other}'"),
         },
@@ -122,11 +120,13 @@ fn parse_value(pair: Pair<Rule>) -> Node {
     let mut node = parse_pair(pair);
 
     for pair in pairs.iter().rev() {
-        let reader_macro = ReaderMacro::from_pair(pair);
         let location = Location::from_pair(pair);
 
         let data = NodeData::PTuple(vec![
-            Node::with_location(location, NodeData::Symbol(reader_macro.to_string())),
+            Node::with_location(
+                location,
+                NodeData::Symbol(expand_reader_macro(pair.as_str()).to_owned()),
+            ),
             node,
         ]);
 
@@ -134,4 +134,15 @@ fn parse_value(pair: Pair<Rule>) -> Node {
     }
 
     node
+}
+
+fn expand_reader_macro(reader_macro: &str) -> &str {
+    match reader_macro {
+        "'" => "quote",
+        ";" => "splice",
+        "~" => "quasiquote",
+        "," => "unquote",
+        "|" => "short-fn",
+        _ => panic!("Pair<Rule> should always return valid reader macros."),
+    }
 }

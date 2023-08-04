@@ -6,8 +6,8 @@ use super::{
 };
 use crate::error::ErrorKind;
 use crate::interpreter::{Arguments, Interpreter};
-use crate::location::Location;
-use crate::{ParameterType, Result, Environment, Node};
+use crate::node::NodeSource;
+use crate::{Environment, Node, NodeData, ParameterType, Result};
 
 pub struct StringModule;
 
@@ -42,48 +42,48 @@ type UnaryOp = fn(&str) -> String;
 fn unary(op: UnaryOp, arguments: Arguments) -> Result<Node> {
     let string = arguments.unwrap_string(0);
 
-    Ok(Node::string(op(&string)))
+    Ok(Node::unknown(NodeData::String(op(&string))))
 }
 
 fn len(
-    _location: Location,
+    _source: NodeSource,
     _: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
     let string = arguments.unwrap_string(0);
 
     #[allow(clippy::cast_precision_loss)]
-    Ok(Node::number(string.len() as f64))
+    Ok(Node::unknown(NodeData::Number(string.len() as f64)))
 }
 
 fn join(
-    _location: Location,
+    _source: NodeSource,
     _: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
     let separator = arguments.unwrap_string(0);
-    let values = arguments.unwrap_list(1);
+    let nodes = arguments.unwrap_list(1);
 
-    let strings = values
+    let strings = nodes
         .into_iter()
-        .map(|value| {
-            if let Some(string) = value.as_string() {
+        .map(|node| {
+            if let Some(string) = node.as_string() {
                 Ok(string.to_owned())
             } else {
                 Err(ErrorKind::InvalidNodeArgument {
                     expected: vec![ParameterType::String],
-                    actual: value,
+                    actual: node,
                 }
                 .into())
             }
         })
         .collect::<Result<Vec<_>>>()?;
 
-    Ok(Node::string(strings.join(&separator)))
+    Ok(Node::unknown(NodeData::String(strings.join(&separator))))
 }
 
 fn join_not_nil(
-    _location: Location,
+    _source: NodeSource,
     _: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -108,14 +108,14 @@ fn join_not_nil(
         .collect::<Result<Vec<_>>>()?;
 
     if strings.is_empty() {
-        Ok(Node::nil())
+        Ok(Node::unknown(NodeData::Nil))
     } else {
-        Ok(Node::string(strings.join(&separator)))
+        Ok(Node::unknown(NodeData::String(strings.join(&separator))))
     }
 }
 
 fn trim(
-    _location: Location,
+    _source: NodeSource,
     _: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -123,7 +123,7 @@ fn trim(
 }
 
 fn split(
-    _location: Location,
+    _source: NodeSource,
     _: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -132,8 +132,8 @@ fn split(
 
     let values = string
         .split(&separator)
-        .map(|s| Node::string(s.to_owned()))
+        .map(|s| Node::unknown(NodeData::String(s.to_owned())))
         .collect::<Vec<_>>();
 
-    Ok(Node::b_tuple(values))
+    Ok(Node::unknown(NodeData::BTuple(values)))
 }

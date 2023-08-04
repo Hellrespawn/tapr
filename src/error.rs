@@ -1,29 +1,31 @@
 use crate::location::Location;
+use crate::node::NodeSource;
 use crate::parser::Rule;
 use crate::{Node, ParameterType};
 use thiserror::Error;
 
 #[derive(Debug)]
 pub struct Error {
-    pub location: Option<Location>,
+    pub source: NodeSource,
     pub kind: ErrorKind,
 }
 impl Error {
-    pub fn new(location: Location, kind: ErrorKind) -> Self {
-        Self {
-            location: Some(location),
-            kind,
-        }
+    pub fn new(source: NodeSource, kind: ErrorKind) -> Self {
+        Self { source, kind }
     }
 
-    pub fn has_location(&self) -> bool {
-        self.location.is_some()
+    pub fn has_source(&self) -> bool {
+        !matches!(self.source, NodeSource::Unknown)
+    }
+
+    pub fn location(&self) -> Option<Location> {
+        self.source.location()
     }
 }
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Some(location) = self.location {
+        if let Some(location) = self.location() {
             write!(f, "{location} {}", self.kind)
         } else {
             write!(f, "{}", self.kind)
@@ -36,7 +38,7 @@ impl std::error::Error for Error {}
 impl From<std::io::Error> for Error {
     fn from(error: std::io::Error) -> Self {
         Self {
-            location: None,
+            source: NodeSource::Unknown,
             kind: error.into(),
         }
     }
@@ -45,7 +47,7 @@ impl From<std::io::Error> for Error {
 impl From<pest::error::Error<Rule>> for Error {
     fn from(error: pest::error::Error<Rule>) -> Self {
         Self {
-            location: None,
+            source: NodeSource::Unknown,
             kind: Box::new(error).into(),
         }
     }
@@ -54,7 +56,7 @@ impl From<pest::error::Error<Rule>> for Error {
 impl From<rustyline::error::ReadlineError> for Error {
     fn from(error: rustyline::error::ReadlineError) -> Self {
         Self {
-            location: None,
+            source: NodeSource::Unknown,
             kind: error.into(),
         }
     }
@@ -63,7 +65,7 @@ impl From<rustyline::error::ReadlineError> for Error {
 impl From<ErrorKind> for Error {
     fn from(kind: ErrorKind) -> Self {
         Error {
-            location: None,
+            source: NodeSource::Unknown,
             kind,
         }
     }

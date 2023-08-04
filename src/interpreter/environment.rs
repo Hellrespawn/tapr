@@ -88,7 +88,7 @@ impl Environment {
 
         if remainder.is_empty() {
             value
-        } else if let Some(NodeData::Module(module)) = value.map(|v| v.data()) {
+        } else if let Some(NodeData::Module(module)) = value.map(Node::data) {
             module.get(remainder)
         } else {
             None

@@ -9,7 +9,7 @@ use std::sync::Arc;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum NodeSource {
     Location(Location),
-    Node(Box<Node>),
+    Node(Arc<Node>),
     Unknown,
 }
 
@@ -25,8 +25,8 @@ impl NodeSource {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Node {
-    data: NodeData,
     source: NodeSource,
+    data: NodeData,
 }
 
 impl std::fmt::Display for Node {
@@ -53,6 +53,12 @@ impl From<Environment> for Node {
     }
 }
 
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.data.partial_cmp(&other.data)
+    }
+}
+
 impl Node {
     pub fn new(source: NodeSource, data: NodeData) -> Self {
         Self { source, data }
@@ -67,7 +73,7 @@ impl Node {
 
     pub fn from_node(node: Node, data: NodeData) -> Self {
         Self {
-            source: NodeSource::Node(Box::new(node)),
+            source: NodeSource::Node(Arc::new(node)),
             data,
         }
     }
@@ -95,7 +101,7 @@ impl Node {
     }
 
     pub fn source(&self) -> NodeSource {
-        self.source
+        self.source.clone()
     }
 
     pub fn is_unquote(&self) -> bool {
@@ -106,6 +112,30 @@ impl Node {
         }
 
         false
+    }
+
+    pub fn is_truthy(&self) -> bool {
+        match self.data() {
+            NodeData::Bool(bool) => *bool,
+            _ => true,
+        }
+    }
+
+    pub fn is_falsy(&self) -> bool {
+        !self.is_truthy()
+    }
+
+    pub fn is_nil(&self) -> bool {
+        matches!(self.data(), NodeData::Nil)
+    }
+
+    pub fn as_string(&self) -> Option<&str> {
+        if let NodeData::String(string) | NodeData::Buffer(string) = self.data()
+        {
+            Some(string)
+        } else {
+            None
+        }
     }
 }
 
@@ -128,8 +158,7 @@ pub enum NodeData {
     Buffer(String),
     Symbol(String),
     Keyword(String),
-    True,
-    False,
+    Bool(bool),
     Nil,
 }
 
@@ -207,8 +236,7 @@ impl std::fmt::Display for NodeData {
             Self::Buffer(string) => write!(f, "@\"{string}\""),
             Self::Symbol(symbol) => write!(f, "{symbol}"),
             Self::Keyword(keyword) => write!(f, ":{keyword}"),
-            Self::True => write!(f, "true"),
-            Self::False => write!(f, "false"),
+            Self::Bool(bool) => write!(f, "{bool}"),
             Self::Nil => write!(f, "nil"),
         }
     }
@@ -230,9 +258,9 @@ impl PartialEq for NodeData {
             | (NodeData::Symbol(lhs), NodeData::Symbol(rhs))
             | (NodeData::Keyword(lhs), NodeData::Keyword(rhs)) => lhs == rhs,
 
-            (NodeData::True, NodeData::True)
-            | (NodeData::False, NodeData::False)
-            | (NodeData::Nil, NodeData::Nil) => true,
+            (NodeData::Bool(lhs), NodeData::Bool(rhs)) => lhs == rhs,
+
+            (NodeData::Nil, NodeData::Nil) => true,
             (NodeData::Number(lhs), NodeData::Number(rhs)) => {
                 lhs.to_bits() == rhs.to_bits()
             }

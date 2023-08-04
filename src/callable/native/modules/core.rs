@@ -6,8 +6,8 @@ use super::{
     NativeFunctionTuple, NativeMacroTuple, NativeModule,
 };
 use crate::interpreter::{Arguments, Interpreter};
-use crate::location::Location;
-use crate::{Node, NodeData, Result, Environment};
+use crate::node::NodeSource;
+use crate::{Environment, Node, NodeData, Result};
 
 pub struct Core;
 
@@ -41,7 +41,7 @@ impl NativeModule for Core {
 }
 
 fn println(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -51,11 +51,11 @@ fn println(
 
     println!();
 
-    Ok(Node::nil())
+    Ok(Node::unknown(NodeData::Nil))
 }
 
 fn print(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -63,21 +63,21 @@ fn print(
         print!("{argument}");
     }
 
-    Ok(Node::nil())
+    Ok(Node::unknown(NodeData::Nil))
 }
 
 fn is_nil(
-    _location: Location,
+    _source: NodeSource,
     _: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
     let argument = arguments.unwrap(0);
 
-    Ok(Node::bool(argument.is_nil()))
+    Ok(Node::unknown(NodeData::Bool(argument.is_nil())))
 }
 
 fn cond(
-    location: Location,
+    source: NodeSource,
     _: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -86,17 +86,14 @@ fn cond(
     let mut node = if arguments.len() % 2 == 1 {
         arguments.pop().unwrap()
     } else {
-        Node::new(location, NodeData::Nil)
+        Node::new(source, NodeData::Nil)
     };
 
     for pair in arguments.rchunks(2) {
         node = Node::new(
-            pair[0].location(),
+            pair[0].source(),
             NodeData::PTuple(vec![
-                Node::new(
-                    pair[0].location(),
-                    NodeData::Symbol("if".to_owned()),
-                ),
+                Node::new(pair[0].source(), NodeData::Symbol("if".to_owned())),
                 pair[0].clone(),
                 pair[1].clone(),
                 node,

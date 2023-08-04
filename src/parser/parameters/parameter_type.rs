@@ -7,17 +7,41 @@ pub enum ParameterType {
     List,
     Module,
     Function,
+    Macro,
     Number,
     String,
-    Boolean,
+    Bool,
     Symbol,
     Keyword,
     Nil,
 }
 
 impl ParameterType {
-    pub fn node_is_type(&self, value: &Node) -> bool {
-        todo!("Implement `node_is_type`")
+    pub fn node_is_type(&self, node: &Node) -> bool {
+        matches!(
+            (self, node.data()),
+            (
+                ParameterType::Map,
+                NodeData::Struct(..) | NodeData::Table(..),
+            ) | (
+                ParameterType::List,
+                NodeData::BArray(..)
+                    | NodeData::BTuple(..)
+                    | NodeData::PArray(..)
+                    | NodeData::PTuple(..)
+            ) | (ParameterType::Module, NodeData::Module(..))
+                | (ParameterType::Function, NodeData::Function(..))
+                | (ParameterType::Macro, NodeData::Macro(..))
+                | (ParameterType::Number, NodeData::Number(..))
+                | (
+                    ParameterType::String,
+                    NodeData::String(..) | NodeData::Buffer(..)
+                )
+                | (ParameterType::Bool, NodeData::Bool(..))
+                | (ParameterType::Symbol, NodeData::Symbol(..))
+                | (ParameterType::Keyword, NodeData::Keyword(..))
+                | (ParameterType::Nil, NodeData::Nil)
+        )
     }
 }
 
@@ -26,7 +50,7 @@ impl TryFrom<&str> for ParameterType {
 
     fn try_from(string: &str) -> Result<Self> {
         let ptype = match string {
-            "bool" => ParameterType::Boolean,
+            "bool" => ParameterType::Bool,
             "number" => ParameterType::Number,
             "symbol" => ParameterType::Symbol,
             "keyword" => ParameterType::Keyword,
@@ -55,9 +79,10 @@ impl std::fmt::Display for ParameterType {
             }
             ParameterType::Module => write!(f, "module"),
             ParameterType::Function => write!(f, "function"),
+            ParameterType::Macro => write!(f, "macro"),
             ParameterType::Number => write!(f, "number"),
             ParameterType::String => write!(f, "string"),
-            ParameterType::Boolean => write!(f, "bool"),
+            ParameterType::Bool => write!(f, "bool"),
             ParameterType::Symbol => write!(f, "symbol"),
             ParameterType::Keyword => write!(f, "keyword"),
             ParameterType::Nil => write!(f, "nil"),

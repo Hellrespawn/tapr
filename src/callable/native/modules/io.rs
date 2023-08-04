@@ -5,8 +5,8 @@ use super::{
     function_tuples_to_environment, NativeFunctionTuple, NativeModule,
 };
 use crate::interpreter::{Arguments, Interpreter};
-use crate::location::Location;
-use crate::{Environment, Node, Result};
+use crate::node::NodeSource;
+use crate::{Environment, Node, NodeData, Result};
 
 pub struct Io;
 
@@ -31,7 +31,7 @@ impl NativeModule for Io {
 }
 
 pub fn read(
-    _location: Location,
+    _source: NodeSource,
     _: &mut Interpreter,
     _: Arguments,
 ) -> Result<Node> {
@@ -39,5 +39,5 @@ pub fn read(
 
     std::io::stdin().read_line(&mut buffer)?;
 
-    Ok(Node::string(buffer))
+    Ok(Node::unknown(NodeData::String(buffer)))
 }

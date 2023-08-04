@@ -1,9 +1,7 @@
-use crate::{
-    callable::{
-        NativeFunction, NativeFunctionImpl, NativeMacro, NativeMacroImpl,
-    },
-    Environment, Node,
+use crate::callable::{
+    NativeFunction, NativeFunctionImpl, NativeMacro, NativeMacroImpl,
 };
+use crate::{Environment, Node};
 
 mod arithmetic;
 mod boolean;

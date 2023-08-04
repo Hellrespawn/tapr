@@ -1,10 +1,10 @@
-use crate::location::Location;
+use crate::node::NodeSource;
 use crate::{
     Arguments, Callable, CallableType, Interpreter, Node, Parameters, Result,
 };
 
 pub type NativeMacroImpl = fn(
-    location: Location,
+    source: NodeSource,
     intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node>;
@@ -39,11 +39,11 @@ impl std::fmt::Display for NativeMacro {
 impl Callable for NativeMacro {
     fn call(
         &self,
-        location: Location,
+        source: NodeSource,
         intp: &mut Interpreter,
         arguments: Arguments,
     ) -> Result<Node> {
-        (self.macro_)(location, intp, arguments)
+        (self.macro_)(source, intp, arguments)
     }
 
     fn callable_type(&self) -> CallableType {

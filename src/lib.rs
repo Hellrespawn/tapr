@@ -1,4 +1,5 @@
 #![warn(clippy::pedantic)]
+#![allow(unknown_lints)]
 #![allow(clippy::manual_assert)]
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::missing_panics_doc)]
@@ -6,6 +7,7 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::module_inception)]
 #![allow(clippy::wildcard_imports)]
+#![allow(clippy::needless_pass_by_ref_mut)]
 
 extern crate alloc;
 extern crate pest;

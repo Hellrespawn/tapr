@@ -5,8 +5,8 @@ use super::{
     function_tuples_to_environment, NativeFunctionTuple, NativeModule,
 };
 use crate::interpreter::{Arguments, Interpreter};
-use crate::location::Location;
-use crate::{Result, Environment, Node};
+use crate::node::NodeSource;
+use crate::{Environment, Node, NodeData, Result};
 
 pub struct Fs;
 
@@ -34,17 +34,19 @@ impl NativeModule for Fs {
 }
 
 fn read_to_string(
-    _location: Location,
+    _source: NodeSource,
     _: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
     let path = arguments.unwrap_string(0);
 
-    Ok(Node::string(std::fs::read_to_string(path)?))
+    Ok(Node::unknown(NodeData::String(std::fs::read_to_string(
+        path,
+    )?)))
 }
 
 fn write(
-    _location: Location,
+    _source: NodeSource,
     _: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -53,5 +55,5 @@ fn write(
 
     std::fs::write(path, body)?;
 
-    Ok(Node::nil())
+    Ok(Node::unknown(NodeData::Nil))
 }

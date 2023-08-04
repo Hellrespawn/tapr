@@ -251,12 +251,8 @@ impl GraphVisitor {
         self.new_node(&format!(":{keyword}"));
     }
 
-    fn visit_true(&mut self) {
-        self.new_node("true");
-    }
-
-    fn visit_false(&mut self) {
-        self.new_node("false");
+    fn visit_bool(&mut self, bool: bool) {
+        self.new_node(&format!(":{bool}"));
     }
 
     fn visit_nil(&mut self) {
@@ -279,9 +275,9 @@ impl Visitor<()> for GraphVisitor {
             NodeData::Buffer(buffer) => self.visit_buffer(buffer),
             NodeData::Symbol(symbol) => self.visit_symbol(symbol),
             NodeData::Keyword(keyword) => self.visit_keyword(keyword),
-            NodeData::True => self.visit_true(),
-            NodeData::False => self.visit_false(),
+            NodeData::Bool(bool) => self.visit_bool(*bool),
             NodeData::Nil => self.visit_nil(),
+            _ => (),
         }
     }
 }

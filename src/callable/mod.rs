@@ -1,16 +1,16 @@
+mod function;
 mod macro_;
 mod native;
 mod native_function;
-mod function;
 
 use crate::arguments::Arguments;
-use crate::location::Location;
-use crate::{Interpreter, Parameters, Result, Node};
+use crate::node::NodeSource;
+use crate::{Interpreter, Node, Parameters, Result};
 
-pub use macro_::{NativeMacro, NativeMacroImpl};
-pub use native_function::{NativeFunction, NativeFunctionImpl};
-pub use native::get_default_environment;
 pub use function::Function;
+pub use macro_::{NativeMacro, NativeMacroImpl};
+pub use native::get_default_environment;
+pub use native_function::{NativeFunction, NativeFunctionImpl};
 
 #[derive(Hash, PartialEq, Eq)]
 pub enum CallableType {
@@ -38,7 +38,7 @@ impl std::fmt::Display for CallableType {
 pub trait Callable: Send + Sync {
     fn call(
         &self,
-        location: Location,
+        source: NodeSource,
         intp: &mut Interpreter,
         arguments: Arguments,
     ) -> Result<Node>;

@@ -1,8 +1,8 @@
 #![allow(clippy::unnecessary_wraps)]
 #![allow(clippy::needless_pass_by_value)]
 use crate::interpreter::{Arguments, Interpreter};
-use crate::location::Location;
-use crate::{Result, Environment, Node};
+use crate::node::NodeSource;
+use crate::{Environment, Node, NodeData, Result};
 
 use super::{
     function_tuples_to_environment, NativeFunctionTuple, NativeModule,
@@ -56,24 +56,24 @@ fn variadic(op: BinaryOp, arguments: Arguments) -> Result<Node> {
         acc = op(lhs, rhs);
     }
 
-    Ok(Node::bool(acc))
+    Ok(Node::unknown(NodeData::Bool(acc)))
 }
 
 fn binary(op: BinaryOp, arguments: Arguments) -> Result<Node> {
     let lhs = arguments.unwrap(0);
     let rhs = arguments.unwrap(1);
 
-    Ok(Node::bool(op(lhs, rhs)))
+    Ok(Node::unknown(NodeData::Bool(op(lhs, rhs))))
 }
 
 fn unary(op: UnaryOp, arguments: Arguments) -> Result<Node> {
     let value = arguments.unwrap(0);
 
-    Ok(Node::bool(op(value)))
+    Ok(Node::unknown(NodeData::Bool(op(value))))
 }
 
 pub fn not(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -81,7 +81,7 @@ pub fn not(
 }
 
 pub fn gt(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -93,7 +93,7 @@ pub fn gt(
 }
 
 pub fn gte(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -105,7 +105,7 @@ pub fn gte(
 }
 
 pub fn eq(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -113,7 +113,7 @@ pub fn eq(
 }
 
 pub fn lte(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -125,7 +125,7 @@ pub fn lte(
 }
 
 pub fn lt(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -137,7 +137,7 @@ pub fn lt(
 }
 
 pub fn ne(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -145,7 +145,7 @@ pub fn ne(
 }
 
 pub fn or(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -162,7 +162,7 @@ pub fn or(
 }
 
 pub fn and(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -179,7 +179,7 @@ pub fn and(
 }
 
 pub fn nil_coalesce(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {

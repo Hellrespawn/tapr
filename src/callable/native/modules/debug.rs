@@ -5,8 +5,8 @@ use super::{
 };
 use crate::error::ErrorKind;
 use crate::interpreter::{Arguments, Interpreter};
-use crate::location::Location;
-use crate::{ParameterType, Result, Environment, Node};
+use crate::node::NodeSource;
+use crate::{Environment, Node, NodeData, ParameterType, Result};
 
 pub struct Debug;
 
@@ -32,12 +32,12 @@ impl NativeModule for Debug {
 }
 
 fn lsmod(
-    _location: Location,
+    _source: NodeSource,
     intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
     if let Some(argument) = arguments.get(0) {
-        if let Node::Module(environment) = argument {
+        if let NodeData::Module(environment) = argument.data() {
             println!("{environment}");
         } else {
             return Err(ErrorKind::InvalidNodeArgument {
@@ -50,5 +50,5 @@ fn lsmod(
         println!("{}", intp.environment());
     }
 
-    Ok(Node::nil())
+    Ok(Node::unknown(NodeData::Nil))
 }

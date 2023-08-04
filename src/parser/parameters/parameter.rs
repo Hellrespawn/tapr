@@ -121,10 +121,7 @@ impl Parameter {
 
     pub fn value_is_type(&self, value: &Node) -> bool {
         self.parameter_types.is_empty()
-            || self
-                .parameter_types
-                .iter()
-                .any(|pt| pt.node_is_type(value))
+            || self.parameter_types.iter().any(|pt| pt.node_is_type(value))
     }
 
     pub fn node_is_type(&self, node: &Node) -> bool {

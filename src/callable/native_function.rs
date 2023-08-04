@@ -1,10 +1,10 @@
-use crate::location::Location;
+use crate::node::NodeSource;
 use crate::{
-    Arguments, Callable, CallableType, Interpreter, Parameters, Result, Node,
+    Arguments, Callable, CallableType, Interpreter, Node, Parameters, Result,
 };
 
 pub type NativeFunctionImpl = fn(
-    location: Location,
+    source: NodeSource,
     intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node>;
@@ -39,11 +39,11 @@ impl std::fmt::Display for NativeFunction {
 impl Callable for NativeFunction {
     fn call(
         &self,
-        location: Location,
+        source: NodeSource,
         intp: &mut Interpreter,
         arguments: Arguments,
     ) -> Result<Node> {
-        (self.function)(location, intp, arguments)
+        (self.function)(source, intp, arguments)
     }
 
     fn callable_type(&self) -> CallableType {

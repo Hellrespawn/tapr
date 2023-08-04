@@ -5,6 +5,6 @@
     (< x 5) "Quite small"
     "Medium size")))
 
-(test 40) # => "Pretty big!"
-(test 2) # => "Quite small"
-(test 6) # => "Medium size"
+(println (test 40)) # => "Pretty big!"
+(println (test 2)) # => "Quite small"
+(println (test 6) )# => "Medium size"

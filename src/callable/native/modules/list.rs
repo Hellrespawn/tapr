@@ -5,8 +5,8 @@ use super::{
     function_tuples_to_environment, NativeFunctionTuple, NativeModule,
 };
 use crate::interpreter::{Arguments, Interpreter};
-use crate::location::Location;
-use crate::{Result, Environment, Node};
+use crate::node::NodeSource;
+use crate::{Environment, Node, NodeData, Result};
 
 pub struct List;
 
@@ -38,17 +38,20 @@ impl NativeModule for List {
 }
 
 fn head(
-    _location: Location,
+    _source: NodeSource,
     _: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
     let list = arguments.unwrap_list(0);
 
-    Ok(list.into_iter().next().unwrap_or_else(Node::nil))
+    Ok(list
+        .into_iter()
+        .next()
+        .unwrap_or_else(|| Node::unknown(NodeData::Nil)))
 }
 
 fn tail(
-    _location: Location,
+    _source: NodeSource,
     _: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -58,11 +61,11 @@ fn tail(
         .map(Vec::from)
         .unwrap_or_default();
 
-    Ok(Node::b_tuple(list))
+    Ok(Node::unknown(NodeData::BTuple(list)))
 }
 
 fn push(
-    _location: Location,
+    _source: NodeSource,
     _: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -72,11 +75,11 @@ fn push(
 
     let output = [list, values].into_iter().flatten().collect();
 
-    Ok(Node::b_tuple(output))
+    Ok(Node::unknown(NodeData::BTuple(output)))
 }
 
 fn reduce(
-    location: Location,
+    source: NodeSource,
     intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -88,12 +91,9 @@ fn reduce(
 
     for value in input {
         output = function.call(
-            location,
+            source.clone(),
             intp,
-            Arguments::from_values(
-                &function.parameters(),
-                vec![output, value],
-            )?,
+            Arguments::from_nodes(&function.parameters(), vec![output, value])?,
         )?;
     }
 
@@ -101,7 +101,7 @@ fn reduce(
 }
 
 fn filter(
-    location: Location,
+    source: NodeSource,
     intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -113,9 +113,9 @@ fn filter(
     for value in values {
         let is_truthy = function
             .call(
-                location,
+                source.clone(),
                 intp,
-                Arguments::from_values(
+                Arguments::from_nodes(
                     &function.parameters(),
                     vec![value.clone()],
                 )?,
@@ -127,11 +127,11 @@ fn filter(
         }
     }
 
-    Ok(Node::b_tuple(output))
+    Ok(Node::unknown(NodeData::BTuple(output)))
 }
 
 fn map(
-    location: Location,
+    source: NodeSource,
     intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -142,12 +142,12 @@ fn map(
         .into_iter()
         .map(|v| {
             function.call(
-                location,
+                source.clone(),
                 intp,
-                Arguments::from_values(&function.parameters(), vec![v])?,
+                Arguments::from_nodes(&function.parameters(), vec![v])?,
             )
         })
         .collect::<Result<Vec<_>>>()?;
 
-    Ok(Node::b_tuple(output))
+    Ok(Node::unknown(NodeData::BTuple(output)))
 }

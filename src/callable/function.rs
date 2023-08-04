@@ -1,7 +1,7 @@
 use crate::interpreter::{Arguments, Interpreter};
-use crate::location::Location;
+use crate::node::NodeSource;
 use crate::parser::parameters::Parameters;
-use crate::{Node, Result, Callable, Environment, NodeData, CallableType};
+use crate::{Callable, CallableType, Environment, Node, NodeData, Result};
 
 #[derive(Debug, Clone)]
 pub struct Function {
@@ -24,7 +24,7 @@ impl std::fmt::Display for Function {
 impl Callable for Function {
     fn call(
         &self,
-        _location: Location,
+        _source: NodeSource,
         intp: &mut Interpreter,
         arguments: Arguments,
     ) -> Result<Node> {

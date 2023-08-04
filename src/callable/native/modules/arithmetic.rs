@@ -3,10 +3,9 @@
 use super::{
     function_tuples_to_environment, NativeFunctionTuple, NativeModule,
 };
-use crate::interpreter::Environment;
-use crate::interpreter::{Arguments, Interpreter};
-use crate::location::Location;
-use crate::{Node, Result};
+use crate::interpreter::{Arguments, Environment, Interpreter};
+use crate::node::NodeSource;
+use crate::{Node, NodeData, Result};
 
 pub struct Arithmetic;
 
@@ -52,7 +51,7 @@ fn variadic(op: BinaryOp, arguments: Arguments) -> Result<Node> {
         acc = op(acc, rhs);
     }
 
-    Ok(Node::number(acc))
+    Ok(Node::unknown(NodeData::Number(acc)))
 }
 
 fn binary(op: BinaryOp, arguments: Arguments) -> Result<Node> {
@@ -60,17 +59,17 @@ fn binary(op: BinaryOp, arguments: Arguments) -> Result<Node> {
         panic!()
     };
 
-    Ok(Node::number(op(lhs, rhs)))
+    Ok(Node::unknown(NodeData::Number(op(lhs, rhs))))
 }
 
 fn unary(op: UnaryOp, arguments: Arguments) -> Result<Node> {
     let number = arguments.unwrap_numbers()[0];
 
-    Ok(Node::number(op(number)))
+    Ok(Node::unknown(NodeData::Number(op(number))))
 }
 
 pub fn add(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -78,7 +77,7 @@ pub fn add(
 }
 
 pub fn subtract(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -86,7 +85,7 @@ pub fn subtract(
 }
 
 pub fn multiply(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -94,7 +93,7 @@ pub fn multiply(
 }
 
 pub fn divide(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -102,7 +101,7 @@ pub fn divide(
 }
 
 pub fn modulus(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -110,7 +109,7 @@ pub fn modulus(
 }
 
 pub fn increment(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {
@@ -118,7 +117,7 @@ pub fn increment(
 }
 
 pub fn decrement(
-    _location: Location,
+    _source: NodeSource,
     _intp: &mut Interpreter,
     arguments: Arguments,
 ) -> Result<Node> {

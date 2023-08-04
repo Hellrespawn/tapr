@@ -1,6 +1,10 @@
+use std::sync::Arc;
+
 use crate::error::{Error, ErrorKind};
 use crate::parser::parameters::{Parameter, ParameterAmount};
-use crate::{Environment, Node, NodeData, ParameterType, Parameters, Result};
+use crate::{
+    Callable, Environment, Node, NodeData, ParameterType, Parameters, Result,
+};
 
 pub struct Arguments<'a> {
     parameters: &'a Parameters,
@@ -72,9 +76,7 @@ impl<'a> Arguments<'a> {
 
         Ok(())
     }
-}
 
-impl<'a> Arguments<'a> {
     pub fn from_nodes(
         parameters: &'a Parameters,
         arguments: Vec<Node>,
@@ -163,5 +165,67 @@ impl<'a> Arguments<'a> {
             actual: node.clone(),
         }
         .into()
+    }
+}
+
+impl<'a> Arguments<'a> {
+    fn get_argument(&self, index: usize) -> Option<&NodeData> {
+        self.arguments.get(index).map(Node::data)
+    }
+
+    pub fn unwrap_symbol(&self, index: usize) -> String {
+        if let Some(NodeData::Symbol(string)) = self.get_argument(index) {
+            return string.clone();
+        }
+
+        panic!()
+    }
+
+    pub fn unwrap_number(&self, index: usize) -> f64 {
+        if let Some(NodeData::Number(number)) = self.get_argument(index) {
+            return *number;
+        }
+
+        panic!()
+    }
+
+    pub fn unwrap_string(&self, index: usize) -> String {
+        if let Some(NodeData::String(string) | NodeData::Buffer(string)) =
+            self.get_argument(index)
+        {
+            return string.clone();
+        }
+
+        panic!()
+    }
+
+    pub fn unwrap_function(&self, index: usize) -> Arc<dyn Callable> {
+        if let Some(NodeData::Function(func)) = self.get_argument(index) {
+            return func.clone();
+        }
+
+        panic!()
+    }
+
+    pub fn unwrap_list(&self, index: usize) -> Vec<Node> {
+        if let Some(
+            NodeData::BTuple(list)
+            | NodeData::BArray(list)
+            | NodeData::PTuple(list)
+            | NodeData::PArray(list),
+        ) = self.get_argument(index)
+        {
+            return list.clone();
+        }
+
+        panic!()
+    }
+
+    pub fn unwrap_numbers(&self) -> Vec<f64> {
+        self.arguments
+            .iter()
+            .enumerate()
+            .map(|(i, _)| self.unwrap_number(i))
+            .collect()
     }
 }
