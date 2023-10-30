@@ -1,13 +1,14 @@
 mod function;
 
+use std::cmp::Ordering;
+use std::sync::Arc;
+
 pub use function::Function;
 
 use super::environment::Environment;
 use super::native::NativeFunction;
 use super::Interpreter;
 use crate::{Arguments, Parameters, Result};
-use std::cmp::Ordering;
-use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -87,7 +88,7 @@ impl PartialEq for Value {
             (Value::Boolean(left), Value::Boolean(right)) => left == right,
             (Value::Number(left), Value::Number(right)) => {
                 (*left - *right).abs() < f64::EPSILON
-            }
+            },
             (Value::String(left), Value::String(right)) => left == right,
             (Value::Symbol(left), Value::Symbol(right)) => left == right,
             (Value::List(left), Value::List(right)) => left == right,
@@ -103,16 +104,16 @@ impl PartialOrd for Value {
             (Value::Nil, Value::Nil) => Some(Ordering::Equal),
             (Value::Boolean(left), Value::Boolean(right)) => {
                 left.partial_cmp(right)
-            }
+            },
             (Value::Number(left), Value::Number(right)) => {
                 left.partial_cmp(right)
-            }
+            },
             (Value::String(left), Value::String(right)) => {
                 left.partial_cmp(right)
-            }
+            },
             (Value::Symbol(left), Value::Symbol(right)) => {
                 left.partial_cmp(right)
-            }
+            },
             _ => None,
         }
     }
@@ -137,11 +138,11 @@ impl std::fmt::Display for Value {
                         .collect::<Vec<_>>()
                         .join(" ")
                 )
-            }
+            },
             Value::Callable(callable) => callable.fmt(f),
             Value::Module(environment) => {
                 write!(f, "<module ({})>", environment.len())
-            }
+            },
         }
     }
 }
@@ -153,14 +154,10 @@ pub enum CallableType {
 
 impl std::fmt::Display for CallableType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                CallableType::Native => "native fn",
-                CallableType::Function => "fn",
-            }
-        )
+        write!(f, "{}", match self {
+            CallableType::Native => "native fn",
+            CallableType::Function => "fn",
+        })
     }
 }
 

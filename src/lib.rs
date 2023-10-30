@@ -23,7 +23,6 @@ mod visitor;
 
 pub type Result<T> = std::result::Result<T, error::Error>;
 
-pub use crate::Result as TaprResult;
 pub use cli::main;
 pub use error::{Error as TaprError, ErrorKind as TaprErrorKind};
 pub use interpreter::{
@@ -33,3 +32,5 @@ pub use interpreter::{
 pub use parser::ast::{Node, NodeData};
 pub use parser::parameters::{Parameter, ParameterType, Parameters};
 pub use visitor::Visitor;
+
+pub use crate::Result as TaprResult;

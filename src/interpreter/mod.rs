@@ -3,12 +3,16 @@ mod environment;
 mod native;
 mod value;
 
-pub use self::environment::Environment;
-use self::native::get_native_environment;
+use std::io::Write;
+use std::path::PathBuf;
+use std::sync::Arc;
+
 pub use arguments::Arguments;
 pub use native::{NativeFunction, NativeFunctionImpl};
 pub use value::{Callable, CallableType, Value};
 
+pub use self::environment::Environment;
+use self::native::get_native_environment;
 use self::value::Function;
 use crate::error::{Error, ErrorKind};
 use crate::location::Location;
@@ -18,9 +22,6 @@ use crate::parser::ast::Special::If;
 use crate::parser::parameters::Parameters;
 use crate::visitor::Visitor;
 use crate::Result;
-use std::io::Write;
-use std::path::PathBuf;
-use std::sync::Arc;
 
 pub struct Interpreter<'i> {
     pub output: Box<dyn Write + 'i>,
@@ -31,19 +32,13 @@ impl<'i> Default for Interpreter<'i> {
     fn default() -> Self {
         let environment = get_native_environment();
 
-        Self {
-            output: Box::new(std::io::stdout()),
-            environment,
-        }
+        Self { output: Box::new(std::io::stdout()), environment }
     }
 }
 
 impl<'i> Interpreter<'i> {
     pub fn new(output: Box<dyn Write + 'i>, environment: Environment) -> Self {
-        Self {
-            output,
-            environment,
-        }
+        Self { output, environment }
     }
 
     pub fn interpret(&mut self, source: &str, name: &str) -> Result<Value> {
@@ -60,10 +55,8 @@ impl<'i> Interpreter<'i> {
     }
 
     pub fn pop_environment(&mut self) -> Environment {
-        let parent_environment = self
-            .environment
-            .take_parent()
-            .expect("Scope to have parent.");
+        let parent_environment =
+            self.environment.take_parent().expect("Scope to have parent.");
 
         std::mem::replace(&mut self.environment, parent_environment)
     }
@@ -102,35 +95,35 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
     fn visit_node(&mut self, node: &Node) -> Result<Value> {
         match node.data() {
             ast::NodeData::Main(nodes) => self.visit_main(nodes),
-            ast::NodeData::Special(special) => match &**special {
-                If {
-                    condition,
-                    then,
-                    else_branch,
-                } => self.visit_if(condition, then, else_branch.as_ref()),
-                ast::Special::Fn { parameters, body } => {
-                    self.visit_fn(parameters, body)
-                }
-                ast::Special::Set { name, value } => {
-                    self.visit_set(name, value, node.location())
-                }
+            ast::NodeData::Special(special) => {
+                match &**special {
+                    If { condition, then, else_branch } => {
+                        self.visit_if(condition, then, else_branch.as_ref())
+                    },
+                    ast::Special::Fn { parameters, body } => {
+                        self.visit_fn(parameters, body)
+                    },
+                    ast::Special::Set { name, value } => {
+                        self.visit_set(name, value, node.location())
+                    },
 
-                ast::Special::Var { name, value } => {
-                    self.visit_var(name, value, node.location())
-                }
-                ast::Special::Import { name, prefix } => {
-                    self.visit_import(name, prefix.as_ref())
+                    ast::Special::Var { name, value } => {
+                        self.visit_var(name, value, node.location())
+                    },
+                    ast::Special::Import { name, prefix } => {
+                        self.visit_import(name, prefix.as_ref())
+                    },
                 }
             },
             ast::NodeData::List { literal, nodes } => {
                 self.visit_list(*literal, nodes)
-            }
+            },
             ast::NodeData::Symbol { module, value } => {
                 self.visit_symbol(module.as_ref(), value, node.location())
-            }
+            },
             ast::NodeData::Keyword(keyword) => {
                 Ok(Value::Keyword(keyword.clone()))
-            }
+            },
             ast::NodeData::Number(number) => Ok(Value::Number(*number)),
             ast::NodeData::String(string) => Ok(Value::String(string.clone())),
             ast::NodeData::True => Ok(Value::Boolean(true)),
@@ -140,10 +133,8 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
     }
 
     fn visit_main(&mut self, nodes: &[Node]) -> Result<Value> {
-        let mut values = nodes
-            .iter()
-            .map(|n| n.accept(self))
-            .collect::<Result<Vec<_>>>()?;
+        let mut values =
+            nodes.iter().map(|n| n.accept(self)).collect::<Result<Vec<_>>>()?;
 
         Ok(values.pop().unwrap_or(Value::Nil))
     }
@@ -263,7 +254,10 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
                 let value = nodes[0].accept(self)?;
 
                 let Value::Callable(callable) = value else {
-                    return Err(Error::new(node.location(), ErrorKind::NotCallable(value)))
+                    return Err(Error::new(
+                        node.location(),
+                        ErrorKind::NotCallable(value),
+                    ));
                 };
 
                 let arguments_vec = nodes[1..]
@@ -293,7 +287,10 @@ impl<'i> Visitor<Result<Value>> for Interpreter<'i> {
     ) -> Result<Value> {
         if let Some(module) = module {
             let Value::Module(environment) = self.get(module, location)? else {
-                return Err(Error::new(location, ErrorKind::ModuleNotDefined(module.clone())));
+                return Err(Error::new(
+                    location,
+                    ErrorKind::ModuleNotDefined(module.clone()),
+                ));
             };
 
             self.push_environment(environment);

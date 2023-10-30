@@ -1,3 +1,7 @@
+use pest::iterators::{Pair, Pairs};
+use pest::Parser as PestParser;
+
+use super::parameters::ParameterType;
 use crate::env::{DebugAst, DEBUG_AST, DEBUG_PARSER};
 use crate::graph::GraphVisitor;
 use crate::location::Location;
@@ -5,10 +9,6 @@ use crate::parser::parameters::{Parameter, Parameters};
 use crate::parser::{Parser, Rule};
 use crate::visitor::Visitor;
 use crate::Result;
-use pest::iterators::{Pair, Pairs};
-use pest::Parser as PestParser;
-
-use super::parameters::ParameterType;
 
 #[derive(Debug, Clone)]
 pub struct Node {
@@ -20,14 +20,8 @@ pub struct Node {
 pub enum NodeData {
     Main(Vec<Node>),
     Special(Box<Special>),
-    List {
-        literal: bool,
-        nodes: Vec<Node>,
-    },
-    Symbol {
-        module: Option<String>,
-        value: String,
-    },
+    List { literal: bool, nodes: Vec<Node> },
+    Symbol { module: Option<String>, value: String },
     Keyword(String),
     Number(f64),
     String(String),
@@ -38,10 +32,7 @@ pub enum NodeData {
 
 impl Node {
     pub fn mock(data: NodeData) -> Self {
-        Self {
-            location: Location::new(0, 0),
-            data,
-        }
+        Self { location: Location::new(0, 0), data }
     }
 
     pub fn accept<T: std::fmt::Debug>(
@@ -90,54 +81,68 @@ impl Node {
 
         let data = match pair.as_rule() {
             Rule::symbol => return Node::parse_symbol(pair),
-            Rule::keyword => NodeData::Keyword(
-                pair.into_inner()
-                    .next()
-                    .expect("Unable to read token from keyword.")
-                    .as_str()
-                    .to_owned(),
-            ),
-
-            Rule::constant => match pair.as_str() {
-                "true" => NodeData::True,
-                "false" => NodeData::False,
-                "nil" => NodeData::Nil,
-                other => panic!("Unexpected constant '{other}'"),
+            Rule::keyword => {
+                NodeData::Keyword(
+                    pair.into_inner()
+                        .next()
+                        .expect("Unable to read token from keyword.")
+                        .as_str()
+                        .to_owned(),
+                )
             },
-            Rule::string => NodeData::String(
-                pair.into_inner()
-                    .next()
-                    .expect("Rule::string did not have inner text.")
-                    .as_str()
-                    .to_owned(),
-            ),
+
+            Rule::constant => {
+                match pair.as_str() {
+                    "true" => NodeData::True,
+                    "false" => NodeData::False,
+                    "nil" => NodeData::Nil,
+                    other => panic!("Unexpected constant '{other}'"),
+                }
+            },
+            Rule::string => {
+                NodeData::String(
+                    pair.into_inner()
+                        .next()
+                        .expect("Rule::string did not have inner text.")
+                        .as_str()
+                        .to_owned(),
+                )
+            },
             Rule::number => {
                 NodeData::Number(pair.as_str().parse().unwrap_or_else(|_| {
                     panic!("unable to parse {} as number", pair.as_str())
                 }))
-            }
+            },
             Rule::special => {
                 NodeData::Special(Box::new(Special::from_pair(pair)))
-            }
-            Rule::plist => NodeData::List {
-                literal: false,
-                nodes: pair.into_inner().map(Node::parse_value).collect(),
             },
-            Rule::blist => NodeData::List {
-                literal: true,
-                nodes: pair.into_inner().map(Node::parse_value).collect(),
+            Rule::plist => {
+                NodeData::List {
+                    literal: false,
+                    nodes: pair.into_inner().map(Node::parse_value).collect(),
+                }
             },
-            Rule::main => NodeData::Main(
-                pair.into_inner()
-                    .take_while(|p| p.as_rule() != Rule::EOI)
-                    .map(Node::parse_value)
-                    .collect(),
-            ),
-            rule => unreachable!(
-                "Attempted to parse '{:?}':\n'{}'",
-                rule,
-                pair.as_str(),
-            ),
+            Rule::blist => {
+                NodeData::List {
+                    literal: true,
+                    nodes: pair.into_inner().map(Node::parse_value).collect(),
+                }
+            },
+            Rule::main => {
+                NodeData::Main(
+                    pair.into_inner()
+                        .take_while(|p| p.as_rule() != Rule::EOI)
+                        .map(Node::parse_value)
+                        .collect(),
+                )
+            },
+            rule => {
+                unreachable!(
+                    "Attempted to parse '{:?}':\n'{}'",
+                    rule,
+                    pair.as_str(),
+                )
+            },
         };
 
         Node { location, data }
@@ -149,13 +154,12 @@ impl Node {
         let inner = pair.into_inner().map(|p| p.as_str()).collect::<Vec<_>>();
 
         let data = match inner.len() {
-            1 => NodeData::Symbol {
-                module: None,
-                value: inner[0].to_owned(),
-            },
-            2 => NodeData::Symbol {
-                module: Some(inner[0].to_owned()),
-                value: inner[1].to_owned(),
+            1 => NodeData::Symbol { module: None, value: inner[0].to_owned() },
+            2 => {
+                NodeData::Symbol {
+                    module: Some(inner[0].to_owned()),
+                    value: inner[1].to_owned(),
+                }
             },
             other => panic!("Rule::symbol has {other} inner pairs."),
         };
@@ -166,27 +170,11 @@ impl Node {
 
 #[derive(Debug, Clone)]
 pub enum Special {
-    Fn {
-        parameters: Parameters,
-        body: Vec<Node>,
-    },
-    If {
-        condition: Node,
-        then: Node,
-        else_branch: Option<Node>,
-    },
-    Import {
-        name: String,
-        prefix: Option<String>,
-    },
-    Set {
-        name: String,
-        value: Node,
-    },
-    Var {
-        name: String,
-        value: Node,
-    },
+    Fn { parameters: Parameters, body: Vec<Node> },
+    If { condition: Node, then: Node, else_branch: Option<Node> },
+    Import { name: String, prefix: Option<String> },
+    Set { name: String, value: Node },
+    Var { name: String, value: Node },
 }
 
 impl Special {
@@ -203,10 +191,12 @@ impl Special {
             Rule::import => Special::import(special),
             Rule::set => Special::set(special),
             Rule::var => Special::var(special),
-            _ => unreachable!(
-                "Encountered '{}' inside Rule::special.",
-                special.as_str()
-            ),
+            _ => {
+                unreachable!(
+                    "Encountered '{}' inside Rule::special.",
+                    special.as_str()
+                )
+            },
         }
     }
 
@@ -223,15 +213,10 @@ impl Special {
 
         let function = Self::function(inner);
 
-        let fn_node = Node {
-            location,
-            data: NodeData::Special(Box::new(function)),
-        };
+        let fn_node =
+            Node { location, data: NodeData::Special(Box::new(function)) };
 
-        Special::Var {
-            name,
-            value: fn_node,
-        }
+        Special::Var { name, value: fn_node }
     }
 
     fn fn_(pair: Pair<Rule>) -> Special {
@@ -321,14 +306,17 @@ impl Special {
 
 pub fn parse_parameters(pairs: Pairs<Rule>) -> Parameters {
     let parameters = pairs
-        .flat_map(|p| match p.as_rule() {
-            Rule::parameters => p
-                .into_inner()
-                .map(|p| parameter(p, false))
-                .collect::<Vec<_>>(),
-            Rule::optional_parameters => optional_parameters(p),
-            Rule::rest_parameter => vec![rest_parameter(p)],
-            other => unreachable!("{:?}", other),
+        .flat_map(|p| {
+            match p.as_rule() {
+                Rule::parameters => {
+                    p.into_inner()
+                        .map(|p| parameter(p, false))
+                        .collect::<Vec<_>>()
+                },
+                Rule::optional_parameters => optional_parameters(p),
+                Rule::rest_parameter => vec![rest_parameter(p)],
+                other => unreachable!("{:?}", other),
+            }
         })
         .collect();
 
@@ -341,15 +329,17 @@ fn parameter(pair: Pair<Rule>, optional: bool) -> Parameter {
 
     let name = inner.next().unwrap().as_str().to_owned();
     let ptypes = inner
-        .map(|p| match p.as_str() {
-            "bool" => ParameterType::Boolean,
-            "number" => ParameterType::Number,
-            "string" => ParameterType::String,
-            "list" => ParameterType::List,
-            "module" => ParameterType::Module,
-            "function" => ParameterType::Function,
-            "nil" => ParameterType::Nil,
-            other => unreachable!("{:?}", other),
+        .map(|p| {
+            match p.as_str() {
+                "bool" => ParameterType::Boolean,
+                "number" => ParameterType::Number,
+                "string" => ParameterType::String,
+                "list" => ParameterType::List,
+                "module" => ParameterType::Module,
+                "function" => ParameterType::Function,
+                "nil" => ParameterType::Nil,
+                other => unreachable!("{:?}", other),
+            }
         })
         .collect();
 
@@ -357,15 +347,9 @@ fn parameter(pair: Pair<Rule>, optional: bool) -> Parameter {
 }
 
 fn optional_parameters(pair: Pair<Rule>) -> Vec<Parameter> {
-    pair.into_inner()
-        .map(|p| parameter(p, true))
-        .collect::<Vec<_>>()
+    pair.into_inner().map(|p| parameter(p, true)).collect::<Vec<_>>()
 }
 
 fn rest_parameter(pair: Pair<Rule>) -> Parameter {
-    pair.into_inner()
-        .map(|p| parameter(p, false))
-        .next()
-        .unwrap()
-        .rest()
+    pair.into_inner().map(|p| parameter(p, false)).next().unwrap().rest()
 }

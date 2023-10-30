@@ -15,10 +15,7 @@ impl<'a> Arguments<'a> {
         parameters: &'a Parameters,
         arguments: Vec<Value>,
     ) -> Result<Self> {
-        let arguments = Self {
-            parameters,
-            arguments,
-        };
+        let arguments = Self { parameters, arguments };
 
         arguments.check_length()?;
         arguments.check_types()?;
@@ -77,8 +74,8 @@ impl<'a> Arguments<'a> {
             .iter()
             .map(|v| {
                 let Value::String(string) = v else {
-                panic!("Called unwrap_strings on non-Value::String")
-            };
+                    panic!("Called unwrap_strings on non-Value::String")
+                };
                 string.clone()
             })
             .collect()
@@ -139,8 +136,8 @@ impl<'a> Arguments<'a> {
             .iter()
             .map(|v| {
                 let Value::Number(number) = v else {
-                panic!("Called unwrap_numbers on non-Value::Number")
-            };
+                    panic!("Called unwrap_numbers on non-Value::Number")
+                };
                 *number
             })
             .collect()

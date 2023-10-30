@@ -1,7 +1,8 @@
+use std::process::Command;
+
 use crate::parser::ast::{Node, NodeData, Special};
 use crate::parser::parameters::Parameters;
 use crate::visitor::Visitor;
-use std::process::Command;
 
 pub(crate) struct GraphVisitor {
     counter: usize,
@@ -81,8 +82,7 @@ impl GraphVisitor {
             }
         };
 
-        self.body
-            .push_str(&format!("  node{} {label_str}\n", self.counter));
+        self.body.push_str(&format!("  node{} {label_str}\n", self.counter));
 
         self.increment()
     }
@@ -179,49 +179,49 @@ impl Visitor<()> for GraphVisitor {
     fn visit_node(&mut self, node: &Node) {
         match node.data() {
             NodeData::Main(nodes) => self.visit_main(nodes),
-            NodeData::Special(special) => match &**special {
-                Special::If {
-                    condition,
-                    then,
-                    else_branch,
-                } => self.visit_if(condition, then, else_branch.as_ref()),
-                Special::Fn { parameters, body } => {
-                    self.visit_fn(parameters, body);
-                }
-                Special::Set { name, value } => {
-                    self.visit_set(name, value, node.location());
-                }
-                Special::Var { name, value } => {
-                    self.visit_var(name, value, node.location());
-                }
-                Special::Import { name, prefix } => {
-                    self.visit_import(name, prefix.as_ref());
+            NodeData::Special(special) => {
+                match &**special {
+                    Special::If { condition, then, else_branch } => {
+                        self.visit_if(condition, then, else_branch.as_ref())
+                    },
+                    Special::Fn { parameters, body } => {
+                        self.visit_fn(parameters, body);
+                    },
+                    Special::Set { name, value } => {
+                        self.visit_set(name, value, node.location());
+                    },
+                    Special::Var { name, value } => {
+                        self.visit_var(name, value, node.location());
+                    },
+                    Special::Import { name, prefix } => {
+                        self.visit_import(name, prefix.as_ref());
+                    },
                 }
             },
             NodeData::List { literal, nodes } => {
                 self.visit_list(*literal, nodes);
-            }
+            },
             NodeData::Symbol { module, value } => {
                 self.visit_symbol(module.as_ref(), value, node.location());
-            }
+            },
             NodeData::Keyword(keyword) => {
                 self.new_node(&format!("keyword:\n{keyword}"));
-            }
+            },
             NodeData::Number(number) => {
                 self.new_node(&format!("number:\n{number}"));
-            }
+            },
             NodeData::String(string) => {
                 self.new_node(&format!("string:\n\\\"{string}\\\""));
-            }
+            },
             NodeData::True => {
                 self.new_node("true");
-            }
+            },
             NodeData::False => {
                 self.new_node("false");
-            }
+            },
             NodeData::Nil => {
                 self.new_node("nil");
-            }
+            },
         }
     }
 

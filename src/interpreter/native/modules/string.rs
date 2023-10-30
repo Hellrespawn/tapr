@@ -74,14 +74,18 @@ fn join_not_nil(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
 
     let strings = values
         .into_iter()
-        .filter_map(|value| match value {
-            Value::String(s) => Some(Ok(s)),
-            Value::Nil => None,
-            other => Some(Err(ErrorKind::InvalidArgument {
-                expected: vec![ParameterType::String],
-                actual: other,
+        .filter_map(|value| {
+            match value {
+                Value::String(s) => Some(Ok(s)),
+                Value::Nil => None,
+                other => {
+                    Some(Err(ErrorKind::InvalidArgument {
+                        expected: vec![ParameterType::String],
+                        actual: other,
+                    }
+                    .into()))
+                },
             }
-            .into())),
         })
         .collect::<Result<Vec<_>>>()?;
 

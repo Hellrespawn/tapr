@@ -1,10 +1,9 @@
 #![allow(clippy::unnecessary_wraps)]
 #![allow(clippy::needless_pass_by_value)]
+use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::Result;
-
-use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
 
 pub struct Boolean;
 

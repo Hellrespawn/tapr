@@ -1,8 +1,9 @@
+use thiserror::Error;
+
 use crate::interpreter::Value;
 use crate::location::Location;
 use crate::parser::parameters::ParameterType;
 use crate::parser::Rule;
-use thiserror::Error;
 
 #[derive(Debug)]
 pub struct Error {
@@ -11,10 +12,7 @@ pub struct Error {
 }
 impl Error {
     pub fn new(location: Location, kind: ErrorKind) -> Self {
-        Self {
-            location: Some(location),
-            kind,
-        }
+        Self { location: Some(location), kind }
     }
 
     pub fn has_location(&self) -> bool {
@@ -32,41 +30,30 @@ impl std::fmt::Display for Error {
     }
 }
 
-impl std::error::Error for Error {}
+impl std::error::Error for Error {
+}
 
 impl From<std::io::Error> for Error {
     fn from(error: std::io::Error) -> Self {
-        Self {
-            location: None,
-            kind: error.into(),
-        }
+        Self { location: None, kind: error.into() }
     }
 }
 
 impl From<pest::error::Error<Rule>> for Error {
     fn from(error: pest::error::Error<Rule>) -> Self {
-        Self {
-            location: None,
-            kind: Box::new(error).into(),
-        }
+        Self { location: None, kind: Box::new(error).into() }
     }
 }
 
 impl From<rustyline::error::ReadlineError> for Error {
     fn from(error: rustyline::error::ReadlineError) -> Self {
-        Self {
-            location: None,
-            kind: error.into(),
-        }
+        Self { location: None, kind: error.into() }
     }
 }
 
 impl From<ErrorKind> for Error {
     fn from(kind: ErrorKind) -> Self {
-        Error {
-            location: None,
-            kind,
-        }
+        Error { location: None, kind }
     }
 }
 
@@ -120,10 +107,7 @@ pub enum ErrorKind {
     InvalidParameterType(String),
 
     #[error("Invalid argument '{actual}', expected '{expected:?}'")]
-    InvalidArgument {
-        expected: Vec<ParameterType>,
-        actual: Value,
-    },
+    InvalidArgument { expected: Vec<ParameterType>, actual: Value },
 
     #[error("Expect {expected} args, got {actual}.")]
     WrongAmountOfFixedArgs { expected: usize, actual: usize },
@@ -136,11 +120,7 @@ pub enum ErrorKind {
     TailOnEmptyList,
 
     #[error("Unable to {op} {lhs} and {rhs}")]
-    InvalidBinOp {
-        op: &'static str,
-        lhs: Value,
-        rhs: Value,
-    },
+    InvalidBinOp { op: &'static str, lhs: Value, rhs: Value },
 
     #[error("Unable to parse {0:?} as number")]
     ParseNumberError(String),

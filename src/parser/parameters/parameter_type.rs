@@ -21,7 +21,7 @@ impl ParameterType {
         match self {
             ParameterType::Module => {
                 matches!(value, Value::Module { .. })
-            }
+            },
             ParameterType::Function => matches!(value, Value::Callable(_)),
             ParameterType::List => matches!(value, Value::List(_)),
             ParameterType::Number => matches!(value, Value::Number(_)),
@@ -36,7 +36,7 @@ impl ParameterType {
                 } else {
                     false
                 }
-            }
+            },
         }
     }
 }
@@ -54,7 +54,7 @@ impl TryFrom<&str> for ParameterType {
                 return Err(
                     ErrorKind::InvalidParameterType(other.to_owned()).into()
                 )
-            }
+            },
         };
 
         Ok(ptype)
@@ -66,7 +66,7 @@ impl std::fmt::Display for ParameterType {
         match self {
             ParameterType::TypedList(_) | ParameterType::List => {
                 write!(f, "list")
-            }
+            },
             ParameterType::Module => write!(f, "module"),
             ParameterType::Function => write!(f, "function"),
             ParameterType::Number => write!(f, "number"),

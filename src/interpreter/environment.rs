@@ -1,7 +1,8 @@
+use std::collections::HashMap;
+
 use super::Value;
 use crate::error::ErrorKind;
 use crate::Result;
-use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct Environment {
@@ -11,10 +12,7 @@ pub struct Environment {
 
 impl Environment {
     pub fn new() -> Self {
-        Self {
-            map: HashMap::new(),
-            parent: None,
-        }
+        Self { map: HashMap::new(), parent: None }
     }
 
     pub fn merge_values(&mut self, other: Environment) -> Result<()> {
@@ -94,11 +92,8 @@ impl Environment {
     pub fn format_table(mut values: Vec<(&str, &Value)>) -> String {
         values.sort_by(|(l, _), (r, _)| l.cmp(r));
 
-        let key_width = values
-            .iter()
-            .map(|(k, _)| k.len())
-            .max()
-            .unwrap_or_default();
+        let key_width =
+            values.iter().map(|(k, _)| k.len()).max().unwrap_or_default();
 
         let value_width = values
             .iter()
@@ -145,11 +140,8 @@ impl std::fmt::Display for Environment {
             parent.fmt(f)?;
         }
 
-        let values = self
-            .map
-            .iter()
-            .map(|(k, v)| (k.as_str(), v))
-            .collect::<Vec<_>>();
+        let values =
+            self.map.iter().map(|(k, v)| (k.as_str(), v)).collect::<Vec<_>>();
 
         writeln!(f, "{}", Self::format_table(values))
     }

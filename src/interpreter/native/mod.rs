@@ -10,11 +10,9 @@ pub fn get_native_environment() -> Environment {
 
     for module in modules::get_modules() {
         if module.is_core_module() {
-            environment
-                .merge_values(module.environment())
-                .unwrap_or_else(|_| {
-                    panic!("Unable to merge core '{}' module.", module.name())
-                });
+            environment.merge_values(module.environment()).unwrap_or_else(
+                |_| panic!("Unable to merge core '{}' module.", module.name()),
+            );
         } else {
             environment
                 .insert(module.name().to_owned(), module.environment().into())
@@ -46,11 +44,7 @@ impl NativeFunction {
         ) -> Result<Value>,
         parameters: Parameters,
     ) -> Self {
-        Self {
-            name,
-            function,
-            parameters,
-        }
+        Self { name, function, parameters }
     }
 }
 

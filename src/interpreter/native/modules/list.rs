@@ -38,11 +38,8 @@ fn head(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
 }
 
 fn tail(_: &mut Interpreter, arguments: Arguments) -> Result<Value> {
-    let list = arguments
-        .unwrap_list(0)
-        .get(1..)
-        .map(Vec::from)
-        .unwrap_or_default();
+    let list =
+        arguments.unwrap_list(0).get(1..).map(Vec::from).unwrap_or_default();
 
     Ok(Value::List(list))
 }

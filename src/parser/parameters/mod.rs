@@ -4,11 +4,12 @@ use crate::Result;
 mod parameter;
 mod parameter_type;
 
-use super::ast::parse_parameters;
-use super::{Parser, Rule};
 pub use parameter::Parameter;
 pub use parameter_type::ParameterType;
 use pest::Parser as PestParser;
+
+use super::ast::parse_parameters;
+use super::{Parser, Rule};
 
 #[derive(Debug, Clone)]
 pub struct Parameters {
@@ -36,16 +37,12 @@ impl Parameters {
     }
 
     pub fn none() -> Self {
-        Self {
-            parameters: Vec::new(),
-        }
+        Self { parameters: Vec::new() }
     }
 
     pub fn has_rest_param(&self) -> bool {
         // If a `Parameters` object has a rest param, it's always the last one.
-        self.parameters
-            .last()
-            .map_or(false, Parameter::is_rest_param)
+        self.parameters.last().map_or(false, Parameter::is_rest_param)
     }
 
     pub fn is_empty(&self) -> bool {
@@ -123,11 +120,7 @@ impl std::fmt::Display for Parameters {
             args.insert(first_optional_index, "&opt".to_owned());
         }
 
-        if self
-            .parameters
-            .iter()
-            .last()
-            .map_or(false, Parameter::is_rest_param)
+        if self.parameters.iter().last().map_or(false, Parameter::is_rest_param)
         {
             args.insert(args.len() - 1, "&".to_owned());
         }

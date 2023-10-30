@@ -1,8 +1,9 @@
+use rustyline::error::ReadlineError;
+use rustyline::Editor;
+
 use crate::error::ErrorKind;
 use crate::interpreter::{Interpreter, Value};
 use crate::Result;
-use rustyline::error::ReadlineError;
-use rustyline::Editor;
 
 // TODO More sophisticated command line handling.
 // TODO Save repl-history in a config dir
@@ -53,9 +54,8 @@ fn eval_line(
     line_no: usize,
     intp: &mut Interpreter,
 ) -> Result<bool> {
-    let readline = rl
-        .readline(&format!("[{line_no}]> "))
-        .map(|s| s.trim().to_owned());
+    let readline =
+        rl.readline(&format!("[{line_no}]> ")).map(|s| s.trim().to_owned());
 
     match readline {
         Ok(line) => {
@@ -71,7 +71,7 @@ fn eval_line(
             }
 
             Ok(false)
-        }
+        },
         Err(ReadlineError::Interrupted) => Ok(true),
         Err(err) => Err(err.into()),
     }

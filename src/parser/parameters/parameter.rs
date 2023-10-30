@@ -16,19 +16,11 @@ impl Parameter {
         optional: bool,
         rest: bool,
     ) -> Self {
-        Self {
-            name,
-            parameter_types,
-            optional,
-            rest,
-        }
+        Self { name, parameter_types, optional, rest }
     }
 
     pub fn empty(name: String) -> Self {
-        Self {
-            name,
-            ..Default::default()
-        }
+        Self { name, ..Default::default() }
     }
 
     pub fn name(&self) -> &str {
@@ -101,9 +93,6 @@ impl Parameter {
 
     pub fn value_is_type(&self, value: &Value) -> bool {
         self.parameter_types.is_empty()
-            || self
-                .parameter_types
-                .iter()
-                .any(|pt| pt.value_is_type(value))
+            || self.parameter_types.iter().any(|pt| pt.value_is_type(value))
     }
 }

@@ -1,12 +1,13 @@
 #![allow(clippy::unnecessary_wraps)]
 #![allow(clippy::needless_pass_by_value)]
 
+use conv::prelude::*;
+
 use super::{tuples_to_environment, NativeFunctionTuple, NativeModule};
 use crate::error::ErrorKind;
 use crate::interpreter::environment::Environment;
 use crate::interpreter::{Arguments, Interpreter, Value};
 use crate::Result;
-use conv::prelude::*;
 
 pub struct Number;
 
